@@ -169,3 +169,6 @@ After each Codex run:
 
 - 2026-03-23: Team mode started for Open Interview.
 - 2026-03-23: Confirmed Codex CLI must be the only code-writing path.
+- 2026-03-23: GitHub SSH push path fixed; branch `dev/mvp-delivery` pushed.
+- 2026-03-23: Added canonical execution bridge docs: `docs/tech-stack.md`, `docs/codex-task-prompts.md`.
+- 2026-03-23: Added bounded Codex slice docs under `tasks/slices/`.
