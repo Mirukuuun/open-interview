@@ -1,0 +1,66 @@
+import { DetailGrid } from "@/components/workbench/detail-grid";
+import { PageHeader } from "@/components/workbench/page-header";
+import { SectionHeading } from "@/components/workbench/section-heading";
+import { Button } from "@/components/ui/button";
+import { SurfaceCard } from "@/components/ui/surface-card";
+
+type ResumeDetailPlaceholderProps = {
+  resumeId: string;
+};
+
+export function ResumeDetailPlaceholder({
+  resumeId,
+}: ResumeDetailPlaceholderProps) {
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        actions={
+          <>
+            <Button href="/resume">Back to resumes</Button>
+            <Button variant="primary">View extracted projects</Button>
+          </>
+        }
+        description="This direct-entry resume route reserves a stable place for one structured resume document and its extracted project list."
+        routeLabel={`/resume/${resumeId}`}
+        title="Resume detail"
+      />
+
+      <DetailGrid
+        items={[
+          { label: "resume_id", value: resumeId },
+          { label: "Sections", value: "Source status, summary, projects" },
+          { label: "Actions", value: "Parse, inspect projects" },
+          { label: "Status", value: "Stubbed" },
+        ]}
+      />
+
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.8fr)]">
+        <SurfaceCard className="space-y-5">
+          <SectionHeading
+            description="Parsed resume summary and project list will live here."
+            title="Resume summary"
+          />
+          <div className="rounded-xl border border-dashed border-border-strong bg-surface-muted p-5 text-sm leading-6 text-text-muted">
+            Resume metadata, parse status, and extracted projects are intentionally
+            deferred to Slice 6.
+          </div>
+        </SurfaceCard>
+
+        <SurfaceCard className="space-y-5" muted>
+          <SectionHeading
+            description="This rail will keep key resume metadata in view."
+            title="Resume metadata"
+          />
+          <div className="space-y-3 text-sm text-text-muted">
+            <div className="rounded-xl border border-border-strong bg-white px-4 py-3">
+              Candidate name placeholder
+            </div>
+            <div className="rounded-xl border border-border-strong bg-white px-4 py-3">
+              Parse status placeholder
+            </div>
+          </div>
+        </SurfaceCard>
+      </div>
+    </div>
+  );
+}

@@ -2,7 +2,7 @@
 
 - task_id: oi-slice-0-bootstrap
 - owner: execution
-- status: pending
+- status: in_review
 - priority: high
 - goal: scaffold a runnable Open Interview web baseline aligned with canonical routes and stack decisions
 
@@ -32,11 +32,11 @@
 - README or run instructions sufficient for local startup
 
 ## Done when
-- [ ] app installs and starts locally
-- [ ] left nav and shell exist
-- [ ] canonical top-level routes are present as placeholders
-- [ ] repo structure matches future slice needs
-- [ ] no fake business logic is baked into bootstrap
+- [x] app installs and starts locally
+- [x] left nav and shell exist
+- [x] canonical top-level routes are present as placeholders
+- [x] repo structure matches future slice needs
+- [x] no fake business logic is baked into bootstrap
 
 ## Refs
 - `docs/tech-stack.md`

@@ -31,9 +31,27 @@ Responsibilities:
 - freeze scope / boundaries
 - decide next bounded coding slice
 - prepare Codex prompts
-- monitor Codex execution
+- monitor Codex execution via the execution role
 - synthesize review findings
 - communicate with Miruku
+
+### Execution role
+Responsibilities:
+- prepare the bounded Codex run
+- launch Codex CLI in the project workdir
+- stay responsible until the Codex run exits
+- collect changed files, validation results, blockers, and next handoff notes
+- hand a complete execution summary to reviewer + lead
+
+Execution closure rule:
+- execution is **not complete when Codex starts**
+- execution is complete only after Codex has exited and a bounded handoff includes:
+  - command shape / run context
+  - changed files or changed areas
+  - validation results (`install`, `typecheck`, `lint`, `build`, or justified subset)
+  - known blockers / risks
+  - explicit reviewer focus points
+- the lead should not need to manually poll raw process state to know whether a slice finished
 
 ### Execution engine (Codex CLI)
 Responsibilities:
@@ -74,7 +92,7 @@ Working rule:
 ## 4. Initial backlog slices
 
 ### Slice 0 — Project bootstrap
-Status: pending
+Status: done
 Goal:
 - freeze technical stack
 - scaffold repo structure
@@ -159,11 +177,17 @@ Reason:
 ## 6. Review protocol
 
 After each Codex run:
-1. collect changed files
-2. inspect diff vs canonical docs
-3. identify correctness gaps / drift
-4. either accept or send bounded rework prompt back to Codex
-5. update this plan / status
+1. execution confirms the run has actually exited
+2. execution collects changed files / changed areas
+3. execution runs or reports validation (`install`, `typecheck`, `lint`, `build`, or justified subset)
+4. reviewer inspects diff vs canonical docs
+5. identify correctness gaps / drift
+6. either accept or send bounded rework prompt back to Codex
+7. update this plan / status
+
+Escalation rule:
+- if the execution handoff is incomplete, the slice is still considered `in_progress`
+- do not treat “Codex launched” as a finished execution step
 
 ## 7. Status log
 
@@ -171,4 +195,6 @@ After each Codex run:
 - 2026-03-23: Confirmed Codex CLI must be the only code-writing path.
 - 2026-03-23: GitHub SSH push path fixed; branch `dev/mvp-delivery` pushed.
 - 2026-03-23: Added canonical execution bridge docs: `docs/tech-stack.md`, `docs/codex-task-prompts.md`.
+- 2026-03-23: Added bounded Codex slice docs under `tasks/slices/`.
+cs/tech-stack.md`, `docs/codex-task-prompts.md`.
 - 2026-03-23: Added bounded Codex slice docs under `tasks/slices/`.
