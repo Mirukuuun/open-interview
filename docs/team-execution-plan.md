@@ -147,7 +147,7 @@ Done when:
 - core browse/search loop is usable
 
 ### Slice 5 — Lightweight RAG QA
-Status: pending
+Status: done
 Goal:
 - implement chunking / retrieval / citations
 - implement `/qa`
@@ -166,13 +166,13 @@ Done when:
 ## 5. Immediate next action
 
 Next recommended action:
-- prepare bounded Codex run for Slice 4（Question bank / interview views）
-- keep scope bounded to `/questions`、`/interviews`、detail pages 与基础搜索/过滤
-- reuse Slice 3 已完成的 review-confirm canonical data；不要扩到 resume / QA / auth
+- prepare bounded Codex run for Slice 6（Resume / deep dive）
+- keep scope bounded to resume parse flow、resume/project detail、deep-dive session creation / ask 主链
+- reuse Slice 5 已完成的 grounded QA / retrieval trace 能力；不要并行扩到 auth / 外部向量基础设施
 
 Reason:
-- Slice 0 / Slice 1 / Slice 2 / Slice 3 已经收口，当前最有价值的是把 canonical question / interview browse loop 打通。
-- QA、resume deep-dive 等后续能力都依赖题库与面试视图先可用。
+- Slice 5 已经完成实现、独立验证与 reviewer 正式验收，grounded QA 主链已可用。
+- 当前最有价值的是把 resume / project deep-dive 这条剩余 MVP 主链补齐，完成端到端产品叙事。
 
 ## 6. Review protocol
 
@@ -204,6 +204,10 @@ Escalation rule:
 - 2026-03-24: Slice 3（Parse review flow）经 reviewer 正式验收通过（PASS_WITH_NOTES）：确认 `/review` queue 不再 500，`page_size` 上限防御生效，review -> confirm -> canonical 写入门控成立；非阻塞 note 为 `/review` 暂无分页控件、`next build` 仍有既知 Turbopack/NFT tracing warning。可进入 commit/push 收口。
 - 2026-03-24: Slice 4（Question bank / interview views）已切到 in_progress，进入 execution；本轮目标是打通 `/questions`、`/questions/:questionId`、`/interviews`、`/interviews/:interviewId` 与基础搜索/过滤，不扩到 QA / resume / auth。
 - 2026-03-24: Slice 4 首轮 Codex dispatch 已发出，但被 Codex CLI usage limit 阻塞；当前不是实现失败，而是执行额度问题。待 Codex 可用后，复用现成 bounded prompt 继续 execution。
-��
 - 2026-03-24: Slice 4（Question bank / interview views）完成实现并通过独立验证：`/questions`、`/questions/:questionId`、`/interviews`、`/interviews/:interviewId` 与最小 list/detail/search/filter API 可用；`db:init` / `typecheck` / `lint` / `build --webpack` 全绿，questions/interviews 的本地 HTTP smoke 通过。
 - 2026-03-24: Slice 4 经 reviewer 正式验收通过（PASS_WITH_NOTES）：Question bank / interview browse loop 已达成合同范围；非阻塞 note 为当前未提供更宽泛的统一 `/api/search` 面，且 repo 状态文档需在 commit 前同步收口。
+- 2026-03-24: Slice 5（Lightweight RAG QA）已切到 in_progress，进入 execution；本轮目标是打通 `/qa`、session/ask API、轻量 hybrid retrieval、citations 与 retrieval trace，不扩到 resume deep-dive / auth / 外部向量基础设施。
+- 2026-03-24: Slice 5（Lightweight RAG QA）execution 完成：`/qa`、`/qa/:sessionId`、`POST /api/qa/sessions`、`POST /api/qa/sessions/:sessionId/ask`、`GET /api/qa/sessions/:sessionId`、`ai_sessions` / `session_turns` / `retrieval_logs` persistence、lightweight hybrid retrieval、citations、related questions、developer-facing retrieval trace 已打通。
+- 2026-03-24: Slice 5 validation 通过：`db:init` / `typecheck` / `lint` / `build --webpack` 全绿。
+- 2026-03-24: Slice 5 real local HTTP smoke 通过：`GET /qa` -> 200；`POST /api/qa/sessions` -> 201；`POST /api/qa/sessions/:sessionId/ask` -> 200；`GET /api/qa/sessions/:sessionId` -> 200；`GET /qa/:sessionId` -> 200，并确认 answer / citations / related questions / retrieval_log / retrieval trace 可见；negative-path 对无 grounding 的 nonsense query 返回 `409 retrieval_unavailable`。
+- 2026-03-24: Slice 5 经 reviewer 正式验收通过（PASS_WITH_NOTES）：Lightweight RAG QA 已达成合同范围；非阻塞 note 为当前 citations 仍以 question-centric owner 为主、仅带 source/interview backref，这在本 slice 的最小合同内可接受。

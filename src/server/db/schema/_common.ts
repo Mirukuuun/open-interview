@@ -77,6 +77,16 @@ export const retrievalQueryTypes = [
 
 export const retrievalStrategies = ["fts", "vector", "hybrid"] as const;
 
+export const aiSessionTypes = [
+  "qa",
+  "resume_deep_dive",
+  "mock_interview",
+] as const;
+
+export const aiSessionStatuses = ["active", "completed", "archived"] as const;
+
+export const sessionTurnRoles = ["user", "assistant", "system"] as const;
+
 export function idColumn() {
   return text("id").notNull().primaryKey();
 }
