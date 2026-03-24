@@ -372,8 +372,8 @@ export function ImportActionsPanel() {
             </Button>
             <Button href="/review">Open Review Queue</Button>
             <p className="text-sm text-text-muted">
-              Parse job creation is deferred to Slice 3, but this source appears in
-              the recent list immediately.
+              Raw source 保存后会立刻出现在 recent list；现在也可以直接去 Review
+              Queue 创建 parse job。
             </p>
           </div>
         </form>

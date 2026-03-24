@@ -3,7 +3,7 @@
 - doc_type: execution_plan
 - audience: agents / implementers
 - status: in_progress
-- updated_at: 2026-03-23
+- updated_at: 2026-03-24
 - canonical_for: team operating mode, role boundaries, backlog slices, execution constraints
 
 ## 0. Hard constraints
@@ -127,7 +127,7 @@ Done when:
 - recent import list visible
 
 ### Slice 3 — Parse review flow
-Status: pending
+Status: done
 Goal:
 - implement parse job creation/status flow
 - implement `/review` and `/review/:jobId`
@@ -166,13 +166,13 @@ Done when:
 ## 5. Immediate next action
 
 Next recommended action:
-- launch Codex for Slice 3（Parse review flow）
-- keep scope bounded to parse job creation / status flow / `/review` queue and detail page
-- reuse Slice 1 / Slice 2 已有 data layer 与 import backbone；不要重开 import 范围
+- prepare bounded Codex run for Slice 4（Question bank / interview views）
+- keep scope bounded to `/questions`、`/interviews`、detail pages 与基础搜索/过滤
+- reuse Slice 3 已完成的 review-confirm canonical data；不要扩到 resume / QA / auth
 
 Reason:
-- Slice 0 / Slice 1 / Slice 2 已经收口，当前最有价值的是把 parse -> review -> confirm 主链打通。
-- Question bank / interview views / QA 都依赖 review-confirm loop 先成立。
+- Slice 0 / Slice 1 / Slice 2 / Slice 3 已经收口，当前最有价值的是把 canonical question / interview browse loop 打通。
+- QA、resume deep-dive 等后续能力都依赖题库与面试视图先可用。
 
 ## 6. Review protocol
 
@@ -199,3 +199,6 @@ Escalation rule:
 - 2026-03-24: Slice 1（Data Layer v1）reviewer 通过，完成清理、提交并推送到 `dev/mvp-delivery`。
 - 2026-03-24: Slice 2（Import flow）已切到 in_progress，进入 execution。
 - 2026-03-24: Slice 2（Import flow）经手工 reviewer 收口通过：真实 HTTP 抽查完成，`/import`、`POST /api/sources/text`、`POST /api/manual-qa`、`GET /api/sources` 可用；`db:init` / `typecheck` / `lint` / `build` 全绿。Turbopack/NFT tracing warning 记为非阻塞 note，后续在基础设施层处理。
+- 2026-03-24: Slice 3（Parse review flow）已切到 in_progress，进入 execution。
+- 2026-03-24: Slice 3（Parse review flow）完成最小返工收口：`/review` blocker 已解除，`db:init` / `typecheck` / `lint` / `build` 全绿，真实 HTTP 抽查通过（`GET /review` -> 200，queue 可见；`POST /api/parse-jobs` -> 201；`GET /review/:jobId` -> 200）。
+- 2026-03-24: Slice 3（Parse review flow）经 reviewer 正式验收通过（PASS_WITH_NOTES）：确认 `/review` queue 不再 500，`page_size` 上限防御生效，review -> confirm -> canonical 写入门控成立；非阻塞 note 为 `/review` 暂无分页控件、`next build` 仍有既知 Turbopack/NFT tracing warning。可进入 commit/push 收口。

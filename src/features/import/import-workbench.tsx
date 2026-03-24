@@ -86,7 +86,7 @@ export function ImportWorkbench({
             <Button href="/questions">Open Question Bank</Button>
           </>
         }
-        description="Import is now live for pasted text and direct manual Q&A. Save raw sources, keep a visible recent-feed, and hand operators toward the review desk without leaving the workbench."
+        description="Import supports pasted text and direct manual Q&A. Pasted text lands as raw source truth, then moves into the live parse-review-confirm loop through Review Queue."
         routeLabel="/import"
         title="Import sources into the workbench"
       />
@@ -112,7 +112,7 @@ export function ImportWorkbench({
         <div className="space-y-6">
           <SurfaceCard muted className="space-y-5">
             <SectionHeading
-              description="Keep the parse/review handoff explicit. Raw pasted sources land with `not_started`, while manual Q&A skips parsing and lands directly in canonical storage."
+              description="Keep the parse/review handoff explicit. Raw pasted sources land with `not_started`, then Review Queue creates parse jobs and waits for human confirmation before canonical write."
               title="Review handoff"
             />
             <div className="rounded-xl border border-border-strong bg-white p-4">
@@ -131,9 +131,9 @@ export function ImportWorkbench({
                 </Button>
               </div>
               <p className="mt-3 text-sm leading-6 text-text-muted">
-                Slice 2 stops at source creation and canonical manual entry. Parse job
-                creation and review confirmation stay in Slice 3, but the route is
-                already linked here so operators know where the next step lives.
+                The parse review flow is live now: create parse jobs from `/review`,
+                inspect `parse_job.result_json`, and only then confirm selected items
+                into canonical entities.
               </p>
             </div>
           </SurfaceCard>

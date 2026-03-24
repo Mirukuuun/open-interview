@@ -2,7 +2,7 @@
 
 - task_id: oi-slice-3-parse-review
 - owner: execution
-- status: pending
+- status: done
 - priority: high
 - goal: implement parse job lifecycle, review queue, and human confirmation before canonical write
 
@@ -23,10 +23,10 @@
 - reviewability is higher priority than automation sophistication
 
 ## Done when
-- [ ] parse job can be created and polled
-- [ ] review queue is operationally visible
-- [ ] reviewer can inspect parse result and confirm selected items
-- [ ] canonical question data is only written through confirmation flow
+- [x] parse job can be created and polled
+- [x] review queue is operationally visible
+- [x] reviewer can inspect parse result and confirm selected items
+- [x] canonical question data is only written through confirmation flow
 
 ## Refs
 - `docs/data-model.md`

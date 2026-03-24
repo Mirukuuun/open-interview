@@ -18,7 +18,6 @@ export const primaryNavItems: NavItem[] = [
     href: "/review",
     match: "/review",
     description: "Inspect parse jobs that need human review.",
-    badge: "0",
   },
   {
     label: "Question Bank",
