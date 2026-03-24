@@ -105,7 +105,7 @@ Done when:
 - basic layout present
 
 ### Slice 1 — Data layer v1
-Status: pending
+Status: done
 Goal:
 - create DB schema for source / parse_job / question / answer_variant / interview / tag mappings
 - prepare migration/bootstrap path
@@ -166,13 +166,13 @@ Done when:
 ## 5. Immediate next action
 
 Next recommended action:
-- freeze `tech-stack.md`
-- then generate `codex-task-prompts.md`
-- then launch Codex for Slice 0
+- launch Codex for Slice 2（Import flow）
+- keep scope bounded to source creation / upload+pasting entry / recent import list
+- reuse Slice 1 data layer directly; do not reopen schema design unless blocked
 
 Reason:
-- Codex performs better when stack/constraints are explicit.
-- This project already has enough product/design docs; the missing bridge is execution prompts.
+- Slice 0 / Slice 1 已经收口，当前最有价值的是把 import 主链打通。
+- 后续 parse/review/search/QA 都依赖 source ingestion 先可用。
 
 ## 6. Review protocol
 
@@ -196,5 +196,4 @@ Escalation rule:
 - 2026-03-23: GitHub SSH push path fixed; branch `dev/mvp-delivery` pushed.
 - 2026-03-23: Added canonical execution bridge docs: `docs/tech-stack.md`, `docs/codex-task-prompts.md`.
 - 2026-03-23: Added bounded Codex slice docs under `tasks/slices/`.
-cs/tech-stack.md`, `docs/codex-task-prompts.md`.
-- 2026-03-23: Added bounded Codex slice docs under `tasks/slices/`.
+- 2026-03-24: Slice 1（Data Layer v1）reviewer 通过，完成清理后可提交；当前下一步转向 Slice 2（Import flow）。

@@ -385,19 +385,19 @@ Required in MVP-1:
 - `tags`
 - `question_tags`
 - `source_question_refs`
+- `chunks`
+- `embeddings`
+- `retrieval_logs`
+
+Deferred after MVP-1（当前不要求在 Slice 1 落表）:
 - `resume_documents`
 - `resume_projects`
 - `ai_sessions`
 - `session_turns`
 
-Pre-create in MVP-1 or MVP-2 boundary:
-- `chunks`
-- `embeddings`
-- `retrieval_logs`
-
 Recommendation:
-- Create `chunks` and `retrieval_logs` in MVP-1.
-- `embeddings` can be enabled in MVP-2, but schema should exist from day one.
+- 在 MVP-1 先把 `chunks`、`embeddings`、`retrieval_logs` 的 schema 位置占住，便于后续 Slice 4/5 接入 grounded QA。
+- `resume` / `session` 相关表延后到 Resume / deep dive 相关 slice 再补，不阻塞当前题库主链。
 
 ---
 

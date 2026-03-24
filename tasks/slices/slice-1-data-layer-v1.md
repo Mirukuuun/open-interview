@@ -2,7 +2,7 @@
 
 - task_id: oi-slice-1-data-layer
 - owner: execution
-- status: pending
+- status: done
 - priority: high
 - goal: implement the first durable schema and local DB bootstrap path for core MVP entities
 
@@ -24,10 +24,10 @@
 - do not introduce external DB or vector infra
 
 ## Done when
-- [ ] schema files exist and are organized
-- [ ] migration/bootstrap path works locally
-- [ ] core entities can be created by later slices without schema rework
-- [ ] FTS/retrieval-related tables are either present or intentionally staged with clear notes
+- [x] schema files exist and are organized
+- [x] migration/bootstrap path works locally
+- [x] core entities can be created by later slices without schema rework
+- [x] FTS/retrieval-related tables are either present or intentionally staged with clear notes
 
 ## Refs
 - `docs/tech-stack.md`
