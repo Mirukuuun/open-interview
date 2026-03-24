@@ -23,11 +23,10 @@ export function AppSidebar() {
         </p>
         <div className="space-y-1">
           <h1 className="text-lg font-semibold tracking-[-0.03em] text-white">
-            MVP Workbench
+            MVP 工作台
           </h1>
           <p className="text-sm leading-6 text-slate-300">
-            Bootstrap shell for import, review, search, grounded QA, and resume
-            flows.
+            覆盖导入、审核、检索、AI 问答和简历链路。
           </p>
         </div>
       </div>
@@ -70,14 +69,13 @@ export function AppSidebar() {
 
       <div className="mt-auto rounded-2xl border border-white/10 bg-white/5 p-4">
         <p className="font-mono text-[11px] uppercase tracking-[0.1em] text-slate-400">
-          Bootstrap status
+          当前状态
         </p>
         <p className="mt-2 text-sm font-medium text-white">
-          No live data wired yet
+          已接入真实数据链路
         </p>
         <p className="mt-2 text-sm leading-6 text-slate-300">
-          Slice 0 keeps the shell and route boundaries in place without baking in
-          business logic.
+          当前以最小工作流为主，保留清晰路由和可追踪数据路径。
         </p>
       </div>
     </aside>

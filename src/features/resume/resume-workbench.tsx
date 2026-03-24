@@ -26,31 +26,31 @@ export function ResumeWorkbench({ workspace }: { workspace: ResumeWorkspace }) {
           <>
             {newestResume ? (
               <Button href={`/resume/${newestResume.resumeDocument.id}`}>
-                Open structured resume
+                打开结构化简历
               </Button>
             ) : null}
             {firstProject ? (
               <Button href={`/resume/projects/${firstProject.id}`} variant="primary">
-                Open first project
+                打开首个项目
               </Button>
             ) : null}
           </>
         }
-        description="Paste a resume source, extract structured projects, and move directly into project-focused deep dives without collapsing the flow into generic chat."
+        description="导入简历、提取项目，并进入项目深挖。"
         routeLabel="/resume"
-        title="Resume / Projects"
+        title="简历 / 项目"
       />
 
       <DetailGrid
         items={[
-          { label: "resume_sources", value: workspace.latestResumeSource ? "1" : "0" },
-          { label: "structured_resumes", value: `${workspace.recentResumes.length}` },
+          { label: "简历来源", value: workspace.latestResumeSource ? "1" : "0" },
+          { label: "结构化简历", value: `${workspace.recentResumes.length}` },
           {
-            label: "parsed_preview_projects",
+            label: "预览项目",
             value: `${workspace.parsedProjectPreview.length}`,
           },
           {
-            label: "active_projects",
+            label: "当前项目",
             value: `${workspace.activeResume?.projects.length ?? 0}`,
           },
         ]}
@@ -58,10 +58,7 @@ export function ResumeWorkbench({ workspace }: { workspace: ResumeWorkspace }) {
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
         <SurfaceCard className="space-y-5">
-          <SectionHeading
-            description="Keep the resume source, parse state, and structured-import action in one place."
-            title="Resume source"
-          />
+          <SectionHeading title="简历来源" />
           <ResumeSourcePanel
             latestParseJob={workspace.latestParseJob}
             latestSource={workspace.latestResumeSource}
@@ -72,19 +69,16 @@ export function ResumeWorkbench({ workspace }: { workspace: ResumeWorkspace }) {
 
         <div className="space-y-6">
           <SurfaceCard className="space-y-5">
-            <SectionHeading
-              description="Structured projects are the entry point for deep-dive storytelling."
-              title="Project list"
-            />
+            <SectionHeading title="项目列表" />
             {!newestResume || newestResume.projects.length === 0 ? (
               <EmptyList
                 bullets={[
-                  "Save a resume source and run parse.",
-                  "Persist the structured preview into resume/project entities.",
-                  "Open a project detail to start the deep-dive flow.",
+                  "先保存简历来源并执行解析。",
+                  "再把预览结果写入简历和项目实体。",
+                  "然后进入项目详情开始深挖。",
                 ]}
-                description="No structured projects are available yet."
-                title="No projects yet"
+                description="还没有结构化项目。"
+                title="还没有项目"
               />
             ) : (
               <div className="space-y-3">
@@ -96,19 +90,19 @@ export function ResumeWorkbench({ workspace }: { workspace: ResumeWorkspace }) {
                   >
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-sm font-semibold text-text-strong">{project.name}</p>
-                      <Badge>{`${project.session_count} session(s)`}</Badge>
+                      <Badge>{`${project.session_count} 个会话`}</Badge>
                     </div>
                     <p className="mt-2 text-sm leading-6 text-text-muted">
-                      {project.summary ?? "No summary extracted."}
+                      {project.summary ?? "还没有项目摘要。"}
                     </p>
                     {project.tech_stack.length > 0 ? (
                       <p className="mt-3 text-xs text-text-muted">
-                        stack: {project.tech_stack.join(", ")}
+                        技术栈: {project.tech_stack.join(", ")}
                       </p>
                     ) : null}
                     {project.latest_session_updated_at ? (
                       <p className="mt-3 text-xs text-text-muted">
-                        latest session {formatDateTime(project.latest_session_updated_at)}
+                        最近会话: {formatDateTime(project.latest_session_updated_at)}
                       </p>
                     ) : null}
                   </Link>
@@ -118,13 +112,10 @@ export function ResumeWorkbench({ workspace }: { workspace: ResumeWorkspace }) {
           </SurfaceCard>
 
           <SurfaceCard className="space-y-4" muted>
-            <SectionHeading
-              description="Direct-entry resume routes stay stable even when only one active resume exists."
-              title="Recent structured resumes"
-            />
+            <SectionHeading title="最近结构化简历" />
             {workspace.recentResumes.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border-strong bg-white px-4 py-4 text-sm text-text-muted">
-                No structured resume has been persisted yet.
+                还没有持久化的结构化简历。
               </div>
             ) : (
               <div className="space-y-3">
@@ -138,7 +129,7 @@ export function ResumeWorkbench({ workspace }: { workspace: ResumeWorkspace }) {
                       {resume.candidate_name ?? resume.id}
                     </p>
                     <p className="mt-2 text-sm text-text-muted">
-                      {resume.project_count} project(s) • updated{" "}
+                      {resume.project_count} 个项目 • 更新于{" "}
                       {formatDateTime(resume.updated_at)}
                     </p>
                   </Link>

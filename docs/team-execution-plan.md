@@ -218,3 +218,6 @@ Escalation rule:
 - 2026-03-24: Slice 6 首轮 reviewer 复验 BLOCK：发现 `parse-source.ts` 在 Projects section 内会把相邻 plain project titles 合并成一个 `resume_project`，导致 structured project entities 不稳定；需做最小 parser rework 后再复验。
 - 2026-03-24: Slice 6 blocker rework 完成：`parse-source.ts` 增补 plain-title boundary 判断，修复多 plain-title project 样本的 block splitting；多项目 parse result 与 `resume_projects` persistence 已通过真实 HTTP smoke 复验，且 Slice 5 QA sanity smoke 无明显回归。
 - 2026-03-24: Slice 6 经 reviewer 最终复验通过（PASS_WITH_NOTES）：resume / project deep-dive 主链达成合同范围；非阻塞 note 为 `tech_stack` heuristic 仍可能有轻微误判，以及 repo 状态需在 commit 前收口。
+- 2026-03-24: 启动 AT-V1-009（Open Interview 验收改动 Round 1），范围聚焦：首轮中文化、`/review` 列表减负、`/import` 默认 manual direct-ingest、manual entry category/tag 受控可创建，以及削减冗长解释文案。
+- 2026-03-24: AT-V1-009 首轮 execution 曾短暂漂移到被禁止的 parse 后 silent auto-confirm 方向；该方向已在 bounded recovery 中明确移除，parse-review-confirm 主链保持显式 review gate。
+- 2026-03-24: AT-V1-009 经 reviewer 正式验收通过（PASS_WITH_NOTES）：major surfaces 首轮中文化达标，`/review` 明显减负，`/import` 默认回到 manual direct-ingest，category/tag 受控可创建并可复用持久化值；非阻塞 note 为中文化仍属 first pass，且 repo/task 状态需在 commit 前收口。

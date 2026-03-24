@@ -11,7 +11,7 @@ type PageHeaderProps = {
 };
 
 export function PageHeader({
-  eyebrow = "Workbench",
+  eyebrow = "工作台",
   title,
   description,
   routeLabel,

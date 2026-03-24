@@ -124,36 +124,33 @@ export function QuestionBankWorkbench({
       <PageHeader
         actions={
           <>
-            <Button href="/interviews">Browse interviews</Button>
+            <Button href="/interviews">查看面经</Button>
             <Button href={sampleQuestionHref} variant="primary">
-              Open latest question
+              打开最新题目
             </Button>
           </>
         }
-        description="Browse confirmed canonical questions with keyword search, exact filters, and direct links back to source interviews."
+        description="按关键词、分类和标签浏览已确认题目。"
         routeLabel="/questions"
-        title="Question Bank"
+        title="题库"
       />
 
       <DetailGrid
         items={[
-          { label: "results", value: `${result.total}` },
-          { label: "showing", value: `${rangeStart}-${rangeEnd}` },
-          { label: "active filters", value: `${countActiveFilters(filters)}` },
-          { label: "sort", value: filters.sort },
+          { label: "结果数", value: `${result.total}` },
+          { label: "当前范围", value: `${rangeStart}-${rangeEnd}` },
+          { label: "筛选数", value: `${countActiveFilters(filters)}` },
+          { label: "排序", value: filters.sort },
         ]}
       />
 
       <div className="grid gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
         <SurfaceCard className="space-y-5">
-          <SectionHeading
-            description="Keep filters visible while browsing so known questions can be found quickly."
-            title="Filters"
-          />
+          <SectionHeading title="筛选" />
 
           {invalidQuery ? (
             <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-warning">
-              Some query parameters were ignored because they were invalid.
+              部分查询参数无效，已忽略。
             </div>
           ) : null}
 
@@ -162,13 +159,13 @@ export function QuestionBankWorkbench({
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-text-strong" htmlFor="q">
-                Keyword
+                关键词
               </label>
               <Input
                 defaultValue={filters.q ?? ""}
                 id="q"
                 name="q"
-                placeholder="Search question text, answers, category, or tags"
+                placeholder="搜索题目、答案、分类或标签"
               />
             </div>
 
@@ -177,10 +174,10 @@ export function QuestionBankWorkbench({
                 className="text-sm font-medium text-text-strong"
                 htmlFor="category"
               >
-                Category
+                分类
               </label>
               <Select defaultValue={filters.category ?? ""} id="category" name="category">
-                <option value="">All categories</option>
+                <option value="">全部分类</option>
                 {facets.categories.map((category) => (
                   <option key={category.name} value={category.name}>
                     {category.name} ({category.count})
@@ -191,10 +188,10 @@ export function QuestionBankWorkbench({
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-text-strong" htmlFor="tag">
-                Tag
+                标签
               </label>
               <Select defaultValue={filters.tag ?? ""} id="tag" name="tag">
-                <option value="">All tags</option>
+                <option value="">全部标签</option>
                 {facets.tags.map((tag) => (
                   <option key={tag.name} value={tag.name}>
                     {tag.name} ({tag.count})
@@ -208,14 +205,14 @@ export function QuestionBankWorkbench({
                 className="text-sm font-medium text-text-strong"
                 htmlFor="difficulty"
               >
-                Difficulty
+                难度
               </label>
               <Select
                 defaultValue={filters.difficulty ?? ""}
                 id="difficulty"
                 name="difficulty"
               >
-                <option value="">All difficulties</option>
+                <option value="">全部难度</option>
                 {facets.difficulties.map((difficulty) => (
                   <option key={difficulty.name} value={difficulty.name}>
                     {difficulty.name} ({difficulty.count})
@@ -229,7 +226,7 @@ export function QuestionBankWorkbench({
                 className="text-sm font-medium text-text-strong"
                 htmlFor="has_personal_answer"
               >
-                Personal answer
+                个人答案
               </label>
               <Select
                 defaultValue={
@@ -240,27 +237,27 @@ export function QuestionBankWorkbench({
                 id="has_personal_answer"
                 name="has_personal_answer"
               >
-                <option value="">All questions</option>
-                <option value="true">Has personal answer</option>
-                <option value="false">Canonical only</option>
+                <option value="">全部题目</option>
+                <option value="true">有个人答案</option>
+                <option value="false">仅标准答案</option>
               </Select>
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-text-strong" htmlFor="sort">
-                Sort
+                排序
               </label>
               <Select defaultValue={filters.sort} id="sort" name="sort">
-                <option value="updated_at">Updated recently</option>
-                <option value="source_count">Most sources</option>
+                <option value="updated_at">最近更新</option>
+                <option value="source_count">来源最多</option>
               </Select>
             </div>
 
             <div className="flex flex-wrap gap-3">
               <Button type="submit" variant="primary">
-                Apply filters
+                应用筛选
               </Button>
-              <Button href="/questions">Reset</Button>
+              <Button href="/questions">重置</Button>
             </div>
           </form>
         </SurfaceCard>
@@ -268,23 +265,22 @@ export function QuestionBankWorkbench({
         <SurfaceCard className="space-y-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <SectionHeading
-              description="Rows stay dense so question text, answer coverage, and source depth are scan-friendly."
-              title="Question list"
+              title="题目列表"
             />
             <p className="font-mono text-xs text-text-muted">
-              {rangeStart}-{rangeEnd} of {result.total}
+              {rangeStart}-{rangeEnd} / {result.total}
             </p>
           </div>
 
           {result.items.length === 0 ? (
             <EmptyList
               bullets={[
-                "Confirmed questions appear here after review import.",
-                "Keyword search spans question text, canonical answer, category, and tags.",
-                "Question detail pages keep answer variants and source links in one route.",
+                "确认后的题目会出现在这里。",
+                "关键词会覆盖题目、标准答案、分类和标签。",
+                "题目详情页会保留答案变体和来源链接。",
               ]}
-              description="No canonical questions matched the current filters."
-              title="No matching questions"
+              description="当前筛选下没有匹配题目。"
+              title="没有匹配题目"
             />
           ) : (
             <div className="overflow-x-auto">
@@ -292,12 +288,12 @@ export function QuestionBankWorkbench({
                 <thead>
                   <tr className="text-left">
                     {[
-                      "question_text",
-                      "category",
-                      "tags",
-                      "source_count",
-                      "updated_at",
-                      "answer",
+                      "题目",
+                      "分类",
+                      "标签",
+                      "来源数",
+                      "更新时间",
+                      "详情",
                     ].map((column) => (
                       <th
                         className="border-b border-border-muted px-3 py-3 font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted"
@@ -321,15 +317,15 @@ export function QuestionBankWorkbench({
                             {item.questionText}
                           </Link>
                           <div className="flex flex-wrap gap-2">
-                            <Badge tone="accent">question</Badge>
+                            <Badge tone="accent">题目</Badge>
                             <Badge
                               tone={
                                 item.hasPersonalAnswer ? "success" : "neutral"
                               }
                             >
                               {item.hasPersonalAnswer
-                                ? "canonical + personal"
-                                : "canonical"}
+                                ? "标准 + 个人"
+                                : "标准"}
                             </Badge>
                           </div>
                         </div>
@@ -351,7 +347,7 @@ export function QuestionBankWorkbench({
                           className="font-medium text-accent hover:underline"
                           href={`/questions/${item.id}`}
                         >
-                          Open detail
+                          打开详情
                         </Link>
                       </td>
                     </tr>
@@ -363,19 +359,18 @@ export function QuestionBankWorkbench({
 
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border-muted pt-4">
             <p className="text-sm text-text-muted">
-              Browse directly into question detail to inspect answer variants and
-              linked sources.
+              进入详情页可继续查看答案变体和关联来源。
             </p>
             <div className="flex flex-wrap gap-2">
               {previousHref ? (
-                <Button href={previousHref}>Previous</Button>
+                <Button href={previousHref}>上一页</Button>
               ) : (
-                <Button disabled>Previous</Button>
+                <Button disabled>上一页</Button>
               )}
               {nextHref ? (
-                <Button href={nextHref}>Next</Button>
+                <Button href={nextHref}>下一页</Button>
               ) : (
-                <Button disabled>Next</Button>
+                <Button disabled>下一页</Button>
               )}
             </div>
           </div>

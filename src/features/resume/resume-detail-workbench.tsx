@@ -21,46 +21,45 @@ export function ResumeDetailWorkbench({ detail }: { detail: ResumeDetail }) {
       <PageHeader
         actions={
           <>
-            <Button href="/resume">Back to resume hub</Button>
+            <Button href="/resume">返回简历页</Button>
             {firstProject ? (
               <Button href={`/resume/projects/${firstProject.id}`} variant="primary">
-                Open first project
+                打开首个项目
               </Button>
             ) : null}
           </>
         }
-        description="Inspect one structured resume document, its linked source, and the extracted projects that drive deep-dive practice."
+        description="查看一份结构化简历及其提取项目。"
         routeLabel={`/resume/${detail.resumeDocument.id}`}
-        title={detail.resumeDocument.candidate_name ?? "Structured resume"}
+        title={detail.resumeDocument.candidate_name ?? "结构化简历"}
       />
 
       <DetailGrid
         items={[
-          { label: "resume_id", value: detail.resumeDocument.id },
-          { label: "projects", value: `${detail.projects.length}` },
-          { label: "source_id", value: detail.sourceDocument.id },
-          { label: "parse_status", value: detail.sourceDocument.parseStatus },
+          { label: "简历 ID", value: detail.resumeDocument.id },
+          { label: "项目数", value: `${detail.projects.length}` },
+          { label: "来源 ID", value: detail.sourceDocument.id },
+          { label: "解析状态", value: detail.sourceDocument.parseStatus },
         ]}
       />
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(320px,0.95fr)]">
         <SurfaceCard className="space-y-5">
           <SectionHeading
-            description="The summary stays close to the extracted projects so the user can move from overview into project detail quickly."
-            title="Resume summary"
+            title="简历摘要"
           />
           <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-4 text-sm leading-6 text-text-muted">
-            {detail.resumeDocument.summary ?? "No summary was captured for this resume."}
+            {detail.resumeDocument.summary ?? "还没有简历摘要。"}
           </div>
 
           {detail.projects.length === 0 ? (
             <EmptyList
               bullets={[
-                "Return to /resume and rerun parse if the project section was unclear.",
-                "Structured resume rows exist, but there are no project entities yet.",
+                "如果项目区块不清晰，可以回到 /resume 重新解析。",
+                "当前只有简历记录，还没有项目实体。",
               ]}
-              description="This resume has no extracted projects."
-              title="No projects"
+              description="这份简历还没有提取到项目。"
+              title="没有项目"
             />
           ) : (
             <div className="space-y-3">
@@ -70,18 +69,18 @@ export function ResumeDetailWorkbench({ detail }: { detail: ResumeDetail }) {
                   href={`/resume/projects/${project.id}`}
                   key={project.id}
                 >
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-sm font-semibold text-text-strong">{project.name}</p>
-                    <Badge>{`${project.session_count} session(s)`}</Badge>
-                  </div>
-                  <p className="mt-2 text-sm leading-6 text-text-muted">
-                    {project.summary ?? "No summary extracted."}
-                  </p>
-                  {project.tech_stack.length > 0 ? (
-                    <p className="mt-3 text-xs text-text-muted">
-                      stack: {project.tech_stack.join(", ")}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-semibold text-text-strong">{project.name}</p>
+                    <Badge>{`${project.session_count} 个会话`}</Badge>
+                    </div>
+                    <p className="mt-2 text-sm leading-6 text-text-muted">
+                    {project.summary ?? "还没有项目摘要。"}
                     </p>
-                  ) : null}
+                    {project.tech_stack.length > 0 ? (
+                      <p className="mt-3 text-xs text-text-muted">
+                      技术栈: {project.tech_stack.join(", ")}
+                      </p>
+                    ) : null}
                 </Link>
               ))}
             </div>
@@ -89,20 +88,17 @@ export function ResumeDetailWorkbench({ detail }: { detail: ResumeDetail }) {
         </SurfaceCard>
 
         <SurfaceCard className="space-y-5" muted>
-          <SectionHeading
-            description="Source linkage remains visible so structured resume data never floats free from its raw origin."
-            title="Source metadata"
-          />
+          <SectionHeading title="来源信息" />
           <div className="space-y-3 text-sm text-text-muted">
             <div className="rounded-xl border border-border-strong bg-white px-4 py-3">
               <p className="font-semibold text-text-strong">{detail.sourceDocument.title}</p>
               <p className="mt-2 font-mono text-xs">{detail.sourceDocument.id}</p>
             </div>
             <div className="rounded-xl border border-border-strong bg-white px-4 py-3">
-              parse status: {detail.sourceDocument.parseStatus}
+              解析状态: {detail.sourceDocument.parseStatus}
             </div>
             <div className="rounded-xl border border-border-strong bg-white px-4 py-3">
-              updated: {formatDateTime(detail.sourceDocument.updatedAt)}
+              更新时间: {formatDateTime(detail.sourceDocument.updatedAt)}
             </div>
           </div>
         </SurfaceCard>

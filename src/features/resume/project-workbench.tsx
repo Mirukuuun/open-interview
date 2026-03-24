@@ -23,48 +23,44 @@ export function ProjectWorkbench({ project }: { project: ResumeProjectDetail }) 
       <PageHeader
         actions={
           <>
-            <Button href={`/resume/${project.resume_document.id}`}>Back to resume</Button>
+            <Button href={`/resume/${project.resume_document.id}`}>返回简历</Button>
             {latestSession ? (
               <Button href={`/resume/projects/${project.id}/session/${latestSession.id}`}>
-                Open latest session
+                打开最新会话
               </Button>
             ) : null}
             <StartDeepDiveSessionButton projectId={project.id} />
           </>
         }
-        description="One project stays anchored as the deep-dive unit: context on the left, session history on the right, and explicit project prompts ready to practice."
+        description="以单个项目为单位查看上下文、会话历史和建议追问。"
         routeLabel={`/resume/projects/${project.id}`}
         title={project.name}
       />
 
       <DetailGrid
         items={[
-          { label: "project_id", value: project.id },
-          { label: "sessions", value: `${project.sessions.length}` },
-          { label: "highlights", value: `${project.highlights.length}` },
-          { label: "tech_stack", value: `${project.tech_stack.length}` },
+          { label: "项目 ID", value: project.id },
+          { label: "会话数", value: `${project.sessions.length}` },
+          { label: "亮点数", value: `${project.highlights.length}` },
+          { label: "技术栈", value: `${project.tech_stack.length}` },
         ]}
       />
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(320px,0.95fr)]">
         <div className="space-y-6">
           <SurfaceCard className="space-y-5">
-            <SectionHeading
-              description="Project context stays visible because the deep-dive flow should practice storytelling, not generic chatting."
-              title="Project context"
-            />
+            <SectionHeading title="项目上下文" />
             <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-4 text-sm leading-6 text-text-muted">
-              {project.summary ?? "No summary extracted for this project."}
+              {project.summary ?? "还没有项目摘要。"}
             </div>
 
             <div className="space-y-3">
               <SectionHeading
-                description="Highlights give the deep-dive session concrete material to probe."
-                title="Highlights"
+                title="项目亮点"
               />
               {project.highlights.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-border-strong bg-white px-4 py-4 text-sm text-text-muted">
-                  No highlight bullets were extracted.
+                  还没有提取到亮点。
                 </div>
               ) : (
                 project.highlights.map((highlight) => (
@@ -80,12 +76,11 @@ export function ProjectWorkbench({ project }: { project: ResumeProjectDetail }) 
 
             <div className="space-y-3">
               <SectionHeading
-                description="Suggested prompts come from the structured project entity and seed the first session turns."
-                title="Suggested deep-dive questions"
+                title="建议追问"
               />
               {project.deep_dive_questions.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-border-strong bg-white px-4 py-4 text-sm text-text-muted">
-                  No suggested questions were extracted.
+                  还没有建议追问。
                 </div>
               ) : (
                 project.deep_dive_questions.map((question) => (
@@ -103,13 +98,10 @@ export function ProjectWorkbench({ project }: { project: ResumeProjectDetail }) 
 
         <div className="space-y-6">
           <SurfaceCard className="space-y-4" muted>
-            <SectionHeading
-              description="The stack is visible before the user starts answering follow-ups."
-              title="Tech stack"
-            />
+            <SectionHeading title="技术栈" />
             {project.tech_stack.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border-strong bg-white px-4 py-4 text-sm text-text-muted">
-                No stack items were extracted.
+                还没有提取到技术栈。
               </div>
             ) : (
               <div className="flex flex-wrap gap-2">
@@ -121,18 +113,15 @@ export function ProjectWorkbench({ project }: { project: ResumeProjectDetail }) 
           </SurfaceCard>
 
           <SurfaceCard className="space-y-5">
-            <SectionHeading
-              description="Session history stays beside the project, not hidden behind the generic QA route."
-              title="Session history"
-            />
+            <SectionHeading title="会话历史" />
             {project.sessions.length === 0 ? (
               <EmptyList
                 bullets={[
-                  "Start a deep-dive session from this page.",
-                  "The first turn will seed from the project's suggested questions.",
+                  "从当前页面开始一次项目深挖。",
+                  "首轮问题会优先使用项目建议追问。",
                 ]}
-                description="No deep-dive sessions exist for this project yet."
-                title="No sessions yet"
+                description="这个项目还没有深挖会话。"
+                title="还没有会话"
               />
             ) : (
               <div className="space-y-3">
@@ -144,12 +133,12 @@ export function ProjectWorkbench({ project }: { project: ResumeProjectDetail }) 
                   >
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-sm font-semibold text-text-strong">
-                        {session.title ?? "Untitled deep dive"}
+                        {session.title ?? "未命名深挖"}
                       </p>
                       <Badge>{session.status}</Badge>
                     </div>
                     <p className="mt-3 text-xs text-text-muted">
-                      updated {formatDateTime(session.updated_at)}
+                      更新于 {formatDateTime(session.updated_at)}
                     </p>
                   </Link>
                 ))}

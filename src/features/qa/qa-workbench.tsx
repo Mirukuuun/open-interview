@@ -47,25 +47,25 @@ export function QaWorkbench({
         actions={
           <>
             {newestSession ? (
-              <Button href={`/qa/${newestSession.id}`}>Open latest session</Button>
+              <Button href={`/qa/${newestSession.id}`}>打开最新会话</Button>
             ) : null}
             <Button href="/questions" variant="primary">
-              Browse question bank
+              打开题库
             </Button>
           </>
         }
-        description="Ask grounded questions against the local interview bank. Every answer must land with citations, related items, and a visible retrieval trace."
+        description="基于本地题库提问，答案会附带引用和检索轨迹。"
         routeLabel="/qa"
-        title="AI Review"
+        title="AI 问答"
       />
 
       <DetailGrid
         items={[
-          { label: "active_questions", value: `${overview.activeQuestionCount}` },
-          { label: "active_sessions", value: `${overview.activeSessionCount}` },
-          { label: "persisted_chunks", value: `${overview.totalChunkCount}` },
+          { label: "可用题目", value: `${overview.activeQuestionCount}` },
+          { label: "会话数", value: `${overview.activeSessionCount}` },
+          { label: "已存分块", value: `${overview.totalChunkCount}` },
           {
-            label: "chunk_mix",
+            label: "分块结构",
             value: `${overview.questionChunkCount}/${overview.answerChunkCount}/${overview.sourceExcerptChunkCount}`,
           },
         ]}
@@ -73,31 +73,24 @@ export function QaWorkbench({
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
         <SurfaceCard className="space-y-5">
-          <SectionHeading
-            description="The ask surface stays grounded by default. The first successful ask creates a reloadable QA session."
-            title="Ask a grounded question"
-          />
+          <SectionHeading title="提问" />
           <QaAskForm initialQuery={initialQuery} mode="new" />
           <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-4 text-sm leading-6 text-text-muted">
-            Hybrid in Slice 5 means question FTS plus structured tag/source
-            recall over persisted local chunks. Embeddings remain deferred.
+            当前默认使用本地 FTS 和结构化召回，不依赖外部向量服务。
           </div>
         </SurfaceCard>
 
         <div className="space-y-6">
           <SurfaceCard className="space-y-4" muted>
-            <SectionHeading
-              description="Recent grounded sessions stay directly reloadable from the workbench."
-              title="Recent sessions"
-            />
+            <SectionHeading title="最近会话" />
             {recentSessions.length === 0 ? (
               <EmptyList
                 bullets={[
-                  "Create a session by asking your first grounded question.",
-                  "Session detail pages will preserve turns, citations, and retrieval trace.",
+                  "先提一个问题创建会话。",
+                  "会话详情页会保留轮次、引用和检索轨迹。",
                 ]}
-                description="No QA sessions have been created yet."
-                title="No sessions yet"
+                description="还没有 QA 会话。"
+                title="还没有会话"
               />
             ) : (
               <div className="space-y-3">
@@ -109,7 +102,7 @@ export function QaWorkbench({
                   >
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-sm font-semibold text-text-strong">
-                        {session.title ?? "Untitled QA session"}
+                        {session.title ?? "未命名会话"}
                       </p>
                       <Badge>{session.status}</Badge>
                     </div>
@@ -119,11 +112,11 @@ export function QaWorkbench({
                       </p>
                     ) : (
                       <p className="mt-2 text-sm leading-6 text-text-muted">
-                        Session exists but has no turns yet.
+                        会话已创建，但还没有轮次。
                       </p>
                     )}
                     <p className="mt-3 text-xs text-text-muted">
-                      {session.turnCount} turns • updated {formatDateTime(session.updatedAt)}
+                      {session.turnCount} 轮 • 更新于 {formatDateTime(session.updatedAt)}
                     </p>
                   </Link>
                 ))}
@@ -132,19 +125,16 @@ export function QaWorkbench({
           </SurfaceCard>
 
           <SurfaceCard className="space-y-4">
-            <SectionHeading
-              description="Developer-facing visibility is part of the product contract for grounded QA."
-              title="Trace contract"
-            />
+            <SectionHeading title="轨迹说明" />
             <div className="space-y-3 text-sm text-text-muted">
               <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
-                Every assistant turn stores `retrieval_log` plus citation JSON.
+                每次回答都会存 `retrieval_log` 和引用数据。
               </div>
               <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
-                Source excerpts, question chunks, and answer chunks are persisted locally.
+                来源摘录、题目分块和答案分块都会本地持久化。
               </div>
               <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
-                `/qa/:sessionId` exposes the selected hits, strategy notes, and related items.
+                `/qa/:sessionId` 会展示命中片段、策略说明和相关题目。
               </div>
             </div>
           </SurfaceCard>

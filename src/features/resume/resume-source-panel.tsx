@@ -65,7 +65,7 @@ async function readApiResponse<T>(response: Response) {
     | null;
 
   if (!payload) {
-    throw new Error("Response body is not valid JSON.");
+    throw new Error("响应体不是合法 JSON。");
   }
 
   if (!payload.ok) {
@@ -118,8 +118,8 @@ export function ResumeSourcePanel({
 
       setFeedback({
         tone: "success",
-        title: "Resume source saved",
-        body: `Source ${data.source_document.id} is ready. Run parse next to extract structured projects.`,
+        title: "简历来源已保存",
+        body: `来源 ${data.source_document.id} 已保存，下一步可执行解析。`,
       });
       setForm({
         title: "",
@@ -130,11 +130,11 @@ export function ResumeSourcePanel({
     } catch (error) {
       setFeedback({
         tone: "error",
-        title: "Resume source failed",
+        title: "保存失败",
         body:
           error instanceof Error
             ? error.message
-            : "Unable to save the resume source right now.",
+            : "当前无法保存简历来源。",
       });
     } finally {
       setIsSaving(false);
@@ -164,18 +164,18 @@ export function ResumeSourcePanel({
 
       setFeedback({
         tone: "success",
-        title: "Resume parsed",
-        body: `Parse job ${data.parse_job.id} is now ${data.parse_job.status}. Review the structured project preview below before persisting.`,
+        title: "简历已解析",
+        body: `任务 ${data.parse_job.id} 当前状态为 ${data.parse_job.status}，可在下方查看项目预览。`,
       });
       router.refresh();
     } catch (error) {
       setFeedback({
         tone: "error",
-        title: "Resume parse failed",
+        title: "解析失败",
         body:
           error instanceof Error
             ? error.message
-            : "Unable to parse the resume source right now.",
+            : "当前无法解析这份简历。",
       });
     } finally {
       setIsParsing(false);
@@ -204,19 +204,19 @@ export function ResumeSourcePanel({
 
       setFeedback({
         tone: "success",
-        title: "Structured resume saved",
-        body: `Persisted ${data.projects.length} structured project(s) into resume ${data.resume_document.id}.`,
+        title: "结构化简历已保存",
+        body: `已写入 ${data.projects.length} 个项目到简历 ${data.resume_document.id}。`,
       });
       router.push(`/resume/${data.resume_document.id}`);
       router.refresh();
     } catch (error) {
       setFeedback({
         tone: "error",
-        title: "Structured import failed",
+        title: "写入失败",
         body:
           error instanceof Error
             ? error.message
-            : "Unable to persist structured resume entities right now.",
+            : "当前无法写入结构化简历。",
       });
     } finally {
       setIsPersisting(false);
@@ -247,7 +247,7 @@ export function ResumeSourcePanel({
 
       <form className="space-y-4" onSubmit={handleSave}>
         <label className="block space-y-2">
-          <span className="text-sm font-medium text-text-strong">Resume title</span>
+          <span className="text-sm font-medium text-text-strong">简历标题</span>
           <Input
             onChange={(event) =>
               setForm((current) => ({
@@ -255,14 +255,14 @@ export function ResumeSourcePanel({
                 title: event.target.value,
               }))
             }
-            placeholder="Candidate resume - backend"
+            placeholder="后端候选人简历"
             required
             value={form.title}
           />
         </label>
 
         <label className="block space-y-2">
-          <span className="text-sm font-medium text-text-strong">Source URL</span>
+          <span className="text-sm font-medium text-text-strong">来源链接</span>
           <Input
             onChange={(event) =>
               setForm((current) => ({
@@ -270,13 +270,13 @@ export function ResumeSourcePanel({
                 sourceUrl: event.target.value,
               }))
             }
-            placeholder="Optional"
+            placeholder="可选"
             value={form.sourceUrl}
           />
         </label>
 
         <label className="block space-y-2">
-          <span className="text-sm font-medium text-text-strong">Raw resume text</span>
+          <span className="text-sm font-medium text-text-strong">简历原文</span>
           <Textarea
             className="min-h-[220px]"
             onChange={(event) =>
@@ -285,7 +285,7 @@ export function ResumeSourcePanel({
                 rawText: event.target.value,
               }))
             }
-            placeholder="Paste the raw resume text, especially the project section."
+            placeholder="粘贴简历原文，尤其是项目经历部分。"
             required
             value={form.rawText}
           />
@@ -293,61 +293,59 @@ export function ResumeSourcePanel({
 
         <div className="flex flex-wrap gap-3">
           <Button disabled={isSaving} type="submit" variant="primary">
-            {isSaving ? "Saving..." : "Save resume source"}
+            {isSaving ? "保存中..." : "保存简历来源"}
           </Button>
-          <Button href="/import">Open generic import</Button>
+          <Button href="/import">打开通用导入</Button>
         </div>
       </form>
 
       <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-4">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge tone="accent">Current source</Badge>
+          <Badge tone="accent">当前来源</Badge>
           {latestSource ? <Badge>{latestSource.parseStatus}</Badge> : null}
-          {latestParseJob ? <Badge>job {latestParseJob.status}</Badge> : null}
+          {latestParseJob ? <Badge>任务 {latestParseJob.status}</Badge> : null}
         </div>
 
         {latestSource ? (
           <div className="mt-4 space-y-2 text-sm text-text-muted">
             <p className="font-semibold text-text-strong">{latestSource.title}</p>
             <p className="font-mono text-xs">{latestSource.id}</p>
-            <p>updated {formatDateTime(latestSource.updatedAt)}</p>
+            <p>更新于 {formatDateTime(latestSource.updatedAt)}</p>
             {latestParseJob?.error_message ? (
               <p className="text-warning">{latestParseJob.error_message}</p>
             ) : null}
           </div>
         ) : (
           <p className="mt-4 text-sm leading-6 text-text-muted">
-            No resume source has been saved yet. Paste one above, then run parse and
-            persist the structured project entities.
+            还没有简历来源。先在上方保存，再执行解析和写入。
           </p>
         )}
 
         <div className="mt-4 flex flex-wrap gap-3">
           <Button disabled={!latestSource || isParsing} onClick={handleParse}>
-            {isParsing ? "Parsing..." : "Run resume parse"}
+            {isParsing ? "解析中..." : "执行解析"}
           </Button>
           <Button
             disabled={!canPersist || isPersisting}
             onClick={handlePersist}
             variant="primary"
           >
-            {isPersisting ? "Persisting..." : "Persist structured resume"}
+            {isPersisting ? "写入中..." : "写入结构化简历"}
           </Button>
           {latestParseJob ? (
-            <Button href={`/review/${latestParseJob.id}`}>Open parse job</Button>
+            <Button href={`/review/${latestParseJob.id}`}>打开解析任务</Button>
           ) : null}
         </div>
       </div>
 
       <div className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge tone="accent">Parsed preview</Badge>
-          <Badge>{`${parsedProjectPreview.length} project(s)`}</Badge>
+          <Badge tone="accent">解析预览</Badge>
+          <Badge>{`${parsedProjectPreview.length} 个项目`}</Badge>
         </div>
         {parsedProjectPreview.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border-strong bg-white px-4 py-4 text-sm leading-6 text-text-muted">
-            No parsed project preview is available yet. The parser expects clear project
-            blocks or a dedicated projects section.
+            还没有项目预览。解析器更适合有清晰项目区块的简历。
           </div>
         ) : (
           <div className="space-y-3">
@@ -358,11 +356,11 @@ export function ResumeSourcePanel({
               >
                 <p className="text-sm font-semibold text-text-strong">{project.name}</p>
                 <p className="mt-2 text-sm leading-6 text-text-muted">
-                  {project.summary ?? "No summary extracted."}
+                  {project.summary ?? "还没有项目摘要。"}
                 </p>
                 {project.techStack.length > 0 ? (
                   <p className="mt-3 text-xs text-text-muted">
-                    stack: {project.techStack.join(", ")}
+                    技术栈: {project.techStack.join(", ")}
                   </p>
                 ) : null}
               </div>

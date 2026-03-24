@@ -7,14 +7,18 @@ import type {
   CreateManualQaResponseData,
   CreateTextSourceResponseData,
 } from "@/lib/schemas/import";
+import type { CreateParseJobResponseData } from "@/lib/schemas/parse-jobs";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
+import { CreatableMultiSelect } from "./creatable-multi-select";
+
 type ImportMode = "upload" | "paste" | "manual";
+type TextSubmitMode = "save_only" | "save_and_review";
 
 type ApiSuccess<T> = {
   ok: true;
@@ -38,25 +42,32 @@ type FeedbackState =
     }
   | undefined;
 
+type ImportActionsPanelProps = {
+  manualQaOptions: {
+    categories: string[];
+    tags: string[];
+  };
+};
+
 const importModes: Array<{
   id: ImportMode;
   title: string;
   description: string;
 }> = [
   {
-    id: "upload",
-    title: "Upload",
-    description: "Keep the file lane visible, but defer the actual upload surface.",
+    id: "manual",
+    title: "手工录入",
+    description: "直接写入题目、答案和可追溯来源。",
   },
   {
     id: "paste",
-    title: "Paste Text",
-    description: "Save raw source text now and hand it off toward parse/review.",
+    title: "粘贴原文",
+    description: "保存原文来源，需要时再送去解析审核。",
   },
   {
-    id: "manual",
-    title: "Manual Q&A",
-    description: "Write a reviewed question-answer pair straight into canonical storage.",
+    id: "upload",
+    title: "文件上传",
+    description: "本轮暂不展开，保留入口说明。",
   },
 ];
 
@@ -82,6 +93,19 @@ function Field({
   );
 }
 
+function sourceKindLabel(value: string) {
+  switch (value) {
+    case "interview_experience":
+      return "面经";
+    case "knowledge_note":
+      return "知识笔记";
+    case "resume":
+      return "简历";
+    default:
+      return value;
+  }
+}
+
 async function readApiResponse<T>(response: Response) {
   const payload = (await response.json().catch(() => null)) as
     | ApiSuccess<T>
@@ -89,7 +113,7 @@ async function readApiResponse<T>(response: Response) {
     | null;
 
   if (!payload) {
-    throw new Error("Response body is not valid JSON.");
+    throw new Error("响应体不是合法 JSON。");
   }
 
   if (!payload.ok) {
@@ -99,11 +123,15 @@ async function readApiResponse<T>(response: Response) {
   return payload.data;
 }
 
-export function ImportActionsPanel() {
+export function ImportActionsPanel({
+  manualQaOptions,
+}: ImportActionsPanelProps) {
   const router = useRouter();
-  const [activeMode, setActiveMode] = useState<ImportMode>("paste");
+  const [activeMode, setActiveMode] = useState<ImportMode>("manual");
   const [feedback, setFeedback] = useState<FeedbackState>();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [textSubmitMode, setTextSubmitMode] =
+    useState<TextSubmitMode>("save_only");
 
   const [textSourceForm, setTextSourceForm] = useState({
     title: "",
@@ -115,9 +143,27 @@ export function ImportActionsPanel() {
   const [manualQaForm, setManualQaForm] = useState({
     questionText: "",
     answerText: "",
-    category: "",
-    tags: "",
+    category: [] as string[],
+    tags: [] as string[],
   });
+
+  async function createParseJob(
+    sourceDocumentId: string,
+    jobType: "extract_interview" | "extract_resume",
+  ) {
+    const response = await fetch("/api/parse-jobs", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        source_document_id: sourceDocumentId,
+        job_type: jobType,
+      }),
+    });
+
+    return readApiResponse<CreateParseJobResponseData>(response);
+  }
 
   async function handleTextSourceSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -139,12 +185,36 @@ export function ImportActionsPanel() {
       });
 
       const data = await readApiResponse<CreateTextSourceResponseData>(response);
+      const sourceId = data.source_document.id;
 
-      setFeedback({
-        tone: "success",
-        title: "Text source saved",
-        body: `Source ${data.source_document.id} is ready with parse_status=${data.source_document.parse_status}. Open Review Queue as the next step.`,
-      });
+      if (textSubmitMode === "save_only") {
+        setFeedback({
+          tone: "success",
+          title: "来源已保存",
+          body: `来源 ${sourceId} 已写入，可稍后在审核队列创建解析任务。`,
+        });
+      } else {
+        const parseJob = await createParseJob(
+          sourceId,
+          textSourceForm.kind === "resume"
+            ? "extract_resume"
+            : "extract_interview",
+        );
+
+        if (parseJob.parse_job.status === "needs_review") {
+          setFeedback({
+            tone: "success",
+            title: "解析任务已创建",
+            body: `来源 ${sourceId} 已创建任务 ${parseJob.parse_job.id}，可进入审核页处理候选结果。`,
+          });
+        } else {
+          setFeedback({
+            tone: "success",
+            title: "已保存来源",
+            body: `来源 ${sourceId} 已创建任务 ${parseJob.parse_job.id}，当前状态为 ${parseJob.parse_job.status}。`,
+          });
+        }
+      }
 
       setTextSourceForm((current) => ({
         ...current,
@@ -156,11 +226,9 @@ export function ImportActionsPanel() {
     } catch (error) {
       setFeedback({
         tone: "error",
-        title: "Text source failed",
+        title: "保存失败",
         body:
-          error instanceof Error
-            ? error.message
-            : "Unable to save the pasted source right now.",
+          error instanceof Error ? error.message : "当前无法保存该来源。",
       });
     } finally {
       setIsSubmitting(false);
@@ -181,11 +249,8 @@ export function ImportActionsPanel() {
         body: JSON.stringify({
           question_text: manualQaForm.questionText,
           answer_text: manualQaForm.answerText,
-          category: manualQaForm.category || null,
-          tags: manualQaForm.tags
-            .split(/[,，]/)
-            .map((value) => value.trim())
-            .filter((value) => value.length > 0),
+          category: manualQaForm.category[0] ?? null,
+          tags: manualQaForm.tags,
         }),
       });
 
@@ -193,25 +258,23 @@ export function ImportActionsPanel() {
 
       setFeedback({
         tone: "success",
-        title: "Manual Q&A created",
-        body: `Question ${data.question_item.id} and answer ${data.answer_variant.id} are stored. A confirmed manual source was also written for traceability.`,
+        title: "题目已创建",
+        body: `题目 ${data.question_item.id}、答案 ${data.answer_variant.id} 和手工来源都已保存。`,
       });
 
       setManualQaForm({
         questionText: "",
         answerText: "",
-        category: "",
-        tags: "",
+        category: [],
+        tags: [],
       });
       router.refresh();
     } catch (error) {
       setFeedback({
         tone: "error",
-        title: "Manual Q&A failed",
+        title: "创建失败",
         body:
-          error instanceof Error
-            ? error.message
-            : "Unable to create the manual question right now.",
+          error instanceof Error ? error.message : "当前无法创建这条手工记录。",
       });
     } finally {
       setIsSubmitting(false);
@@ -241,7 +304,7 @@ export function ImportActionsPanel() {
             >
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm font-semibold text-text-strong">{mode.title}</p>
-                {isActive ? <Badge tone="accent">Active</Badge> : null}
+                {isActive ? <Badge tone="accent">当前</Badge> : null}
               </div>
               <p className="mt-2 text-sm leading-6 text-text-muted">
                 {mode.description}
@@ -268,27 +331,23 @@ export function ImportActionsPanel() {
       {activeMode === "upload" ? (
         <div className="rounded-2xl border border-dashed border-border-strong bg-surface-muted p-5">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge tone="warning">Deferred</Badge>
-            <p className="text-sm font-semibold text-text-strong">
-              File upload stays out of Slice 2.
-            </p>
+            <Badge tone="warning">暂缓</Badge>
+            <p className="text-sm font-semibold text-text-strong">文件上传本轮不展开。</p>
           </div>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-text-muted">
-            To keep the MVP ingestion loop tight, this slice ships the pasted-text
-            and manual-Q&A lanes first. If you need to ingest content right now, use
-            Paste Text and keep the file upload surface for the next slice.
+          <p className="mt-3 text-sm leading-6 text-text-muted">
+            需要立即处理内容时，优先使用“手工录入”；原文较长时再用“粘贴原文”。
           </p>
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <Button
               onClick={() => {
-                setActiveMode("paste");
+                setActiveMode("manual");
                 setFeedback(undefined);
               }}
               variant="primary"
             >
-              Switch to Paste Text
+              切到手工录入
             </Button>
-            <Button href="/review">Open Review Queue</Button>
+            <Button href="/review">打开审核队列</Button>
           </div>
         </div>
       ) : null}
@@ -296,10 +355,7 @@ export function ImportActionsPanel() {
       {activeMode === "paste" ? (
         <form className="space-y-5" onSubmit={handleTextSourceSubmit}>
           <div className="grid gap-4 md:grid-cols-2">
-            <Field
-              description="Use a concise operator-facing title so the source is easy to scan later."
-              label="Title"
-            >
+            <Field label="标题">
               <Input
                 onChange={(event) =>
                   setTextSourceForm((current) => ({
@@ -313,10 +369,7 @@ export function ImportActionsPanel() {
               />
             </Field>
 
-            <Field
-              description="Choose the raw source kind now. Manual input has its own dedicated mode."
-              label="Kind"
-            >
+            <Field label="类型">
               <Select
                 onChange={(event) =>
                   setTextSourceForm((current) => ({
@@ -326,17 +379,18 @@ export function ImportActionsPanel() {
                 }
                 value={textSourceForm.kind}
               >
-                <option value="interview_experience">Interview experience</option>
-                <option value="knowledge_note">Knowledge note</option>
-                <option value="resume">Resume</option>
+                <option value="interview_experience">
+                  {sourceKindLabel("interview_experience")}
+                </option>
+                <option value="knowledge_note">
+                  {sourceKindLabel("knowledge_note")}
+                </option>
+                <option value="resume">{sourceKindLabel("resume")}</option>
               </Select>
             </Field>
           </div>
 
-          <Field
-            description="Optional reference URL. Leave blank when the source only exists in copied text."
-            label="Source URL"
-          >
+          <Field label="来源链接">
             <Input
               onChange={(event) =>
                 setTextSourceForm((current) => ({
@@ -349,10 +403,7 @@ export function ImportActionsPanel() {
             />
           </Field>
 
-          <Field
-            description="Paste the raw material as-is so the later parse/review flow has the original truth source."
-            label="Raw text"
-          >
+          <Field label="原文">
             <Textarea
               onChange={(event) =>
                 setTextSourceForm((current) => ({
@@ -360,31 +411,38 @@ export function ImportActionsPanel() {
                   rawText: event.target.value,
                 }))
               }
-              placeholder="粘贴面经、知识笔记、或简历原文。"
+              placeholder="粘贴面经、知识笔记或简历原文。"
               required
               value={textSourceForm.rawText}
             />
           </Field>
 
           <div className="flex flex-wrap items-center gap-3">
-            <Button disabled={isSubmitting} type="submit" variant="primary">
-              {isSubmitting ? "Saving..." : "Save Source"}
+            <Button
+              disabled={isSubmitting}
+              onClick={() => setTextSubmitMode("save_only")}
+              type="submit"
+              variant="primary"
+            >
+              {isSubmitting ? "处理中..." : "保存来源"}
             </Button>
-            <Button href="/review">Open Review Queue</Button>
-            <p className="text-sm text-text-muted">
-              Raw source 保存后会立刻出现在 recent list；现在也可以直接去 Review
-              Queue 创建 parse job。
-            </p>
+            <Button
+              disabled={isSubmitting}
+              onClick={() => setTextSubmitMode("save_and_review")}
+              type="submit"
+            >
+              保存并创建解析任务
+            </Button>
+            <Button href="/review" variant="ghost">
+              审核队列
+            </Button>
           </div>
         </form>
       ) : null}
 
       {activeMode === "manual" ? (
         <form className="space-y-5" onSubmit={handleManualQaSubmit}>
-          <Field
-            description="Write the canonical question text you want to keep in the question bank."
-            label="Question"
-          >
+          <Field label="题目">
             <Textarea
               className="min-h-[104px]"
               onChange={(event) =>
@@ -399,10 +457,7 @@ export function ImportActionsPanel() {
             />
           </Field>
 
-          <Field
-            description="This becomes the first answer variant. Existing questions keep their canonical answer unless it is still empty."
-            label="Answer"
-          >
+          <Field label="答案">
             <Textarea
               onChange={(event) =>
                 setManualQaForm((current) => ({
@@ -416,35 +471,42 @@ export function ImportActionsPanel() {
             />
           </Field>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 xl:grid-cols-2">
             <Field
-              description="Optional taxonomy bucket for the canonical question."
-              label="Category"
+              description="单选；可从已有项选择，也可直接新建。"
+              label="分类"
             >
-              <Input
-                onChange={(event) =>
+              <CreatableMultiSelect
+                createText="新建分类"
+                emptyText="未选择分类"
+                maxSelected={1}
+                onChange={(nextValue) =>
                   setManualQaForm((current) => ({
                     ...current,
-                    category: event.target.value,
+                    category: nextValue,
                   }))
                 }
-                placeholder="java_concurrency"
+                options={manualQaOptions.categories}
+                placeholder="输入或搜索分类，如 distributed_system"
                 value={manualQaForm.category}
               />
             </Field>
 
             <Field
-              description="Comma-separated tags. They merge into the question's tag set."
-              label="Tags"
+              description="多选；支持复用已有标签，也支持新建。"
+              label="标签"
             >
-              <Input
-                onChange={(event) =>
+              <CreatableMultiSelect
+                createText="新建标签"
+                emptyText="未选择标签"
+                onChange={(nextValue) =>
                   setManualQaForm((current) => ({
                     ...current,
-                    tags: event.target.value,
+                    tags: nextValue,
                   }))
                 }
-                placeholder="threadlocal, java"
+                options={manualQaOptions.tags}
+                placeholder="输入或搜索标签，如 redis"
                 value={manualQaForm.tags}
               />
             </Field>
@@ -452,13 +514,9 @@ export function ImportActionsPanel() {
 
           <div className="flex flex-wrap items-center gap-3">
             <Button disabled={isSubmitting} type="submit" variant="primary">
-              {isSubmitting ? "Creating..." : "Create Question"}
+              {isSubmitting ? "创建中..." : "创建题目"}
             </Button>
-            <Button href="/questions">Open Question Bank</Button>
-            <p className="text-sm text-text-muted">
-              This path also writes a confirmed `manual_input` source so the question
-              keeps a raw origin record.
-            </p>
+            <Button href="/questions">打开题库</Button>
           </div>
         </form>
       ) : null}

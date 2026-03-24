@@ -102,36 +102,33 @@ export function InterviewListWorkbench({
       <PageHeader
         actions={
           <>
-            <Button href="/questions">Browse questions</Button>
+            <Button href="/questions">查看题库</Button>
             <Button href={sampleInterviewHref} variant="primary">
-              Open latest interview
+              打开最新面经
             </Button>
           </>
         }
-        description="Browse confirmed interview experiences by source, then jump into linked canonical questions without losing the source context."
+        description="按公司、标签和来源上下文浏览已确认面经。"
         routeLabel="/interviews"
-        title="Interview Notes"
+        title="面经"
       />
 
       <DetailGrid
         items={[
-          { label: "results", value: `${result.total}` },
-          { label: "showing", value: `${rangeStart}-${rangeEnd}` },
-          { label: "active filters", value: `${countActiveFilters(filters)}` },
-          { label: "linked companies", value: `${facets.companies.length}` },
+          { label: "结果数", value: `${result.total}` },
+          { label: "当前范围", value: `${rangeStart}-${rangeEnd}` },
+          { label: "筛选数", value: `${countActiveFilters(filters)}` },
+          { label: "公司数", value: `${facets.companies.length}` },
         ]}
       />
 
       <div className="grid gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
         <SurfaceCard className="space-y-5">
-          <SectionHeading
-            description="Source-oriented browsing complements the question bank instead of replacing it."
-            title="Filters"
-          />
+          <SectionHeading title="筛选" />
 
           {invalidQuery ? (
             <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-warning">
-              Some query parameters were ignored because they were invalid.
+              部分查询参数无效，已忽略。
             </div>
           ) : null}
 
@@ -140,13 +137,13 @@ export function InterviewListWorkbench({
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-text-strong" htmlFor="q">
-                Keyword
+                关键词
               </label>
               <Input
                 defaultValue={filters.q ?? ""}
                 id="q"
                 name="q"
-                placeholder="Search company, role, summary, source title, or raw text"
+                placeholder="搜索公司、岗位、摘要或来源"
               />
             </div>
 
@@ -155,10 +152,10 @@ export function InterviewListWorkbench({
                 className="text-sm font-medium text-text-strong"
                 htmlFor="company"
               >
-                Company
+                公司
               </label>
               <Select defaultValue={filters.company ?? ""} id="company" name="company">
-                <option value="">All companies</option>
+                <option value="">全部公司</option>
                 {facets.companies.map((company) => (
                   <option key={company.name} value={company.name}>
                     {company.name} ({company.count})
@@ -169,10 +166,10 @@ export function InterviewListWorkbench({
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-text-strong" htmlFor="tag">
-                Tag
+                标签
               </label>
               <Select defaultValue={filters.tag ?? ""} id="tag" name="tag">
-                <option value="">All tags</option>
+                <option value="">全部标签</option>
                 {facets.tags.map((tag) => (
                   <option key={tag.name} value={tag.name}>
                     {tag.name} ({tag.count})
@@ -183,9 +180,9 @@ export function InterviewListWorkbench({
 
             <div className="flex flex-wrap gap-3">
               <Button type="submit" variant="primary">
-                Apply filters
+                应用筛选
               </Button>
-              <Button href="/interviews">Reset</Button>
+              <Button href="/interviews">重置</Button>
             </div>
           </form>
         </SurfaceCard>
@@ -193,23 +190,22 @@ export function InterviewListWorkbench({
         <SurfaceCard className="space-y-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <SectionHeading
-              description="Each row keeps the source view dense: company, round, summary, question count, and direct detail link."
-              title="Interview list"
+              title="面经列表"
             />
             <p className="font-mono text-xs text-text-muted">
-              {rangeStart}-{rangeEnd} of {result.total}
+              {rangeStart}-{rangeEnd} / {result.total}
             </p>
           </div>
 
           {result.items.length === 0 ? (
             <EmptyList
               bullets={[
-                "Interview records appear here after review-confirmed imports.",
-                "Keyword search spans interview metadata and raw source text.",
-                "Interview detail pages keep linked questions and the raw source together.",
+                "确认后的面经会出现在这里。",
+                "关键词会覆盖面经元数据和来源文本。",
+                "详情页会同时保留原文和关联题目。",
               ]}
-              description="No interview experiences matched the current filters."
-              title="No matching interviews"
+              description="当前筛选下没有匹配面经。"
+              title="没有匹配面经"
             />
           ) : (
             <div className="overflow-x-auto">
@@ -217,12 +213,12 @@ export function InterviewListWorkbench({
                 <thead>
                   <tr className="text-left">
                     {[
-                      "company",
-                      "role / round",
-                      "summary",
-                      "question_count",
-                      "tags",
-                      "updated_at",
+                      "公司",
+                      "岗位 / 轮次",
+                      "摘要",
+                      "题目数",
+                      "标签",
+                      "更新时间",
                     ].map((column) => (
                       <th
                         className="border-b border-border-muted px-3 py-3 font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted"
@@ -243,7 +239,7 @@ export function InterviewListWorkbench({
                             className="text-sm font-semibold text-text-strong hover:text-accent"
                             href={`/interviews/${item.id}`}
                           >
-                            {item.company ?? "Unknown company"}
+                            {item.company ?? "未知公司"}
                           </Link>
                           <p className="text-sm text-text-muted">{item.sourceTitle}</p>
                         </div>
@@ -251,7 +247,7 @@ export function InterviewListWorkbench({
                       <td className="border-b border-border-muted px-3 py-4 text-sm text-text-strong">
                         <div>{item.role ?? "-"}</div>
                         <div className="mt-1 text-text-muted">
-                          {item.roundInfo ?? "Round unspecified"}
+                          {item.roundInfo ?? "轮次未标注"}
                         </div>
                       </td>
                       <td className="border-b border-border-muted px-3 py-4 text-sm text-text-strong">
@@ -275,19 +271,18 @@ export function InterviewListWorkbench({
 
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border-muted pt-4">
             <p className="text-sm text-text-muted">
-              Open an interview detail route to review raw context and jump to
-              linked canonical questions.
+              进入详情页可查看原始上下文并跳转到关联题目。
             </p>
             <div className="flex flex-wrap gap-2">
               {previousHref ? (
-                <Button href={previousHref}>Previous</Button>
+                <Button href={previousHref}>上一页</Button>
               ) : (
-                <Button disabled>Previous</Button>
+                <Button disabled>上一页</Button>
               )}
               {nextHref ? (
-                <Button href={nextHref}>Next</Button>
+                <Button href={nextHref}>下一页</Button>
               ) : (
-                <Button disabled>Next</Button>
+                <Button disabled>下一页</Button>
               )}
             </div>
           </div>

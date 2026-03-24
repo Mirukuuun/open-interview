@@ -2,6 +2,7 @@ import { sqlite } from "@/server/db/client";
 import {
   questionRepository,
   sourceDocumentRepository,
+  tagRepository,
 } from "@/server/repositories";
 import type { SourceDocumentRecord } from "@/server/repositories/source-document-repository";
 
@@ -26,6 +27,44 @@ type ListSourcesInput = {
   page?: number;
   pageSize?: number;
 };
+
+export type ManualQaOptions = {
+  categories: string[];
+  tags: string[];
+};
+
+const defaultManualQaCategories = [
+  "distributed_system",
+  "database",
+  "java_concurrency",
+  "java_jvm",
+  "backend_framework",
+  "networking",
+  "system_design",
+];
+
+const defaultManualQaTags = [
+  "redis",
+  "mq",
+  "mysql",
+  "threadlocal",
+  "concurrency",
+  "jvm",
+  "spring",
+  "network",
+  "design",
+];
+
+function mergeSeededValues(defaultValues: string[], persistedValues: string[]) {
+  return Array.from(
+    new Map(
+      [...defaultValues, ...persistedValues]
+        .map((value) => value.trim())
+        .filter((value) => value.length > 0)
+        .map((value) => [value.toLowerCase(), value]),
+    ).values(),
+  );
+}
 
 function buildManualSourceTitle(questionText: string) {
   const compactQuestion = questionText.replace(/\s+/g, " ").trim();
@@ -170,5 +209,15 @@ export const importService = {
 
   listRecentSources(limit = 8) {
     return sourceDocumentRepository.listRecent(limit);
+  },
+
+  getManualQaOptions(): ManualQaOptions {
+    return {
+      categories: mergeSeededValues(
+        defaultManualQaCategories,
+        questionRepository.listCategories(40),
+      ),
+      tags: mergeSeededValues(defaultManualQaTags, tagRepository.listNames(80)),
+    };
   },
 };

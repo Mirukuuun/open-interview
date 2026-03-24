@@ -1,7 +1,7 @@
 import { and, count, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 
-import { db } from "@/server/db/client";
+import { db, sqlite } from "@/server/db/client";
 import {
   answerVariants,
   questionItems,
@@ -169,6 +169,27 @@ export const questionRepository = {
       .where(eq(questionItems.normalizedQuestionText, normalizedQuestionText))
       .limit(1)
       .all()[0];
+  },
+
+  listCategories(limit = 24) {
+    return (
+      sqlite
+        .prepare(
+          `
+            SELECT q.category AS category
+            FROM question_items q
+            WHERE q.review_status = 'active'
+              AND q.category IS NOT NULL
+              AND TRIM(q.category) <> ''
+            GROUP BY q.category
+            ORDER BY COUNT(*) DESC, q.category COLLATE NOCASE ASC
+            LIMIT ?
+          `,
+        )
+        .all(limit) as Array<{
+        category: string;
+      }>
+    ).map((item) => item.category);
   },
 
   createAnswerVariant(input: z.input<typeof createAnswerVariantInputSchema>) {

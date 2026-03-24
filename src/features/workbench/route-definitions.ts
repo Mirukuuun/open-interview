@@ -8,39 +8,39 @@ export type NavItem = {
 
 export const primaryNavItems: NavItem[] = [
   {
-    label: "Import",
+    label: "导入",
     href: "/import",
     match: "/import",
-    description: "Create sources and kick off parsing.",
+    description: "导入原文或手工录入。",
   },
   {
-    label: "Review Queue",
+    label: "审核队列",
     href: "/review",
     match: "/review",
-    description: "Inspect parse jobs that need human review.",
+    description: "查看待处理的解析任务。",
   },
   {
-    label: "Question Bank",
+    label: "题库",
     href: "/questions",
     match: "/questions",
-    description: "Browse the canonical study surface.",
+    description: "浏览确认后的题目。",
   },
   {
-    label: "Interview Notes",
+    label: "面经",
     href: "/interviews",
     match: "/interviews",
-    description: "Review source-oriented interview context.",
+    description: "按来源查看面试上下文。",
   },
   {
-    label: "AI Review",
+    label: "AI 问答",
     href: "/qa",
     match: "/qa",
-    description: "Ask grounded questions against local knowledge.",
+    description: "基于本地数据做引用式问答。",
   },
   {
-    label: "Resume / Projects",
+    label: "简历 / 项目",
     href: "/resume",
     match: "/resume",
-    description: "Deep dive into extracted resume projects.",
+    description: "查看简历和项目深挖。",
   },
 ];

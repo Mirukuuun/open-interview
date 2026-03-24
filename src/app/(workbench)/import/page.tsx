@@ -8,9 +8,11 @@ export default function ImportPage() {
     page: 1,
     pageSize: 8,
   });
+  const manualQaOptions = importService.getManualQaOptions();
 
   return (
     <ImportWorkbench
+      manualQaOptions={manualQaOptions}
       recentSources={recentSourcesResult.items}
       totalSources={recentSourcesResult.total}
     />

@@ -137,17 +137,17 @@ export function QaSessionWorkbench({ detail }: QaSessionWorkbenchProps) {
       <PageHeader
         actions={
           <>
-            <Button href="/qa">Back to QA</Button>
+            <Button href="/qa">返回 QA</Button>
             {latestAssistantTurn?.citations[0] ? (
               <Button href={latestAssistantTurn.citations[0].href} variant="primary">
-                Open top citation
+                打开首条引用
               </Button>
             ) : null}
           </>
         }
-        description="This session view preserves turn history, grounded citations, and the retrieval trace selected for each assistant answer."
+        description="查看会话轮次、引用和检索轨迹。"
         routeLabel={`/qa/${detail.aiSession.id}`}
-        title={detail.aiSession.title ?? "QA session"}
+        title={detail.aiSession.title ?? "QA 会话"}
       />
 
       <DetailGrid

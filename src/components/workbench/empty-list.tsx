@@ -10,7 +10,7 @@ export function EmptyList({ title, description, bullets }: EmptyListProps) {
   return (
     <div className="rounded-xl border border-dashed border-border-strong bg-surface-muted p-5">
       <div className="flex items-center gap-2">
-        <Badge>Empty state</Badge>
+        <Badge>空状态</Badge>
       </div>
       <h3 className="mt-3 text-base font-semibold text-text-strong">{title}</h3>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-text-muted">

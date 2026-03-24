@@ -37,7 +37,7 @@ async function readApiResponse<T>(response: Response) {
     | null;
 
   if (!payload) {
-    throw new Error("Response body is not valid JSON.");
+    throw new Error("响应体不是合法 JSON。");
   }
 
   if (!payload.ok) {
@@ -88,19 +88,19 @@ export function DeepDiveAnswerForm({
 
       setFeedback({
         tone: "success",
-        title: "Answer stored",
-        body: `Next question is ready with ${data.coach_hints.length} coach hint(s) and retrieval log ${data.retrieval_log_id}.`,
+        title: "回答已保存",
+        body: `下一题已准备好，包含 ${data.coach_hints.length} 条提示和检索日志 ${data.retrieval_log_id}。`,
       });
       setAnswer("");
       router.refresh();
     } catch (error) {
       setFeedback({
         tone: "error",
-        title: "Deep dive failed",
+        title: "继续深挖失败",
         body:
           error instanceof Error
             ? error.message
-            : "Unable to continue this deep-dive session right now.",
+            : "当前无法继续这次深挖。",
       });
     } finally {
       setIsSubmitting(false);
@@ -110,11 +110,11 @@ export function DeepDiveAnswerForm({
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
       <label className="block space-y-2">
-        <span className="text-sm font-medium text-text-strong">Your answer</span>
+        <span className="text-sm font-medium text-text-strong">你的回答</span>
         <Textarea
           className="min-h-[140px]"
           onChange={(event) => setAnswer(event.target.value)}
-          placeholder="Answer the latest project deep-dive question with your own role, trade-offs, and outcomes."
+          placeholder="结合你的职责、权衡和结果来回答当前问题。"
           required
           value={answer}
         />
@@ -136,9 +136,9 @@ export function DeepDiveAnswerForm({
 
       <div className="flex flex-wrap gap-3">
         <Button disabled={isSubmitting} type="submit" variant="primary">
-          {isSubmitting ? "Submitting..." : "Submit answer"}
+          {isSubmitting ? "提交中..." : "提交回答"}
         </Button>
-        <Button href={`/resume/projects/${projectId}`}>Back to project</Button>
+        <Button href={`/resume/projects/${projectId}`}>返回项目</Button>
       </div>
     </form>
   );

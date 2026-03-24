@@ -79,16 +79,16 @@ export function ProjectSessionWorkbench({
       <PageHeader
         actions={
           <>
-            <Button href={`/resume/projects/${detail.resumeProject.id}`}>Back to project</Button>
+            <Button href={`/resume/projects/${detail.resumeProject.id}`}>返回项目</Button>
             <StartDeepDiveSessionButton
-              label="New deep dive"
+              label="新建深挖"
               projectId={detail.resumeProject.id}
             />
           </>
         }
-        description="The transcript keeps interviewer prompts, your answers, coach hints, and the retrieval trace visible beside the structured project context."
+        description="查看深挖对话、提示和检索轨迹。"
         routeLabel={`/resume/projects/${detail.resumeProject.id}/session/${detail.aiSession.id}`}
-        title={detail.aiSession.title ?? `${detail.resumeProject.name} deep dive`}
+        title={detail.aiSession.title ?? `${detail.resumeProject.name} 深挖`}
       />
 
       <DetailGrid

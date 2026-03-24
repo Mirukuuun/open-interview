@@ -10,6 +10,10 @@ import type { SourceDocumentRecord } from "@/server/repositories/source-document
 import { ImportActionsPanel } from "./import-actions-panel";
 
 type ImportWorkbenchProps = {
+  manualQaOptions: {
+    categories: string[];
+    tags: string[];
+  };
   recentSources: SourceDocumentRecord[];
   totalSources: number;
 };
@@ -35,13 +39,13 @@ function summarizeText(rawText: string) {
 function kindLabel(kind: SourceDocumentRecord["kind"]) {
   switch (kind) {
     case "interview_experience":
-      return "Interview";
+      return "面经";
     case "knowledge_note":
-      return "Knowledge note";
+      return "知识笔记";
     case "resume":
-      return "Resume";
+      return "简历";
     case "manual_input":
-      return "Manual input";
+      return "手工录入";
     default:
       return kind;
   }
@@ -55,23 +59,24 @@ function parseStatusBadge(
 } {
   switch (parseStatus) {
     case "not_started":
-      return { label: "Ready for parse", tone: "accent" };
+      return { label: "待处理", tone: "accent" };
     case "pending":
-      return { label: "Pending", tone: "warning" };
+      return { label: "排队中", tone: "warning" };
     case "running":
-      return { label: "Running", tone: "warning" };
+      return { label: "解析中", tone: "warning" };
     case "needs_review":
-      return { label: "Needs review", tone: "warning" };
+      return { label: "待人工处理", tone: "warning" };
     case "confirmed":
-      return { label: "Confirmed", tone: "success" };
+      return { label: "已入库", tone: "success" };
     case "failed":
-      return { label: "Failed", tone: "warning" };
+      return { label: "失败", tone: "warning" };
     default:
       return { label: parseStatus, tone: "neutral" };
   }
 }
 
 export function ImportWorkbench({
+  manualQaOptions,
   recentSources,
   totalSources,
 }: ImportWorkbenchProps) {
@@ -81,78 +86,70 @@ export function ImportWorkbench({
         actions={
           <>
             <Button href="/review" variant="primary">
-              Open Review Queue
+              打开审核队列
             </Button>
-            <Button href="/questions">Open Question Bank</Button>
+            <Button href="/questions">打开题库</Button>
           </>
         }
-        description="Import supports pasted text and direct manual Q&A. Pasted text lands as raw source truth, then moves into the live parse-review-confirm loop through Review Queue."
+        description="手工录入是默认入口，会直接写入题库；粘贴原文作为次级入口，用于后续解析和审核。"
         routeLabel="/import"
-        title="Import sources into the workbench"
+        title="导入内容"
       />
 
       <DetailGrid
         items={[
-          { label: "Live now", value: "Paste Text, Manual Q&A" },
-          { label: "Upload lane", value: "Deferred in-place" },
-          { label: "Recent feed", value: `${recentSources.length} visible` },
-          { label: "Next handoff", value: "Review Queue" },
+          { label: "当前重点", value: "手工录入 / 直接入库" },
+          { label: "次级入口", value: "粘贴原文" },
+          { label: "最近来源", value: `${recentSources.length} 条` },
+          { label: "后续处理", value: "审核队列" },
         ]}
       />
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.88fr)]">
         <SurfaceCard className="space-y-5">
-          <SectionHeading
-            description="Choose the fastest ingestion path for the material you have right now. Paste Text writes raw source truth. Manual Q&A writes a canonical question plus a confirmed source backbone."
-            title="Import methods"
-          />
-          <ImportActionsPanel />
+          <SectionHeading title="导入方式" />
+          <ImportActionsPanel manualQaOptions={manualQaOptions} />
         </SurfaceCard>
 
         <div className="space-y-6">
           <SurfaceCard muted className="space-y-5">
             <SectionHeading
-              description="Keep the parse/review handoff explicit. Raw pasted sources land with `not_started`, then Review Queue creates parse jobs and waits for human confirmation before canonical write."
-              title="Review handoff"
+              description="手工录入会直接入库；粘贴原文需要显式创建解析任务，再进入人工审核。"
+              title="处理路径"
             />
             <div className="rounded-xl border border-border-strong bg-white p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <Badge tone="accent">Next step</Badge>
+                    <Badge tone="accent">下一步</Badge>
                     <span className="font-mono text-xs text-text-muted">/review</span>
                   </div>
                   <p className="text-sm font-semibold text-text-strong">
-                    Use Review Queue after saving pasted text.
+                    粘贴原文后，到审核队列创建任务并确认导入。
                   </p>
                 </div>
                 <Button href="/review" variant="primary">
-                  Open Review Queue
+                  打开审核队列
                 </Button>
               </div>
-              <p className="mt-3 text-sm leading-6 text-text-muted">
-                The parse review flow is live now: create parse jobs from `/review`,
-                inspect `parse_job.result_json`, and only then confirm selected items
-                into canonical entities.
-              </p>
             </div>
           </SurfaceCard>
 
           <SurfaceCard className="space-y-5">
             <SectionHeading
-              description="The recent source feed is live and updates after every successful save on this page."
-              title={`Recent sources (${totalSources})`}
+              title={`最近来源（${totalSources}）`}
             />
 
             {recentSources.length === 0 ? (
               <EmptyList
                 bullets={[
-                  "Paste interview notes, knowledge text, or resume content into the raw source lane.",
-                  "Use Manual Q&A when you already know the canonical question and answer.",
-                  "Open Review Queue after saving a pasted source to continue the parse/review loop later.",
+                  "默认先用手工录入，直接补齐题目和答案。",
+                  "原文较长时再使用粘贴入口，保存为可追溯来源。",
+                  "手工录入会同时写入题目、答案和原始来源。",
+                  "粘贴原文后，可在审核队列继续解析和确认。",
                 ]}
-                description="No source_document records exist yet. The import page is ready; create the first item from the left-side panel and it will appear here immediately."
-                title="No imported sources yet"
+                description="还没有来源记录。左侧提交后会立即出现在这里。"
+                title="还没有导入内容"
               />
             ) : (
               <div className="space-y-3">
@@ -191,16 +188,16 @@ export function ImportWorkbench({
                       <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-text-muted">
                         {source.sourceUrl ? (
                           <span className="rounded-full bg-white px-3 py-1">
-                            source_url: {source.sourceUrl}
+                            来源链接: {source.sourceUrl}
                           </span>
                         ) : null}
                         {source.kind === "manual_input" ? (
                           <Button href="/questions" variant="ghost">
-                            Open Question Bank
+                            打开题库
                           </Button>
                         ) : (
                           <Button href="/review" variant="ghost">
-                            Open Review Queue
+                            打开审核队列
                           </Button>
                         )}
                       </div>

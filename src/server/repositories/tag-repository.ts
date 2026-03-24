@@ -1,7 +1,7 @@
 import { eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 
-import { db } from "@/server/db/client";
+import { db, sqlite } from "@/server/db/client";
 import { tags } from "@/server/db/schema";
 import { createOpaqueId, nowUtcIso } from "@/server/repositories/ids";
 import { normalizeTagName } from "@/server/repositories/normalization";
@@ -63,5 +63,23 @@ export const tagRepository = {
       .where(eq(tags.normalizedName, normalizedName))
       .limit(1)
       .all()[0];
+  },
+
+  listNames(limit = 60) {
+    return (
+      sqlite
+        .prepare(
+          `
+            SELECT t.name AS name
+            FROM tags t
+            WHERE TRIM(t.name) <> ''
+            ORDER BY t.name COLLATE NOCASE ASC
+            LIMIT ?
+          `,
+        )
+        .all(limit) as Array<{
+        name: string;
+      }>
+    ).map((item) => item.name);
   },
 };

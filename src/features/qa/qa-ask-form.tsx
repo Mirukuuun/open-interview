@@ -50,7 +50,7 @@ async function readApiResponse<T>(response: Response) {
     | null;
 
   if (!payload) {
-    throw new Error("Response body is not valid JSON.");
+    throw new Error("响应体不是合法 JSON。");
   }
 
   if (!payload.ok) {
@@ -119,8 +119,8 @@ export function QaAskForm({
 
       setFeedback({
         tone: "success",
-        title: "Grounded answer saved",
-        body: `Stored with ${data.citations.length} citation(s) and retrieval log ${data.retrieval_log_id}.`,
+        title: "答案已保存",
+        body: `已保存 ${data.citations.length} 条引用，检索日志 ${data.retrieval_log_id}。`,
       });
       setQuery("");
 
@@ -133,11 +133,11 @@ export function QaAskForm({
     } catch (error) {
       setFeedback({
         tone: "error",
-        title: "Grounded ask failed",
+        title: "提问失败",
         body:
           error instanceof Error
             ? error.message
-            : "Unable to complete the grounded ask right now.",
+            : "当前无法完成这次提问。",
       });
     } finally {
       setIsSubmitting(false);
@@ -147,29 +147,27 @@ export function QaAskForm({
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
       <div className="flex flex-wrap items-center gap-2">
-        <Badge tone="accent">Grounded only</Badge>
+        <Badge tone="accent">仅引用式回答</Badge>
         <Badge>{strategy}</Badge>
         <Badge>{`top_k=${topK}`}</Badge>
       </div>
 
       {mode === "new" ? (
         <label className="block space-y-2">
-          <span className="text-sm font-medium text-text-strong">
-            Session title
-          </span>
+          <span className="text-sm font-medium text-text-strong">会话标题</span>
           <Input
             onChange={(event) => setSessionTitle(event.target.value)}
-            placeholder="Optional, or let the first question become the title"
+            placeholder="可选，不填则使用第一条问题"
             value={sessionTitle}
           />
         </label>
       ) : null}
 
       <label className="block space-y-2">
-        <span className="text-sm font-medium text-text-strong">Question</span>
+        <span className="text-sm font-medium text-text-strong">问题</span>
         <Textarea
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Ask a grounded question against your local interview bank"
+          placeholder="基于本地题库提问"
           required
           rows={5}
           value={query}
@@ -178,15 +176,13 @@ export function QaAskForm({
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="block space-y-2">
-          <span className="text-sm font-medium text-text-strong">
-            Retrieval strategy
-          </span>
+          <span className="text-sm font-medium text-text-strong">检索策略</span>
           <Select
             onChange={(event) => setStrategy(event.target.value as "fts" | "hybrid")}
             value={strategy}
           >
-            <option value="hybrid">Hybrid</option>
-            <option value="fts">FTS only</option>
+            <option value="hybrid">混合</option>
+            <option value="fts">仅 FTS</option>
           </Select>
         </label>
 
@@ -219,13 +215,13 @@ export function QaAskForm({
         <Button disabled={isSubmitting} type="submit" variant="primary">
           {isSubmitting
             ? mode === "new"
-              ? "Creating session..."
-              : "Asking..."
+              ? "创建中..."
+              : "发送中..."
             : mode === "new"
-              ? "Ask in new session"
-              : "Ask grounded follow-up"}
+              ? "在新会话中提问"
+              : "继续提问"}
         </Button>
-        {mode === "existing" ? <Button href="/qa">New QA session</Button> : null}
+        {mode === "existing" ? <Button href="/qa">新建 QA 会话</Button> : null}
       </div>
     </form>
   );

@@ -44,7 +44,7 @@ type StartDeepDiveSessionButtonProps = {
 
 export function StartDeepDiveSessionButton({
   projectId,
-  label = "Start deep dive",
+  label = "开始深挖",
 }: StartDeepDiveSessionButtonProps) {
   const router = useRouter();
   const [isCreating, setIsCreating] = useState(false);
@@ -77,7 +77,7 @@ export function StartDeepDiveSessionButton({
 
   return (
     <Button disabled={isCreating} onClick={handleClick} variant="primary">
-      {isCreating ? "Creating..." : label}
+      {isCreating ? "创建中..." : label}
     </Button>
   );
 }

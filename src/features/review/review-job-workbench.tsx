@@ -106,6 +106,19 @@ function parseTags(value: string) {
   );
 }
 
+function actionLabel(action: QuestionDraft["action"]) {
+  switch (action) {
+    case "create":
+      return "新建";
+    case "merge":
+      return "合并";
+    case "skip":
+      return "跳过";
+    default:
+      return action;
+  }
+}
+
 function hasInterviewDraftValue(value: InterviewDraft) {
   return Boolean(
     value.company.trim() ||
@@ -123,7 +136,7 @@ async function readApiResponse<T>(response: Response) {
     | null;
 
   if (!payload) {
-    throw new Error("Response body is not valid JSON.");
+    throw new Error("响应体不是合法 JSON。");
   }
 
   if (!payload.ok) {
@@ -205,7 +218,7 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
       setFeedback({
         tone: "success",
         title: "已重新触发解析",
-        body: `任务 ${data.parse_job.id} 已重新执行，页面将刷新以显示新的 parse 结果。`,
+        body: `任务 ${data.parse_job.id} 已重新执行，页面将刷新显示最新结果。`,
       });
       router.refresh();
     } catch (error) {
@@ -298,24 +311,21 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
               onClick={handleConfirm}
               variant="primary"
             >
-              {isConfirming ? "确认中..." : "确认导入"}
+              {isConfirming ? "入库中..." : "确认入库"}
             </Button>
           </>
         }
-        description="这里是 Slice 3 的核心人工审核面板。左侧保留 source 真相，中央逐题确认，右侧预览 merge target 和最终导入摘要。"
+        description="左侧看原文，中间处理候选题，右侧看导入预览。"
         routeLabel={`/review/${jobSummary.id}`}
-        title="审核 parse 结果后再写入 canonical"
+        title="审核解析结果"
       />
 
       <DetailGrid
         items={[
-          { label: "job_id", value: jobSummary.id },
-          { label: "job_type", value: jobTypeLabel(jobSummary.job_type) },
-          {
-            label: "status",
-            value: parseJobStatusMeta(jobSummary.status).label,
-          },
-          { label: "attempt_count", value: `${jobSummary.attempt_count}` },
+          { label: "任务 ID", value: jobSummary.id },
+          { label: "任务类型", value: jobTypeLabel(jobSummary.job_type) },
+          { label: "状态", value: parseJobStatusMeta(jobSummary.status).label },
+          { label: "尝试次数", value: `${jobSummary.attempt_count}` },
         ]}
       />
 
@@ -335,18 +345,15 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.1fr)_minmax(0,0.9fr)]">
         <SurfaceCard className="space-y-5">
-          <SectionHeading
-            description="审核时始终保留原始 source 和提取到的面经元信息，避免只看 parse 结果就直接入库。"
-            title="Source 上下文"
-          />
+          <SectionHeading title="来源上下文" />
 
           <div className="flex flex-wrap items-center gap-2">
             <Badge>{sourceKindLabel(detail.sourceDocument.kind)}</Badge>
             <Badge tone={sourceParseStatusMeta(detail.sourceDocument.parseStatus).tone}>
-              source {sourceParseStatusMeta(detail.sourceDocument.parseStatus).label}
+              来源 {sourceParseStatusMeta(detail.sourceDocument.parseStatus).label}
             </Badge>
             <Badge tone={parseJobStatusMeta(jobSummary.status).tone}>
-              job {parseJobStatusMeta(jobSummary.status).label}
+              任务 {parseJobStatusMeta(jobSummary.status).label}
             </Badge>
           </div>
 
@@ -365,7 +372,7 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Company">
+            <Field label="公司">
               <Input
                 disabled={jobSummary.job_type !== "extract_interview"}
                 onChange={(event) =>
@@ -378,7 +385,7 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
                 value={interviewDraft.company}
               />
             </Field>
-            <Field label="Role">
+            <Field label="岗位">
               <Input
                 disabled={jobSummary.job_type !== "extract_interview"}
                 onChange={(event) =>
@@ -391,7 +398,7 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
                 value={interviewDraft.role}
               />
             </Field>
-            <Field label="Round Info">
+            <Field label="轮次">
               <Input
                 disabled={jobSummary.job_type !== "extract_interview"}
                 onChange={(event) =>
@@ -404,7 +411,7 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
                 value={interviewDraft.roundInfo}
               />
             </Field>
-            <Field label="Tags" description="逗号分隔，确认后会写入 interview tags。">
+            <Field label="标签" description="逗号分隔。">
               <Input
                 disabled={jobSummary.job_type !== "extract_interview"}
                 onChange={(event) =>
@@ -419,10 +426,7 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
             </Field>
           </div>
 
-          <Field
-            description="这部分是面经级摘要；如果你不想写入 interview_experience，可以留空。"
-            label="Summary"
-          >
+          <Field label="摘要">
             <Textarea
               disabled={jobSummary.job_type !== "extract_interview"}
               onChange={(event) =>
@@ -436,7 +440,7 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
             />
           </Field>
 
-          <Field label="Raw Source">
+          <Field label="原文">
             <Textarea
               className="min-h-[360px] font-mono text-xs leading-6"
               readOnly
@@ -446,27 +450,24 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
         </SurfaceCard>
 
         <SurfaceCard className="space-y-5">
-          <SectionHeading
-            description="每个候选题都必须显式选择 create / merge / skip；不会因为 parse 成功就自动入 canonical。"
-            title={`候选题 (${questionDrafts.length})`}
-          />
+          <SectionHeading title={`候选题（${questionDrafts.length}）`} />
 
           {!detail.result ? (
             <EmptyList
               bullets={[
-                "任务可能失败了，或 parse 结果还没有落到 result_json。",
+                "任务可能失败了，或结果还没有落到 result_json。",
                 "可以先检查左侧原文，再重试解析。",
-                "在当前 slice 中，不会对没有结果的任务执行 canonical 写入。",
+                "没有结果时不会执行入库。",
               ]}
-              description="当前任务没有可展示的 parse result。"
-              title="暂无 parse 结果"
+              description="当前任务没有可展示的解析结果。"
+              title="暂无解析结果"
             />
           ) : questionDrafts.length === 0 ? (
             <EmptyList
               bullets={[
-                "这通常表示 parse 没有稳定识别出题目候选。",
+                "这通常表示解析没有稳定识别出候选题。",
                 "你仍然可以保留这次审核记录，然后决定是否重试。",
-                "如果 source 是 resume，结构化确认会留到后续 slice。",
+                "如果是简历任务，结构化确认会留到后续流程。",
               ]}
               description="result_json 已持久化，但 questions 为空。"
               title="没有提取到候选题"
@@ -485,151 +486,162 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
                   onClick={() => setActiveCandidateIndex(index)}
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      <Badge tone="accent">Candidate {index + 1}</Badge>
-                      <Badge>{question.action}</Badge>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Badge tone="accent">候选 {index + 1}</Badge>
+                        <Badge>{actionLabel(question.action)}</Badge>
+                      </div>
+                      <p className="text-sm font-semibold text-text-strong">
+                        {question.questionText || "未填写题目"}
+                      </p>
                     </div>
                     <span className="text-xs text-text-muted">
-                      confidence {question.confidence?.toFixed(2) ?? "n/a"}
+                      置信度 {question.confidence?.toFixed(2) ?? "无"}
                     </span>
                   </div>
 
-                  <div className="mt-4 space-y-4">
-                    <Field label="Question Text">
-                      <Input
-                        onChange={(event) =>
-                          setQuestionDrafts((current) =>
-                            current.map((item, itemIndex) =>
-                              itemIndex === index
-                                ? { ...item, questionText: event.target.value }
-                                : item,
-                            ),
-                          )
-                        }
-                        onFocus={() => setActiveCandidateIndex(index)}
-                        value={question.questionText}
-                      />
-                    </Field>
-
-                    <Field label="Canonical Answer">
-                      <Textarea
-                        onChange={(event) =>
-                          setQuestionDrafts((current) =>
-                            current.map((item, itemIndex) =>
-                              itemIndex === index
-                                ? { ...item, canonicalAnswer: event.target.value }
-                                : item,
-                            ),
-                          )
-                        }
-                        onFocus={() => setActiveCandidateIndex(index)}
-                        placeholder="确认后写入 canonical_answer；merge 时默认优先补空，不主动覆盖现有值。"
-                        value={question.canonicalAnswer}
-                      />
-                    </Field>
-
-                    <Field label="Source Answer">
-                      <Textarea
-                        onChange={(event) =>
-                          setQuestionDrafts((current) =>
-                            current.map((item, itemIndex) =>
-                              itemIndex === index
-                                ? { ...item, sourceAnswer: event.target.value }
-                                : item,
-                            ),
-                          )
-                        }
-                        onFocus={() => setActiveCandidateIndex(index)}
-                        placeholder="可选。确认后会作为 personal answer_variant 写入。"
-                        value={question.sourceAnswer}
-                      />
-                    </Field>
-
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <Field label="Category">
-                        <Input
-                          onChange={(event) =>
-                            setQuestionDrafts((current) =>
-                              current.map((item, itemIndex) =>
-                                itemIndex === index
-                                  ? { ...item, category: event.target.value }
-                                  : item,
-                              ),
-                            )
-                          }
-                          onFocus={() => setActiveCandidateIndex(index)}
-                          placeholder="distributed_system"
-                          value={question.category}
-                        />
-                      </Field>
-
-                      <Field label="Tags">
-                        <Input
-                          onChange={(event) =>
-                            setQuestionDrafts((current) =>
-                              current.map((item, itemIndex) =>
-                                itemIndex === index
-                                  ? { ...item, tags: event.target.value }
-                                  : item,
-                              ),
-                            )
-                          }
-                          onFocus={() => setActiveCandidateIndex(index)}
-                          placeholder="redis, lock"
-                          value={question.tags}
-                        />
-                      </Field>
+                  {!(
+                    activeCandidateIndex === index
+                  ) ? (
+                    <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-text-muted">
+                      <span>分类: {question.category || "未设置"}</span>
+                      <span>标签: {parseTags(question.tags).length}</span>
                     </div>
-
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <Field label="Action">
-                        <Select
-                          onChange={(event) =>
-                            setQuestionDrafts((current) =>
-                              current.map((item, itemIndex) =>
-                                itemIndex === index
-                                  ? {
-                                      ...item,
-                                      action: event.target.value as QuestionDraft["action"],
-                                    }
-                                  : item,
-                              ),
-                            )
-                          }
-                          onFocus={() => setActiveCandidateIndex(index)}
-                          value={question.action}
-                        >
-                          <option value="create">create</option>
-                          <option value="merge">merge</option>
-                          <option value="skip">skip</option>
-                        </Select>
-                      </Field>
-
-                      <Field
-                        description="仅在 merge 时需要。当前 slice 不做搜索弹窗，优先用 parse hint 或手填目标题目 ID。"
-                        label="Target Question ID"
-                      >
+                  ) : (
+                    <div className="mt-4 space-y-4">
+                      <Field label="题目">
                         <Input
-                          disabled={question.action !== "merge"}
                           onChange={(event) =>
                             setQuestionDrafts((current) =>
                               current.map((item, itemIndex) =>
                                 itemIndex === index
-                                  ? {
-                                      ...item,
-                                      targetQuestionId: event.target.value,
-                                    }
+                                  ? { ...item, questionText: event.target.value }
                                   : item,
                               ),
                             )
                           }
                           onFocus={() => setActiveCandidateIndex(index)}
-                          placeholder="q_xxx"
-                          value={question.targetQuestionId}
+                          value={question.questionText}
                         />
                       </Field>
+
+                      <Field label="标准答案">
+                        <Textarea
+                          onChange={(event) =>
+                            setQuestionDrafts((current) =>
+                              current.map((item, itemIndex) =>
+                                itemIndex === index
+                                  ? { ...item, canonicalAnswer: event.target.value }
+                                  : item,
+                              ),
+                            )
+                          }
+                          onFocus={() => setActiveCandidateIndex(index)}
+                          placeholder="写入 canonical_answer。"
+                          value={question.canonicalAnswer}
+                        />
+                      </Field>
+
+                      <Field label="来源答案">
+                        <Textarea
+                          onChange={(event) =>
+                            setQuestionDrafts((current) =>
+                              current.map((item, itemIndex) =>
+                                itemIndex === index
+                                  ? { ...item, sourceAnswer: event.target.value }
+                                  : item,
+                              ),
+                            )
+                          }
+                          onFocus={() => setActiveCandidateIndex(index)}
+                          placeholder="可选。"
+                          value={question.sourceAnswer}
+                        />
+                      </Field>
+
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <Field label="分类">
+                          <Input
+                            onChange={(event) =>
+                              setQuestionDrafts((current) =>
+                                current.map((item, itemIndex) =>
+                                  itemIndex === index
+                                    ? { ...item, category: event.target.value }
+                                    : item,
+                                ),
+                              )
+                            }
+                            onFocus={() => setActiveCandidateIndex(index)}
+                            placeholder="distributed_system"
+                            value={question.category}
+                          />
+                        </Field>
+
+                        <Field label="标签">
+                          <Input
+                            onChange={(event) =>
+                              setQuestionDrafts((current) =>
+                                current.map((item, itemIndex) =>
+                                  itemIndex === index
+                                    ? { ...item, tags: event.target.value }
+                                    : item,
+                                ),
+                              )
+                            }
+                            onFocus={() => setActiveCandidateIndex(index)}
+                            placeholder="redis, lock"
+                            value={question.tags}
+                          />
+                        </Field>
+                      </div>
+
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <Field label="处理方式">
+                          <Select
+                            onChange={(event) =>
+                              setQuestionDrafts((current) =>
+                                current.map((item, itemIndex) =>
+                                  itemIndex === index
+                                    ? {
+                                        ...item,
+                                        action: event.target.value as QuestionDraft["action"],
+                                      }
+                                    : item,
+                                ),
+                              )
+                            }
+                            onFocus={() => setActiveCandidateIndex(index)}
+                            value={question.action}
+                          >
+                            <option value="create">新建</option>
+                            <option value="merge">合并</option>
+                            <option value="skip">跳过</option>
+                          </Select>
+                        </Field>
+
+                        <Field description="仅在合并时需要。" label="目标题目 ID">
+                          <Input
+                            disabled={question.action !== "merge"}
+                            onChange={(event) =>
+                              setQuestionDrafts((current) =>
+                                current.map((item, itemIndex) =>
+                                  itemIndex === index
+                                    ? {
+                                        ...item,
+                                        targetQuestionId: event.target.value,
+                                      }
+                                    : item,
+                                ),
+                              )
+                            }
+                            onFocus={() => setActiveCandidateIndex(index)}
+                            placeholder="q_xxx"
+                            value={question.targetQuestionId}
+                          />
+                        </Field>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -638,19 +650,16 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
 
         <div className="space-y-6">
           <SurfaceCard className="space-y-5">
-            <SectionHeading
-              description="右侧只展示当前聚焦候选题的 merge target 或新建预览，保证批量审核时仍然能逐条看清。"
-              title="Merge / 导入预览"
-            />
+            <SectionHeading title="导入预览" />
 
             {jobSummary.job_type !== "extract_interview" ? (
               <EmptyList
                 bullets={[
-                  "当前 slice 只完成 interview parse 的人工确认写入。",
-                  "resume parse result 会保留在 parse_job.result_json 中。",
-                  "后续 slice 会补 resume/project 的 canonical 写入路径。",
+                  "当前只支持面经解析结果的人工确认。",
+                  "简历解析结果会保留在 parse_job.result_json 中。",
+                  "后续会补简历 / 项目的写入路径。",
                 ]}
-                description="这个任务类型暂不支持 confirm import。"
+                description="这个任务类型暂不支持确认写入。"
                 title="当前类型仅支持查看，不支持确认写入"
               />
             ) : !activeCandidate ? (
@@ -665,9 +674,9 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
               />
             ) : activeCandidate.action === "merge" ? (
               activeMergeTarget ? (
-                <div className="space-y-4">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge tone="warning">Merge target</Badge>
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge tone="warning">合并目标</Badge>
                     <Badge>{activeMergeTarget.reviewStatus}</Badge>
                   </div>
                   <div className="space-y-1">
@@ -679,66 +688,60 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
                     </p>
                   </div>
                   <div className="rounded-xl border border-border-muted bg-surface-muted p-4 text-sm text-text-muted">
-                    <p>category: {activeMergeTarget.category ?? "未设置"}</p>
+                    <p>分类: {activeMergeTarget.category ?? "未设置"}</p>
+                    <p className="mt-2">来源数: {activeMergeTarget.sourceCount}</p>
                     <p className="mt-2">
-                      source_count: {activeMergeTarget.sourceCount}
-                    </p>
-                    <p className="mt-2">
-                      tags:{" "}
+                      标签:{" "}
                       {activeMergeTarget.tags.length > 0
                         ? activeMergeTarget.tags.join(", ")
                         : "无"}
                     </p>
                   </div>
-                  <Field label="Current Canonical Answer">
+                  <Field label="当前标准答案">
                     <Textarea readOnly value={activeMergeTarget.canonicalAnswer ?? ""} />
                   </Field>
-                  <p className="text-sm leading-6 text-text-muted">
-                    merge 确认时，当前实现会优先补全缺失字段，并把新答案以
-                    answer_variant 追加进去，不会默认强行覆盖已有 canonical_answer。
-                  </p>
                 </div>
               ) : (
                 <EmptyList
                   bullets={[
                     "手填的 target_question_id 如果不在当前已加载预览里，这里不会自动补全。",
                     "确认时服务层仍会校验目标题目是否存在。",
-                    "如果只想新建，请把 action 改成 create。",
+                    "如果只想新建，请把处理方式改成新建。",
                   ]}
-                  description="当前 merge target 没有现成预览。"
-                  title="未找到 merge target 预览"
+                  description="当前合并目标没有现成预览。"
+                  title="未找到合并目标预览"
                 />
               )
             ) : activeCandidate.action === "skip" ? (
               <EmptyList
                 bullets={[
-                  "skip 不会写入 question_item，也不会创建 source_question_ref。",
-                  "这条候选题仍然会保留在 parse_job.result_json 里供回看。",
-                  "如果只是暂时不确定，可以先保留 skip，后续再重跑或人工处理。",
+                  "跳过不会写入 question_item，也不会创建 source_question_ref。",
+                  "这条候选题仍会保留在 parse_job.result_json 里供回看。",
+                  "如果只是暂时不确定，可以先保留跳过，后续再重跑或人工处理。",
                 ]}
-                description="这条候选题被标记为 skip。"
+                description="这条候选题被标记为跳过。"
                 title="当前候选题不会导入"
               />
             ) : (
               <div className="space-y-4">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge tone="accent">Create preview</Badge>
+                  <Badge tone="accent">新建预览</Badge>
                 </div>
                 <div className="rounded-xl border border-border-muted bg-surface-muted p-4">
                   <p className="text-sm font-semibold text-text-strong">
-                    {activeCandidate.questionText || "未填写 question_text"}
+                    {activeCandidate.questionText || "未填写题目"}
                   </p>
                   <p className="mt-3 text-sm leading-6 text-text-muted">
-                    category: {activeCandidate.category || "未设置"}
+                    分类: {activeCandidate.category || "未设置"}
                   </p>
                   <p className="mt-2 text-sm leading-6 text-text-muted">
-                    tags:{" "}
+                    标签:{" "}
                     {parseTags(activeCandidate.tags).length > 0
                       ? parseTags(activeCandidate.tags).join(", ")
                       : "无"}
                   </p>
                 </div>
-                <Field label="Canonical Answer Preview">
+                <Field label="标准答案预览">
                   <Textarea readOnly value={activeCandidate.canonicalAnswer} />
                 </Field>
               </div>
@@ -746,15 +749,12 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
           </SurfaceCard>
 
           <SurfaceCard className="space-y-5">
-            <SectionHeading
-              description="批量摘要始终可见，避免 reviewer 在长列表里失去这次导入会发生什么。"
-              title="批量导入摘要"
-            />
+            <SectionHeading title="批量摘要" />
 
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
                 <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">
-                  create
+                  新建
                 </div>
                 <div className="mt-1 text-sm font-semibold text-text-strong">
                   {visibleSummary.create}
@@ -762,7 +762,7 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
               </div>
               <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
                 <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">
-                  merge
+                  合并
                 </div>
                 <div className="mt-1 text-sm font-semibold text-text-strong">
                   {visibleSummary.merge}
@@ -770,7 +770,7 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
               </div>
               <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
                 <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">
-                  skip
+                  跳过
                 </div>
                 <div className="mt-1 text-sm font-semibold text-text-strong">
                   {visibleSummary.skip}
@@ -780,7 +780,7 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
 
             {detail.result?.warnings && detail.result.warnings.length > 0 ? (
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-text-muted">
-                <p className="font-semibold text-text-strong">Parse warnings</p>
+                <p className="font-semibold text-text-strong">解析提示</p>
                 <ul className="mt-2 space-y-1">
                   {detail.result.warnings.map((warning) => (
                     <li key={warning}>{warning}</li>
@@ -796,9 +796,9 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
                   : jobSummary.status === "confirmed"
                     ? "这个任务已经确认过了，不会再次写入 canonical。"
                     : missingMergeTarget
-                      ? "仍有 merge 候选题没有填写 target_question_id。"
+                      ? "仍有合并候选题没有填写目标 ID。"
                       : invalidQuestion
-                        ? "仍有 create / merge 候选题缺少 question_text。"
+                        ? "仍有新建或合并候选题缺少题目。"
                         : "当前还不能执行确认导入。"}
               </div>
             ) : null}
@@ -816,14 +816,14 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
                 onClick={handleConfirm}
                 variant="primary"
               >
-                {isConfirming ? "确认中..." : "确认导入"}
+                {isConfirming ? "入库中..." : "确认入库"}
               </Button>
             </div>
 
             <div className="rounded-xl border border-border-muted bg-surface-muted p-4 text-sm text-text-muted">
-              <p>created_at: {formatTimestamp(jobSummary.created_at)}</p>
-              <p className="mt-2">started_at: {formatTimestamp(jobSummary.started_at)}</p>
-              <p className="mt-2">finished_at: {formatTimestamp(jobSummary.finished_at)}</p>
+              <p>创建时间: {formatTimestamp(jobSummary.created_at)}</p>
+              <p className="mt-2">开始时间: {formatTimestamp(jobSummary.started_at)}</p>
+              <p className="mt-2">完成时间: {formatTimestamp(jobSummary.finished_at)}</p>
             </div>
           </SurfaceCard>
         </div>

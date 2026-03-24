@@ -20,7 +20,7 @@ function formatDateTime(value: string) {
 
 function renderTagList(tags: string[]) {
   if (tags.length === 0) {
-    return <span className="text-sm text-text-muted">No tags</span>;
+    return <span className="text-sm text-text-muted">无标签</span>;
   }
 
   return (
@@ -36,9 +36,9 @@ export function InterviewDetailWorkbench({
   interview,
 }: InterviewDetailWorkbenchProps) {
   const titleParts = [
-    interview.company ?? "Unknown company",
-    interview.role ?? "Unknown role",
-    interview.roundInfo ?? "Unknown round",
+    interview.company ?? "未知公司",
+    interview.role ?? "未知岗位",
+    interview.roundInfo ?? "未知轮次",
   ];
 
   return (
@@ -46,13 +46,13 @@ export function InterviewDetailWorkbench({
       <PageHeader
         actions={
           <>
-            <Button href="/interviews">Back to interviews</Button>
+            <Button href="/interviews">返回面经</Button>
             <Button href="/questions" variant="primary">
-              Browse questions
+              查看题库
             </Button>
           </>
         }
-        description="This route keeps the grouped source context intact: interview metadata, linked canonical questions, and the raw source text."
+        description="集中查看面经元信息、关联题目和来源原文。"
         routeLabel={`/interviews/${interview.id}`}
         title={titleParts.join(" / ")}
       />
@@ -61,10 +61,10 @@ export function InterviewDetailWorkbench({
 
       <DetailGrid
         items={[
-          { label: "source_title", value: interview.sourceDocument.title },
-          { label: "question_count", value: String(interview.questionCount) },
-          { label: "source_kind", value: interview.sourceDocument.kind },
-          { label: "updated_at", value: formatDateTime(interview.updatedAt) },
+          { label: "来源标题", value: interview.sourceDocument.title },
+          { label: "题目数", value: String(interview.questionCount) },
+          { label: "来源类型", value: interview.sourceDocument.kind },
+          { label: "更新时间", value: formatDateTime(interview.updatedAt) },
         ]}
       />
 
@@ -72,22 +72,20 @@ export function InterviewDetailWorkbench({
         <div className="space-y-6">
           <SurfaceCard className="space-y-4">
             <SectionHeading
-              description="Summary keeps the source-level takeaways visible before drilling into question links."
-              title="Interview summary"
+              title="面经摘要"
             />
             <div className="rounded-xl border border-border-muted bg-surface-muted p-4 text-sm leading-7 text-text-strong whitespace-pre-wrap">
-              {interview.summary ?? "No interview summary saved yet."}
+              {interview.summary ?? "还没有面经摘要。"}
             </div>
           </SurfaceCard>
 
           <SurfaceCard className="space-y-4">
             <SectionHeading
-              description="Linked questions connect the interview source view back to the canonical study bank."
-              title={`Linked questions (${interview.questions.length})`}
+              title={`关联题目（${interview.questions.length}）`}
             />
             {interview.questions.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border-strong bg-surface-muted p-4 text-sm text-text-muted">
-                No canonical questions have been linked to this interview yet.
+                这条面经还没有关联题目。
               </div>
             ) : (
               <div className="space-y-3">
@@ -123,8 +121,7 @@ export function InterviewDetailWorkbench({
 
           <SurfaceCard className="space-y-4">
             <SectionHeading
-              description="The original imported source stays visible so study and review stay grounded."
-              title="Raw source"
+              title="来源原文"
             />
             <div className="max-h-[560px] overflow-auto rounded-xl border border-border-muted bg-surface-muted p-4 font-mono text-sm leading-6 text-text-strong whitespace-pre-wrap">
               {interview.sourceDocument.rawText}
@@ -135,47 +132,45 @@ export function InterviewDetailWorkbench({
         <div className="space-y-6">
           <SurfaceCard className="space-y-4" muted>
             <SectionHeading
-              description="Operational metadata stays visible while moving between the source view and canonical questions."
-              title="Metadata"
+              title="元信息"
             />
             <div className="space-y-3 text-sm text-text-strong">
               <div className="rounded-xl border border-border-strong bg-white px-4 py-3">
-                company: {interview.company ?? "unknown"}
+                公司: {interview.company ?? "未知"}
               </div>
               <div className="rounded-xl border border-border-strong bg-white px-4 py-3">
-                role: {interview.role ?? "unknown"}
+                岗位: {interview.role ?? "未知"}
               </div>
               <div className="rounded-xl border border-border-strong bg-white px-4 py-3">
-                round_info: {interview.roundInfo ?? "unknown"}
+                轮次: {interview.roundInfo ?? "未知"}
               </div>
             </div>
           </SurfaceCard>
 
           <SurfaceCard className="space-y-4">
             <SectionHeading
-              description="Source document info is grouped separately so the route can be used as a direct-entry source detail page."
-              title="Source document"
+              title="来源文档"
             />
             <div className="space-y-3 text-sm text-text-strong">
               <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
-                <span className="font-medium">Title:</span> {interview.sourceDocument.title}
+                <span className="font-medium">标题:</span> {interview.sourceDocument.title}
               </div>
               <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
-                <span className="font-medium">Kind:</span> {interview.sourceDocument.kind}
+                <span className="font-medium">类型:</span> {interview.sourceDocument.kind}
               </div>
               <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
-                <span className="font-medium">Updated:</span>{" "}
+                <span className="font-medium">更新时间:</span>{" "}
                 {formatDateTime(interview.sourceDocument.updatedAt)}
               </div>
               {interview.sourceDocument.fileName ? (
                 <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
-                  <span className="font-medium">File:</span>{" "}
+                  <span className="font-medium">文件:</span>{" "}
                   {interview.sourceDocument.fileName}
                 </div>
               ) : null}
               {interview.sourceDocument.sourceUrl ? (
                 <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
-                  <span className="font-medium">Source URL:</span>{" "}
+                  <span className="font-medium">来源链接:</span>{" "}
                   <Link
                     className="text-accent hover:underline"
                     href={interview.sourceDocument.sourceUrl}

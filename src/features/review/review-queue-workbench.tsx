@@ -57,7 +57,7 @@ async function readApiResponse<T>(response: Response) {
     | null;
 
   if (!payload) {
-    throw new Error("Response body is not valid JSON.");
+    throw new Error("响应体不是合法 JSON。");
   }
 
   if (!payload.ok) {
@@ -138,7 +138,18 @@ export function ReviewQueueWorkbench({
     },
   );
 
-  function runCreateJob(sourceDocumentId: string, kind: "interview_experience" | "knowledge_note" | "resume") {
+  function resetFilters() {
+    setFilters({
+      status: "all",
+      kind: "all",
+      query: "",
+    });
+  }
+
+  function runCreateJob(
+    sourceDocumentId: string,
+    kind: "interview_experience" | "knowledge_note" | "resume",
+  ) {
     setActiveMutationKey(`create:${sourceDocumentId}`);
     setFeedback(undefined);
     setIsSubmitting(true);
@@ -160,7 +171,7 @@ export function ReviewQueueWorkbench({
         setFeedback({
           tone: "success",
           title: "解析任务已就绪",
-          body: `任务 ${data.parse_job.id} 当前状态为 ${data.parse_job.status}，已跳转到审核页。`,
+          body: `任务 ${data.parse_job.id} 当前状态为 ${parseJobStatusMeta(data.parse_job.status).label}。`,
         });
         router.push(`/review/${data.parse_job.id}`);
       } catch (error) {
@@ -194,7 +205,7 @@ export function ReviewQueueWorkbench({
         setFeedback({
           tone: "success",
           title: "重试已执行",
-          body: `任务 ${data.parse_job.id} 已重新解析，当前状态为 ${data.parse_job.status}。`,
+          body: `任务 ${data.parse_job.id} 已重新解析，当前状态为 ${parseJobStatusMeta(data.parse_job.status).label}。`,
         });
         router.push(`/review/${data.parse_job.id}`);
       } catch (error) {
@@ -202,9 +213,7 @@ export function ReviewQueueWorkbench({
           tone: "error",
           title: "重试失败",
           body:
-            error instanceof Error
-              ? error.message
-              : "当前无法重试该任务。",
+            error instanceof Error ? error.message : "当前无法重试该任务。",
         });
       } finally {
         setIsSubmitting(false);
@@ -218,23 +227,23 @@ export function ReviewQueueWorkbench({
       <PageHeader
         actions={
           <>
-            <Button href="/import">返回导入台</Button>
+            <Button href="/import">返回导入</Button>
             <Button href="/questions" variant="primary">
               打开题库
             </Button>
           </>
         }
-        description="Review Queue 负责把 parse 结果变成可检查、可重试、可确认的工作流。原始 source 先落地，parse job 再落地，最后由人工确认写入 canonical。"
+        description="所有 canonical 写入都必须经过明确确认。这里负责创建解析任务、查看失败状态，并进入审核详情。"
         routeLabel="/review"
-        title="审核解析任务并决定是否写入 canonical"
+        title="审核队列"
       />
 
       <DetailGrid
         items={[
-          { label: "待创建 source", value: `${visiblePendingSources.length}` },
-          { label: "待审核 job", value: `${visibleSummary.needs_review}` },
-          { label: "失败 job", value: `${visibleSummary.failed}` },
-          { label: "当前可见", value: `${visibleJobs.length} jobs` },
+          { label: "待处理来源", value: `${visiblePendingSources.length}` },
+          { label: "待审核任务", value: `${visibleSummary.needs_review}` },
+          { label: "失败任务", value: `${visibleSummary.failed}` },
+          { label: "已确认", value: `${visibleSummary.confirmed}` },
         ]}
       />
 
@@ -252,14 +261,24 @@ export function ReviewQueueWorkbench({
         </div>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
-        <SurfaceCard className="space-y-5">
-          <SectionHeading
-            description="过滤器先服务于人工扫描和运维可见性，不追求复杂搜索能力。"
-            title="队列过滤"
-          />
+      <SurfaceCard className="space-y-4">
+        <SectionHeading title="筛选" />
+        <div className="grid gap-4 lg:grid-cols-[1fr_180px_180px_auto]">
+          <label className="space-y-2">
+            <span className="text-sm font-medium text-text-strong">关键词</span>
+            <Input
+              onChange={(event) =>
+                setFilters((current) => ({
+                  ...current,
+                  query: event.target.value,
+                }))
+              }
+              placeholder="搜索来源标题、任务 ID 或错误信息"
+              value={filters.query}
+            />
+          </label>
 
-          <label className="block space-y-2">
+          <label className="space-y-2">
             <span className="text-sm font-medium text-text-strong">状态</span>
             <Select
               onChange={(event) =>
@@ -271,15 +290,15 @@ export function ReviewQueueWorkbench({
               value={filters.status}
             >
               <option value="all">全部状态</option>
-              <option value="pending">pending</option>
-              <option value="running">running</option>
-              <option value="needs_review">needs_review</option>
-              <option value="failed">failed</option>
-              <option value="confirmed">confirmed</option>
+              <option value="pending">待执行</option>
+              <option value="running">执行中</option>
+              <option value="needs_review">待人工处理</option>
+              <option value="failed">失败</option>
+              <option value="confirmed">已入库</option>
             </Select>
           </label>
 
-          <label className="block space-y-2">
+          <label className="space-y-2">
             <span className="text-sm font-medium text-text-strong">来源类型</span>
             <Select
               onChange={(event) =>
@@ -291,252 +310,217 @@ export function ReviewQueueWorkbench({
               value={filters.kind}
             >
               <option value="all">全部类型</option>
-              <option value="interview_experience">interview_experience</option>
-              <option value="knowledge_note">knowledge_note</option>
-              <option value="resume">resume</option>
+              <option value="interview_experience">面经</option>
+              <option value="knowledge_note">知识笔记</option>
+              <option value="resume">简历</option>
             </Select>
           </label>
 
-          <label className="block space-y-2">
-            <span className="text-sm font-medium text-text-strong">关键词</span>
-            <Input
-              onChange={(event) =>
-                setFilters((current) => ({
-                  ...current,
-                  query: event.target.value,
-                }))
-              }
-              placeholder="搜索 source title / job id / error"
-              value={filters.query}
-            />
-          </label>
-
-          <Button
-            className="w-full"
-            onClick={() =>
-              setFilters({
-                status: "all",
-                kind: "all",
-                query: "",
-              })
-            }
-          >
-            清空过滤器
-          </Button>
-
-          <div className="rounded-xl border border-border-muted bg-surface-muted p-4 text-sm text-text-muted">
-            <p className="font-semibold text-text-strong">状态摘要</p>
-            <div className="mt-3 space-y-2">
-              <div>pending: {visibleSummary.pending}</div>
-              <div>running: {visibleSummary.running}</div>
-              <div>needs_review: {visibleSummary.needs_review}</div>
-              <div>failed: {visibleSummary.failed}</div>
-              <div>confirmed: {visibleSummary.confirmed}</div>
-            </div>
+          <div className="flex items-end">
+            <Button className="w-full" onClick={resetFilters}>
+              清空筛选
+            </Button>
           </div>
-        </SurfaceCard>
+        </div>
+      </SurfaceCard>
 
-        <div className="space-y-6">
-          <SurfaceCard className="space-y-5">
-            <SectionHeading
-              description="Slice 2 里只落 raw source；这里补上显式的 parse job 创建入口，避免结果偷偷直写 canonical。"
-              title={`待创建解析任务 (${visiblePendingSources.length})`}
-            />
+      <SurfaceCard className="space-y-5">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <SectionHeading title={`待处理来源（${visiblePendingSources.length}）`} />
+          <div className="flex flex-wrap gap-2">
+            <Badge tone="accent">先创建任务</Badge>
+            <Badge>{`待执行 ${visibleSummary.pending}`}</Badge>
+            <Badge>{`执行中 ${visibleSummary.running}`}</Badge>
+            <Badge tone="warning">{`待审核 ${visibleSummary.needs_review}`}</Badge>
+          </div>
+        </div>
 
-            {visiblePendingSources.length === 0 ? (
-              <EmptyList
-                bullets={[
-                  "新导入的 source 如果还没开始解析，会出现在这里。",
-                  "创建任务后会直接进入 `/review/:jobId`，方便立刻检查结果。",
-                  "manual_input 不走 parse job，这里不会展示。",
-                ]}
-                description="当前没有处于 `not_started` 的 source。你可以回到 Import 页面继续导入，或直接处理下面已有的 parse job。"
-                title="没有待创建任务的 source"
-              />
-            ) : (
-              <div className="space-y-3">
-                {visiblePendingSources.map((sourceDocument) => {
-                  const parseStatus = sourceParseStatusMeta(sourceDocument.parseStatus);
-                  const mutationKey = `create:${sourceDocument.id}`;
+        {visiblePendingSources.length === 0 ? (
+          <EmptyList
+            bullets={[
+              "新导入且尚未解析的来源会出现在这里。",
+              "创建任务后会直接进入审核详情页。",
+              "手工录入不会进入这一队列。",
+            ]}
+            description="当前没有待创建任务的来源。"
+            title="没有待处理来源"
+          />
+        ) : (
+          <div className="space-y-3">
+            {visiblePendingSources.map((sourceDocument) => {
+              const parseStatus = sourceParseStatusMeta(sourceDocument.parseStatus);
+              const mutationKey = `create:${sourceDocument.id}`;
 
-                  return (
-                    <div
-                      className="rounded-xl border border-border-muted bg-surface-muted p-4"
-                      key={sourceDocument.id}
-                    >
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div className="space-y-2">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Badge>{sourceKindLabel(sourceDocument.kind)}</Badge>
-                            <Badge tone={parseStatus.tone}>{parseStatus.label}</Badge>
-                          </div>
-                          <div className="space-y-1">
-                            <p className="text-sm font-semibold text-text-strong">
-                              {sourceDocument.title}
-                            </p>
-                            <p className="font-mono text-xs text-text-muted">
-                              {sourceDocument.id}
-                            </p>
-                          </div>
-                        </div>
-                        <p className="text-xs text-text-muted">
-                          {formatTimestamp(sourceDocument.createdAt)}
+              return (
+                <div
+                  className="rounded-xl border border-border-muted bg-surface-muted p-4"
+                  key={sourceDocument.id}
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge>{sourceKindLabel(sourceDocument.kind)}</Badge>
+                        <Badge tone={parseStatus.tone}>{parseStatus.label}</Badge>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-text-strong">
+                          {sourceDocument.title}
+                        </p>
+                        <p className="font-mono text-xs text-text-muted">
+                          {sourceDocument.id}
                         </p>
                       </div>
-
-                      <div className="mt-4 flex flex-wrap items-center gap-3">
-                        <Button
-                          disabled={isSubmitting && activeMutationKey === mutationKey}
-                          onClick={() =>
-                            runCreateJob(sourceDocument.id, sourceDocument.kind)
-                          }
-                          variant="primary"
-                        >
-                          {isSubmitting && activeMutationKey === mutationKey
-                            ? "创建中..."
-                            : "创建解析任务"}
-                        </Button>
-                        <Button href="/import" variant="ghost">
-                          查看导入页
-                        </Button>
-                      </div>
                     </div>
+                    <p className="text-xs text-text-muted">
+                      {formatTimestamp(sourceDocument.createdAt)}
+                    </p>
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap items-center gap-3">
+                    <Button
+                      disabled={isSubmitting && activeMutationKey === mutationKey}
+                      onClick={() => runCreateJob(sourceDocument.id, sourceDocument.kind)}
+                      variant="primary"
+                    >
+                      {isSubmitting && activeMutationKey === mutationKey
+                        ? "创建中..."
+                        : "创建解析任务"}
+                    </Button>
+                    <Button href="/import" variant="ghost">
+                      返回导入
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </SurfaceCard>
+
+      <SurfaceCard className="space-y-5">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <SectionHeading title={`解析任务（${visibleJobs.length}）`} />
+          <p className="text-sm text-text-muted">保留任务记录，便于扫描状态、进入审核和重试。</p>
+        </div>
+
+        {visibleJobs.length === 0 ? (
+          <EmptyList
+            bullets={[
+              "先从上方待处理来源创建任务。",
+              "失败任务会保留在这里，便于重试。",
+              "待审核任务可一键进入详情页确认导入。",
+            ]}
+            description="当前筛选下没有匹配的解析任务。"
+            title="没有可见任务"
+          />
+        ) : (
+          <div className="overflow-hidden rounded-xl border border-border-strong">
+            <table className="min-w-full border-collapse text-left text-sm">
+              <thead className="bg-surface-muted">
+                <tr>
+                  {["任务", "来源", "类型", "状态", "时间", "候选题", "操作"].map(
+                    (column) => (
+                      <th
+                        className="border-b border-border-strong px-4 py-3 font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted"
+                        key={column}
+                      >
+                        {column}
+                      </th>
+                    ),
+                  )}
+                </tr>
+              </thead>
+              <tbody className="bg-white">
+                {visibleJobs.map((job) => {
+                  const jobStatus = parseJobStatusMeta(job.status);
+                  const sourceStatus = sourceParseStatusMeta(job.source_parse_status);
+                  const retryMutationKey = `retry:${job.id}`;
+
+                  return (
+                    <tr
+                      className="border-b border-border-muted last:border-b-0"
+                      key={job.id}
+                    >
+                      <td className="px-4 py-4 align-top">
+                        <div className="space-y-1">
+                          <p className="font-mono text-xs text-text-strong">{job.id}</p>
+                          <p className="font-mono text-[11px] text-text-muted">
+                            src {job.source_document_id}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 align-top text-text-muted">
+                        <div className="space-y-2">
+                          <p className="text-sm font-semibold text-text-strong">
+                            {job.source_title}
+                          </p>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge>{sourceKindLabel(job.source_kind)}</Badge>
+                            <Badge tone={sourceStatus.tone}>
+                              来源 {sourceStatus.label}
+                            </Badge>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 align-top text-text-muted">
+                        {jobTypeLabel(job.job_type)}
+                      </td>
+                      <td className="px-4 py-4 align-top">
+                        <div className="space-y-2">
+                          <Badge tone={jobStatus.tone}>{jobStatus.label}</Badge>
+                          <p className="text-xs text-text-muted">
+                            第 {job.attempt_count} 次
+                          </p>
+                          {job.error_message ? (
+                            <p className="max-w-[260px] text-xs leading-5 text-warning">
+                              {job.error_message}
+                            </p>
+                          ) : null}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 align-top text-text-muted">
+                        <div>{formatTimestamp(job.created_at)}</div>
+                        <div className="mt-1 text-xs text-text-muted">
+                          更新:{" "}
+                          {job.finished_at
+                            ? formatTimestamp(job.finished_at)
+                            : formatTimestamp(job.updated_at)}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 align-top text-text-muted">
+                        {job.candidate_question_count}
+                      </td>
+                      <td className="px-4 py-4 align-top">
+                        <div className="flex flex-wrap gap-2">
+                          {job.status === "failed" ? (
+                            <Button
+                              disabled={
+                                isSubmitting &&
+                                activeMutationKey === retryMutationKey
+                              }
+                              onClick={() => runRetry(job.id)}
+                            >
+                              {isSubmitting && activeMutationKey === retryMutationKey
+                                ? "重试中..."
+                                : "重试"}
+                            </Button>
+                          ) : null}
+                          <Button
+                            href={`/review/${job.id}`}
+                            variant={job.status === "needs_review" ? "primary" : "ghost"}
+                          >
+                            {job.status === "needs_review" ? "打开审核" : "查看详情"}
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
                   );
                 })}
-              </div>
-            )}
-          </SurfaceCard>
-
-          <SurfaceCard className="space-y-5">
-            <SectionHeading
-              description="任务表优先服务于状态可见性和批量扫描，不做隐藏式自动导入。"
-              title={`解析任务 (${visibleJobs.length})`}
-            />
-
-            {visibleJobs.length === 0 ? (
-              <EmptyList
-                bullets={[
-                  "先从上方 source 列表创建 parse job。",
-                  "解析失败的任务会保留在队列里，便于重试。",
-                  "待人工确认的任务可以一键进入三栏 review desk。",
-                ]}
-                description="当前过滤器下没有匹配的 parse job。你可以清空过滤器，或先创建新的解析任务。"
-                title="队列里还没有可见任务"
-              />
-            ) : (
-              <div className="overflow-hidden rounded-xl border border-border-strong">
-                <table className="min-w-full border-collapse text-left text-sm">
-                  <thead className="bg-surface-muted">
-                    <tr>
-                      {[
-                        "job_id",
-                        "source title",
-                        "job_type",
-                        "status",
-                        "created_at",
-                        "updated_at",
-                        "candidate_count",
-                        "actions",
-                      ].map((column) => (
-                        <th
-                          className="border-b border-border-strong px-4 py-3 font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted"
-                          key={column}
-                        >
-                          {column}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white">
-                    {visibleJobs.map((job) => {
-                      const jobStatus = parseJobStatusMeta(job.status);
-                      const sourceStatus = sourceParseStatusMeta(job.source_parse_status);
-                      const retryMutationKey = `retry:${job.id}`;
-
-                      return (
-                        <tr
-                          className="border-b border-border-muted last:border-b-0"
-                          key={job.id}
-                        >
-                          <td className="px-4 py-4 align-top">
-                            <div className="space-y-1">
-                              <p className="font-mono text-xs text-text-strong">
-                                {job.id}
-                              </p>
-                              <p className="font-mono text-[11px] text-text-muted">
-                                src {job.source_document_id}
-                              </p>
-                            </div>
-                          </td>
-                          <td className="px-4 py-4 align-top text-text-muted">
-                            <div className="space-y-2">
-                              <p className="text-sm font-semibold text-text-strong">
-                                {job.source_title}
-                              </p>
-                              <div className="flex flex-wrap items-center gap-2">
-                                <Badge>{sourceKindLabel(job.source_kind)}</Badge>
-                                <Badge tone={sourceStatus.tone}>
-                                  source {sourceStatus.label}
-                                </Badge>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-4 py-4 align-top text-text-muted">
-                            {jobTypeLabel(job.job_type)}
-                          </td>
-                          <td className="px-4 py-4 align-top">
-                            <div className="space-y-2">
-                              <Badge tone={jobStatus.tone}>{jobStatus.label}</Badge>
-                              <p className="text-xs text-text-muted">
-                                attempt {job.attempt_count}
-                              </p>
-                              {job.error_message ? (
-                                <p className="max-w-[220px] text-xs leading-5 text-warning">
-                                  {job.error_message}
-                                </p>
-                              ) : null}
-                            </div>
-                          </td>
-                          <td className="px-4 py-4 align-top text-text-muted">
-                            {formatTimestamp(job.created_at)}
-                          </td>
-                          <td className="px-4 py-4 align-top text-text-muted">
-                            {job.finished_at
-                              ? formatTimestamp(job.finished_at)
-                              : formatTimestamp(job.updated_at)}
-                          </td>
-                          <td className="px-4 py-4 align-top text-text-muted">
-                            {job.candidate_question_count}
-                          </td>
-                          <td className="px-4 py-4 align-top">
-                            <div className="flex flex-wrap gap-2">
-                              <Button href={`/review/${job.id}`}>打开审核</Button>
-                              {job.status === "failed" ? (
-                                <Button
-                                  disabled={
-                                    isSubmitting &&
-                                    activeMutationKey === retryMutationKey
-                                  }
-                                  onClick={() => runRetry(job.id)}
-                                  variant="primary"
-                                >
-                                  {isSubmitting && activeMutationKey === retryMutationKey
-                                    ? "重试中..."
-                                    : "重试"}
-                                </Button>
-                              ) : null}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </SurfaceCard>
-        </div>
-      </div>
+              </tbody>
+            </table>
+          </div>
+        )}
+      </SurfaceCard>
     </div>
   );
 }

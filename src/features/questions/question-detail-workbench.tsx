@@ -18,7 +18,7 @@ function formatDateTime(value: string) {
 
 function renderTagList(tags: string[]) {
   if (tags.length === 0) {
-    return <span className="text-sm text-text-muted">No tags</span>;
+    return <span className="text-sm text-text-muted">无标签</span>;
   }
 
   return (
@@ -40,22 +40,22 @@ export function QuestionDetailWorkbench({
       <PageHeader
         actions={
           <>
-            <Button href="/questions">Back to bank</Button>
+            <Button href="/questions">返回题库</Button>
             {primaryInterview?.interviewExperience ? (
               <Button
                 href={`/interviews/${primaryInterview.interviewExperience.id}`}
                 variant="primary"
               >
-                Open linked interview
+                打开关联面经
               </Button>
             ) : (
               <Button href="/interviews" variant="primary">
-                Browse interviews
+                查看面经
               </Button>
             )}
           </>
         }
-        description="Canonical answer, answer variants, and source links stay together so this route can stand alone for review and study."
+        description="集中查看标准答案、答案变体和关联来源。"
         routeLabel={`/questions/${question.id}`}
         title={question.questionText}
       />
@@ -64,10 +64,10 @@ export function QuestionDetailWorkbench({
 
       <DetailGrid
         items={[
-          { label: "category", value: question.category ?? "unassigned" },
-          { label: "difficulty", value: question.difficulty ?? "unset" },
-          { label: "source_count", value: String(question.sourceCount) },
-          { label: "updated_at", value: formatDateTime(question.updatedAt) },
+          { label: "分类", value: question.category ?? "未分配" },
+          { label: "难度", value: question.difficulty ?? "未设置" },
+          { label: "来源数", value: String(question.sourceCount) },
+          { label: "更新时间", value: formatDateTime(question.updatedAt) },
         ]}
       />
 
@@ -75,22 +75,20 @@ export function QuestionDetailWorkbench({
         <div className="space-y-6">
           <SurfaceCard className="space-y-4">
             <SectionHeading
-              description="The canonical answer is the default study anchor for this question."
-              title="Canonical answer"
+              title="标准答案"
             />
             <div className="rounded-xl border border-border-muted bg-surface-muted p-4 text-sm leading-7 text-text-strong whitespace-pre-wrap">
-              {question.canonicalAnswer ?? "No canonical answer saved yet."}
+              {question.canonicalAnswer ?? "还没有标准答案。"}
             </div>
           </SurfaceCard>
 
           <SurfaceCard className="space-y-4">
             <SectionHeading
-              description="Variants stay visible so personal answers and concise versions can be compared quickly."
-              title={`Answer variants (${question.answerVariants.length})`}
+              title={`答案变体（${question.answerVariants.length}）`}
             />
             {question.answerVariants.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border-strong bg-surface-muted p-4 text-sm text-text-muted">
-                No answer variants saved yet.
+                还没有答案变体。
               </div>
             ) : (
               <div className="space-y-3">
@@ -113,13 +111,11 @@ export function QuestionDetailWorkbench({
 
           <SurfaceCard className="space-y-4">
             <SectionHeading
-              description="Related questions favor shared-source links first, then same-category fallback."
-              title={`Related questions (${question.relatedQuestions.length})`}
+              title={`相关题目（${question.relatedQuestions.length}）`}
             />
             {question.relatedQuestions.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border-strong bg-surface-muted p-4 text-sm text-text-muted">
-                No related questions were found from shared sources or the same
-                category.
+                暂无相关题目。
               </div>
             ) : (
               <div className="space-y-3">
@@ -137,7 +133,7 @@ export function QuestionDetailWorkbench({
                       </Link>
                       {relatedQuestion.sharedSourceCount ? (
                         <Badge tone="success">
-                          {relatedQuestion.sharedSourceCount} shared source
+                          共源 {relatedQuestion.sharedSourceCount}
                         </Badge>
                       ) : null}
                     </div>
@@ -159,30 +155,28 @@ export function QuestionDetailWorkbench({
         <div className="space-y-6">
           <SurfaceCard className="space-y-4" muted>
             <SectionHeading
-              description="Metadata stays visible while reviewing answers or jumping to source context."
-              title="Metadata"
+              title="元信息"
             />
             <div className="space-y-3 text-sm text-text-strong">
               <div className="rounded-xl border border-border-strong bg-white px-4 py-3">
-                review_status: {question.reviewStatus}
+                审核状态: {question.reviewStatus}
               </div>
               <div className="rounded-xl border border-border-strong bg-white px-4 py-3">
-                personal_answer: {question.hasPersonalAnswer ? "yes" : "no"}
+                个人答案: {question.hasPersonalAnswer ? "有" : "无"}
               </div>
               <div className="rounded-xl border border-border-strong bg-white px-4 py-3">
-                sources linked: {question.sources.length}
+                关联来源: {question.sources.length}
               </div>
             </div>
           </SurfaceCard>
 
           <SurfaceCard className="space-y-4">
             <SectionHeading
-              description="Each linked source keeps the question grounded in review-confirmed study context."
-              title={`Sources (${question.sources.length})`}
+              title={`来源（${question.sources.length}）`}
             />
             {question.sources.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border-strong bg-surface-muted p-4 text-sm text-text-muted">
-                No sources are linked to this question yet.
+                这道题还没有关联来源。
               </div>
             ) : (
               <div className="space-y-3">
@@ -199,14 +193,14 @@ export function QuestionDetailWorkbench({
                     </div>
                     {source.interviewExperience ? (
                       <p className="mt-2 text-sm text-text-muted">
-                        Interview:{" "}
+                        面经:{" "}
                         <Link
                           className="font-medium text-accent hover:underline"
                           href={`/interviews/${source.interviewExperience.id}`}
                         >
-                          {source.interviewExperience.company ?? "Unknown company"} /{" "}
-                          {source.interviewExperience.role ?? "Unknown role"} /{" "}
-                          {source.interviewExperience.roundInfo ?? "Unknown round"}
+                          {source.interviewExperience.company ?? "未知公司"} /{" "}
+                          {source.interviewExperience.role ?? "未知岗位"} /{" "}
+                          {source.interviewExperience.roundInfo ?? "未知轮次"}
                         </Link>
                       </p>
                     ) : null}
@@ -217,7 +211,7 @@ export function QuestionDetailWorkbench({
                     ) : null}
                     {source.sourceUrl ? (
                       <p className="mt-3 text-sm text-text-muted">
-                        Source URL:{" "}
+                        来源链接:{" "}
                         <Link
                           className="font-medium text-accent hover:underline"
                           href={source.sourceUrl}

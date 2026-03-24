@@ -10,23 +10,23 @@ export function TopBar() {
         </p>
         <div className="flex flex-wrap items-center gap-3">
           <h2 className="text-lg font-semibold tracking-[-0.03em] text-text-strong">
-            Workbench shell
+            工作台
           </h2>
-          <Badge tone="success">local-first</Badge>
+          <Badge tone="success">本地优先</Badge>
         </div>
       </div>
 
       <div className="flex flex-col gap-3 lg:w-[540px] lg:flex-row lg:items-center">
         <div className="flex-1">
           <Input
-            aria-label="Global search"
-            placeholder="Global search placeholder for questions, interviews, and sessions"
+            aria-label="全局搜索"
+            placeholder="全局搜索（题目、面经、会话）"
             readOnly
           />
         </div>
         <div className="flex items-center gap-2 self-start rounded-full border border-border-strong bg-white px-3 py-2 text-xs text-text-muted">
           <span className="h-2 w-2 rounded-full bg-warning" />
-          Provider not connected
+          模型服务未连接
         </div>
       </div>
     </header>
