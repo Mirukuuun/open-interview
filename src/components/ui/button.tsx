@@ -34,7 +34,7 @@ function isLinkButtonProps(
 
 function buttonClasses(variant: ButtonVariant, className?: string) {
   return cn(
-    "inline-flex h-9 items-center justify-center rounded-lg px-3 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2",
+    "inline-flex h-9 items-center justify-center rounded-lg px-3 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-60",
     variantClasses[variant],
     className,
   );

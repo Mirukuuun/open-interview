@@ -116,7 +116,7 @@ Done when:
 - seed/dev bootstrap path is available
 
 ### Slice 2 — Import flow
-Status: pending
+Status: done
 Goal:
 - implement `/import`
 - support paste text / manual QA / upload entry points
@@ -166,13 +166,13 @@ Done when:
 ## 5. Immediate next action
 
 Next recommended action:
-- launch Codex for Slice 2（Import flow）
-- keep scope bounded to source creation / upload+pasting entry / recent import list
-- reuse Slice 1 data layer directly; do not reopen schema design unless blocked
+- launch Codex for Slice 3（Parse review flow）
+- keep scope bounded to parse job creation / status flow / `/review` queue and detail page
+- reuse Slice 1 / Slice 2 已有 data layer 与 import backbone；不要重开 import 范围
 
 Reason:
-- Slice 0 / Slice 1 已经收口，当前最有价值的是把 import 主链打通。
-- 后续 parse/review/search/QA 都依赖 source ingestion 先可用。
+- Slice 0 / Slice 1 / Slice 2 已经收口，当前最有价值的是把 parse -> review -> confirm 主链打通。
+- Question bank / interview views / QA 都依赖 review-confirm loop 先成立。
 
 ## 6. Review protocol
 
@@ -196,4 +196,6 @@ Escalation rule:
 - 2026-03-23: GitHub SSH push path fixed; branch `dev/mvp-delivery` pushed.
 - 2026-03-23: Added canonical execution bridge docs: `docs/tech-stack.md`, `docs/codex-task-prompts.md`.
 - 2026-03-23: Added bounded Codex slice docs under `tasks/slices/`.
-- 2026-03-24: Slice 1（Data Layer v1）reviewer 通过，完成清理后可提交；当前下一步转向 Slice 2（Import flow）。
+- 2026-03-24: Slice 1（Data Layer v1）reviewer 通过，完成清理、提交并推送到 `dev/mvp-delivery`。
+- 2026-03-24: Slice 2（Import flow）已切到 in_progress，进入 execution。
+- 2026-03-24: Slice 2（Import flow）经手工 reviewer 收口通过：真实 HTTP 抽查完成，`/import`、`POST /api/sources/text`、`POST /api/manual-qa`、`GET /api/sources` 可用；`db:init` / `typecheck` / `lint` / `build` 全绿。Turbopack/NFT tracing warning 记为非阻塞 note，后续在基础设施层处理。

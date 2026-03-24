@@ -49,6 +49,12 @@ const createSourceQuestionRefInputSchema = z.object({
   sourceOrder: z.number().int().min(0).nullable().optional(),
 });
 
+const updateQuestionItemInputSchema = z.object({
+  canonicalAnswer: z.string().min(1).nullable().optional(),
+  category: z.string().min(1).nullable().optional(),
+  reviewStatus: z.enum(["draft", "active", "archived"]).optional(),
+});
+
 function getQuestionById(id: string) {
   return db
     .select()
@@ -120,6 +126,33 @@ export const questionRepository = {
   },
 
   findById(id: string) {
+    return getQuestionById(id);
+  },
+
+  update(id: string, input: z.input<typeof updateQuestionItemInputSchema>) {
+    const value = updateQuestionItemInputSchema.parse(input);
+    const updatedFields = {
+      ...(value.canonicalAnswer === undefined
+        ? {}
+        : { canonicalAnswer: value.canonicalAnswer }),
+      ...(value.category === undefined ? {} : { category: value.category }),
+      ...(value.reviewStatus === undefined
+        ? {}
+        : { reviewStatus: value.reviewStatus }),
+    };
+
+    if (Object.keys(updatedFields).length === 0) {
+      return getQuestionById(id);
+    }
+
+    db.update(questionItems)
+      .set({
+        ...updatedFields,
+        updatedAt: nowUtcIso(),
+      })
+      .where(eq(questionItems.id, id))
+      .run();
+
     return getQuestionById(id);
   },
 
