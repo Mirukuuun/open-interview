@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "@/server/db/client";
 import { interviewExperiences, interviewTags, tags } from "@/server/db/schema";
 import { createOpaqueId, nowUtcIso } from "@/server/repositories/ids";
+import { searchIndexRepository } from "@/server/repositories/search-index-repository";
 import { tagRepository } from "@/server/repositories/tag-repository";
 
 const upsertInterviewExperienceInputSchema = z.object({
@@ -68,6 +69,7 @@ export const interviewExperienceRepository = {
       };
 
       db.insert(interviewExperiences).values(interviewExperience).run();
+      searchIndexRepository.upsertInterviewDocument(interviewExperience.id);
 
       return interviewExperience;
     }
@@ -83,6 +85,8 @@ export const interviewExperienceRepository = {
       })
       .where(eq(interviewExperiences.id, existing.id))
       .run();
+
+    searchIndexRepository.upsertInterviewDocument(existing.id);
 
     return getInterviewExperienceById(existing.id);
   },
@@ -101,6 +105,7 @@ export const interviewExperienceRepository = {
       .run();
 
     if (cleanedTagNames.length === 0) {
+      searchIndexRepository.upsertInterviewDocument(interviewExperienceId);
       return [];
     }
 
@@ -117,6 +122,8 @@ export const interviewExperienceRepository = {
       )
       .onConflictDoNothing()
       .run();
+
+    searchIndexRepository.upsertInterviewDocument(interviewExperienceId);
 
     return getInterviewTagRows(interviewExperienceId);
   },

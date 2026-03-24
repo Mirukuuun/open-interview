@@ -137,7 +137,7 @@ Done when:
 - parse result can be reviewed and confirmed into canonical data
 
 ### Slice 4 — Question bank / interview views
-Status: pending
+Status: done
 Goal:
 - implement `/questions` + detail
 - implement `/interviews` + detail
@@ -202,3 +202,8 @@ Escalation rule:
 - 2026-03-24: Slice 3（Parse review flow）已切到 in_progress，进入 execution。
 - 2026-03-24: Slice 3（Parse review flow）完成最小返工收口：`/review` blocker 已解除，`db:init` / `typecheck` / `lint` / `build` 全绿，真实 HTTP 抽查通过（`GET /review` -> 200，queue 可见；`POST /api/parse-jobs` -> 201；`GET /review/:jobId` -> 200）。
 - 2026-03-24: Slice 3（Parse review flow）经 reviewer 正式验收通过（PASS_WITH_NOTES）：确认 `/review` queue 不再 500，`page_size` 上限防御生效，review -> confirm -> canonical 写入门控成立；非阻塞 note 为 `/review` 暂无分页控件、`next build` 仍有既知 Turbopack/NFT tracing warning。可进入 commit/push 收口。
+- 2026-03-24: Slice 4（Question bank / interview views）已切到 in_progress，进入 execution；本轮目标是打通 `/questions`、`/questions/:questionId`、`/interviews`、`/interviews/:interviewId` 与基础搜索/过滤，不扩到 QA / resume / auth。
+- 2026-03-24: Slice 4 首轮 Codex dispatch 已发出，但被 Codex CLI usage limit 阻塞；当前不是实现失败，而是执行额度问题。待 Codex 可用后，复用现成 bounded prompt 继续 execution。
+��
+- 2026-03-24: Slice 4（Question bank / interview views）完成实现并通过独立验证：`/questions`、`/questions/:questionId`、`/interviews`、`/interviews/:interviewId` 与最小 list/detail/search/filter API 可用；`db:init` / `typecheck` / `lint` / `build --webpack` 全绿，questions/interviews 的本地 HTTP smoke 通过。
+- 2026-03-24: Slice 4 经 reviewer 正式验收通过（PASS_WITH_NOTES）：Question bank / interview browse loop 已达成合同范围；非阻塞 note 为当前未提供更宽泛的统一 `/api/search` 面，且 repo 状态文档需在 commit 前同步收口。

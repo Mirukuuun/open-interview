@@ -1,4 +1,7 @@
-import { InterviewDetailPlaceholder } from "@/features/interviews/interview-detail-placeholder";
+import { notFound } from "next/navigation";
+
+import { InterviewDetailWorkbench } from "@/features/interviews/interview-detail-workbench";
+import { interviewBrowseService } from "@/server/services/interview-browse-service";
 
 type InterviewDetailPageProps = {
   params: Promise<{
@@ -10,6 +13,11 @@ export default async function InterviewDetailPage({
   params,
 }: InterviewDetailPageProps) {
   const { interviewId } = await params;
+  const interview = interviewBrowseService.getInterviewDetail(interviewId);
 
-  return <InterviewDetailPlaceholder interviewId={interviewId} />;
+  if (!interview) {
+    notFound();
+  }
+
+  return <InterviewDetailWorkbench interview={interview} />;
 }

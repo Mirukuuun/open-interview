@@ -2,7 +2,7 @@
 
 - task_id: oi-slice-4-browse-search
 - owner: execution
-- status: pending
+- status: in_progress
 - priority: medium
 - goal: make the question bank and interview notes truly browsable/searchable as the main daily-use surfaces
 
@@ -23,10 +23,10 @@
 - align with canonical route/page expectations in `docs/ui-flows.md`
 
 ## Done when
-- [ ] question bank list/detail works
-- [ ] interview notes list/detail works
-- [ ] keyword search and basic filters work
-- [ ] source/question cross-links are visible enough for study workflows
+- [x] question bank list/detail works
+- [x] interview notes list/detail works
+- [x] keyword search and basic filters work
+- [x] source/question cross-links are visible enough for study workflows
 
 ## Refs
 - `docs/ui-flows.md`

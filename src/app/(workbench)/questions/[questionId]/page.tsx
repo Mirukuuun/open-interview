@@ -1,4 +1,7 @@
-import { QuestionDetailPlaceholder } from "@/features/questions/question-detail-placeholder";
+import { notFound } from "next/navigation";
+
+import { QuestionDetailWorkbench } from "@/features/questions/question-detail-workbench";
+import { questionBankService } from "@/server/services/question-bank-service";
 
 type QuestionDetailPageProps = {
   params: Promise<{
@@ -10,6 +13,11 @@ export default async function QuestionDetailPage({
   params,
 }: QuestionDetailPageProps) {
   const { questionId } = await params;
+  const question = questionBankService.getQuestionDetail(questionId);
 
-  return <QuestionDetailPlaceholder questionId={questionId} />;
+  if (!question) {
+    notFound();
+  }
+
+  return <QuestionDetailWorkbench question={question} />;
 }

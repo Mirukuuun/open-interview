@@ -11,6 +11,7 @@ import {
 } from "@/server/db/schema";
 import { createOpaqueId, nowUtcIso } from "@/server/repositories/ids";
 import { normalizeQuestionText } from "@/server/repositories/normalization";
+import { searchIndexRepository } from "@/server/repositories/search-index-repository";
 import { tagRepository } from "@/server/repositories/tag-repository";
 
 const createQuestionItemInputSchema = z.object({
@@ -121,6 +122,7 @@ export const questionRepository = {
     };
 
     db.insert(questionItems).values(questionItem).run();
+    searchIndexRepository.upsertQuestionDocument(questionItem.id);
 
     return questionItem;
   },
@@ -152,6 +154,8 @@ export const questionRepository = {
       })
       .where(eq(questionItems.id, id))
       .run();
+
+    searchIndexRepository.upsertQuestionDocument(id);
 
     return getQuestionById(id);
   },
@@ -233,6 +237,7 @@ export const questionRepository = {
       .run();
 
     if (normalizedTagNames.length === 0) {
+      searchIndexRepository.upsertQuestionDocument(questionItemId);
       return [];
     }
 
@@ -249,6 +254,8 @@ export const questionRepository = {
       )
       .onConflictDoNothing()
       .run();
+
+    searchIndexRepository.upsertQuestionDocument(questionItemId);
 
     return getQuestionTagRows(questionItemId);
   },
