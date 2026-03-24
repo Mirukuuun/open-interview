@@ -3,6 +3,7 @@ import { count, eq } from "drizzle-orm";
 import { db, sqlite } from "@/server/db/client";
 import { chunks } from "@/server/db/schema";
 import { createStableOpaqueId, nowUtcIso } from "@/server/repositories/ids";
+import { parseJsonStringArray } from "@/server/repositories/search-helpers";
 
 function estimateTokenCount(content: string) {
   const trimmedContent = content.trim();
@@ -37,6 +38,10 @@ export function getSourceExcerptChunkId(
   return buildChunkId(
     `source_document:${sourceDocumentId}:source_excerpt:${questionItemId}`,
   );
+}
+
+export function getResumeProjectSummaryChunkId(projectId: string) {
+  return buildChunkId(`resume_project:${projectId}:project_summary`);
 }
 
 function upsertChunk(input: {
@@ -222,6 +227,62 @@ export const chunkRepository = {
         }
       } else {
         deleteChunk(chunkId);
+      }
+    }
+
+    return {
+      chunkCount,
+    };
+  },
+
+  syncResumeProjectChunks() {
+    const rows = sqlite.prepare(`
+      SELECT
+        rp.id AS projectId,
+        rp.name AS name,
+        rp.summary AS summary,
+        rp.highlights_json AS highlightsJson,
+        rp.tech_stack_json AS techStackJson,
+        rp.deep_dive_questions_json AS deepDiveQuestionsJson
+      FROM resume_projects rp
+      INNER JOIN resume_documents rd
+        ON rd.id = rp.resume_document_id
+      INNER JOIN source_documents sd
+        ON sd.id = rd.source_document_id
+      WHERE sd.status = 'active'
+    `).all() as Array<{
+      projectId: string;
+      name: string;
+      summary: string | null;
+      highlightsJson: string | null;
+      techStackJson: string | null;
+      deepDiveQuestionsJson: string | null;
+    }>;
+    let chunkCount = 0;
+
+    for (const row of rows) {
+      const parts = [
+        row.name,
+        row.summary,
+        ...parseJsonStringArray(row.highlightsJson),
+        parseJsonStringArray(row.techStackJson).length > 0
+          ? `Tech stack: ${parseJsonStringArray(row.techStackJson).join(", ")}`
+          : null,
+        ...parseJsonStringArray(row.deepDiveQuestionsJson).map(
+          (question) => `Deep dive: ${question}`,
+        ),
+      ].filter((value): value is string => Boolean(value && value.trim()));
+
+      if (
+        upsertChunk({
+          id: getResumeProjectSummaryChunkId(row.projectId),
+          ownerType: "resume_project",
+          ownerId: row.projectId,
+          chunkType: "project_summary",
+          content: parts.join("\n"),
+        })
+      ) {
+        chunkCount += 1;
       }
     }
 

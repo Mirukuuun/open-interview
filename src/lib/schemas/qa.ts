@@ -1,6 +1,11 @@
 import { z } from "zod";
 
 import { relatedQuestionSchema } from "@/lib/schemas/questions";
+import {
+  retrievalFinalContextSchema,
+  retrievalHitSchema,
+  retrievalLogSchema,
+} from "@/lib/schemas/retrieval";
 
 function coerceOptionalTrimmedString(maxLength: number) {
   return z.preprocess(
@@ -73,47 +78,6 @@ export const qaCitationSchema = z.object({
       source_snippet: z.string().min(1).nullable().optional(),
     })
     .optional(),
-});
-
-export const retrievalHitSchema = z.object({
-  owner_type: z.enum([
-    "question_item",
-    "answer_variant",
-    "source_document",
-    "resume_project",
-  ]),
-  owner_id: z.string().min(1),
-  chunk_id: z.string().min(1).nullable().optional(),
-  score: z.number().min(0),
-  reason: z.enum(["fts", "vector", "merged"]),
-  snippet: z.string().min(1),
-});
-
-export const retrievalFinalContextSchema = z.object({
-  question_ids: z.array(z.string().min(1)),
-  chunk_ids: z.array(z.string().min(1)),
-  related_question_ids: z.array(z.string().min(1)).default([]),
-  source_document_ids: z.array(z.string().min(1)).default([]),
-  strategy_notes: z.array(z.string()).default([]),
-  warnings: z.array(z.string()).default([]),
-  corpus_sync: z
-    .object({
-      question_chunks: z.number().int().min(0),
-      answer_chunks: z.number().int().min(0),
-      source_excerpt_chunks: z.number().int().min(0),
-    })
-    .nullable()
-    .optional(),
-});
-
-export const retrievalLogSchema = z.object({
-  id: z.string().min(1),
-  query_text: z.string().min(1),
-  query_type: z.literal("qa"),
-  strategy: z.enum(["fts", "vector", "hybrid"]),
-  hits: z.array(retrievalHitSchema),
-  final_context: retrievalFinalContextSchema,
-  created_at: z.string().datetime(),
 });
 
 export const qaSessionTurnSchema = z.object({

@@ -1,4 +1,7 @@
-import { ResumeDetailPlaceholder } from "@/features/resume/resume-detail-placeholder";
+import { notFound } from "next/navigation";
+
+import { ResumeDetailWorkbench } from "@/features/resume/resume-detail-workbench";
+import { resumeService } from "@/server/services/resume-service";
 
 type ResumeDetailPageProps = {
   params: Promise<{
@@ -10,6 +13,11 @@ export default async function ResumeDetailPage({
   params,
 }: ResumeDetailPageProps) {
   const { resumeId } = await params;
+  const detail = resumeService.getResumeDetail(resumeId);
 
-  return <ResumeDetailPlaceholder resumeId={resumeId} />;
+  if (!detail) {
+    notFound();
+  }
+
+  return <ResumeDetailWorkbench detail={detail} />;
 }

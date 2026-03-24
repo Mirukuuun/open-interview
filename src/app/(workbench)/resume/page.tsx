@@ -1,5 +1,10 @@
-import { ResumePlaceholder } from "@/features/resume/resume-placeholder";
+import { ResumeWorkbench } from "@/features/resume/resume-workbench";
+import { resumeService } from "@/server/services/resume-service";
+
+export const dynamic = "force-dynamic";
 
 export default function ResumePage() {
-  return <ResumePlaceholder />;
+  const workspace = resumeService.getWorkspace();
+
+  return <ResumeWorkbench workspace={workspace} />;
 }

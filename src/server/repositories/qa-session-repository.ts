@@ -7,10 +7,13 @@ import { createOpaqueId, nowUtcIso } from "@/server/repositories/ids";
 
 const createSessionInputSchema = z.object({
   id: z.string().min(1).optional(),
-  sessionType: z.literal("qa").default("qa"),
+  sessionType: z
+    .enum(["qa", "resume_deep_dive", "mock_interview"])
+    .default("qa"),
   status: z.enum(["active", "completed", "archived"]).default("active"),
   provider: z.literal("openclaw").default("openclaw"),
   title: z.string().min(1).nullable().optional(),
+  relatedResumeProjectId: z.string().min(1).nullable().optional(),
 });
 
 const createSessionTurnInputSchema = z.object({
@@ -39,7 +42,7 @@ export const qaSessionRepository = {
       id: value.id ?? createOpaqueId("sess"),
       sessionType: value.sessionType,
       status: value.status,
-      relatedResumeProjectId: null,
+      relatedResumeProjectId: value.relatedResumeProjectId ?? null,
       provider: value.provider,
       title: value.title ?? null,
       createdAt: timestamp,
@@ -129,6 +132,57 @@ export const qaSessionRepository = {
       .leftJoin(sessionTurns, eq(sessionTurns.aiSessionId, aiSessions.id))
       .where(
         and(eq(aiSessions.sessionType, "qa"), eq(aiSessions.status, "active")),
+      )
+      .groupBy(aiSessions.id)
+      .orderBy(desc(aiSessions.updatedAt))
+      .limit(limit)
+      .all()
+      .map((row) => ({
+        ...row,
+        turnCount: Number(row.turnCount),
+      }));
+  },
+
+  listByRelatedResumeProject(projectId: string, limit = 12) {
+    return db
+      .select({
+        id: aiSessions.id,
+        sessionType: aiSessions.sessionType,
+        status: aiSessions.status,
+        provider: aiSessions.provider,
+        relatedResumeProjectId: aiSessions.relatedResumeProjectId,
+        title: aiSessions.title,
+        createdAt: aiSessions.createdAt,
+        updatedAt: aiSessions.updatedAt,
+        turnCount: count(sessionTurns.id),
+        latestAssistantTurn: sql<string | null>`
+          (
+            SELECT st.content
+            FROM session_turns st
+            WHERE st.ai_session_id = ${aiSessions.id}
+              AND st.role = 'assistant'
+            ORDER BY st.created_at DESC
+            LIMIT 1
+          )
+        `,
+        latestUserTurn: sql<string | null>`
+          (
+            SELECT st.content
+            FROM session_turns st
+            WHERE st.ai_session_id = ${aiSessions.id}
+              AND st.role = 'user'
+            ORDER BY st.created_at DESC
+            LIMIT 1
+          )
+        `,
+      })
+      .from(aiSessions)
+      .leftJoin(sessionTurns, eq(sessionTurns.aiSessionId, aiSessions.id))
+      .where(
+        and(
+          eq(aiSessions.sessionType, "resume_deep_dive"),
+          eq(aiSessions.relatedResumeProjectId, projectId),
+        ),
       )
       .groupBy(aiSessions.id)
       .orderBy(desc(aiSessions.updatedAt))

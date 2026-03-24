@@ -1,0 +1,145 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+import type { AskResumeProjectSessionResponseData } from "@/lib/schemas/resume";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
+
+type ApiSuccess<T> = {
+  ok: true;
+  data: T;
+};
+
+type ApiFailure = {
+  ok: false;
+  error: {
+    code: string;
+    message: string;
+    details?: unknown;
+  };
+};
+
+type FeedbackState =
+  | {
+      tone: "success" | "error";
+      title: string;
+      body: string;
+    }
+  | undefined;
+
+async function readApiResponse<T>(response: Response) {
+  const payload = (await response.json().catch(() => null)) as
+    | ApiSuccess<T>
+    | ApiFailure
+    | null;
+
+  if (!payload) {
+    throw new Error("Response body is not valid JSON.");
+  }
+
+  if (!payload.ok) {
+    throw new Error(payload.error.message);
+  }
+
+  return payload.data;
+}
+
+type DeepDiveAnswerFormProps = {
+  projectId: string;
+  sessionId: string;
+};
+
+export function DeepDiveAnswerForm({
+  projectId,
+  sessionId,
+}: DeepDiveAnswerFormProps) {
+  const router = useRouter();
+  const [answer, setAnswer] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [feedback, setFeedback] = useState<FeedbackState>();
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (answer.trim().length === 0) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setFeedback(undefined);
+
+    try {
+      const response = await fetch(
+        `/api/resume-projects/${projectId}/deep-dive-sessions/${sessionId}/ask`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            answer: answer.trim(),
+          }),
+        },
+      );
+      const data = await readApiResponse<AskResumeProjectSessionResponseData>(response);
+
+      setFeedback({
+        tone: "success",
+        title: "Answer stored",
+        body: `Next question is ready with ${data.coach_hints.length} coach hint(s) and retrieval log ${data.retrieval_log_id}.`,
+      });
+      setAnswer("");
+      router.refresh();
+    } catch (error) {
+      setFeedback({
+        tone: "error",
+        title: "Deep dive failed",
+        body:
+          error instanceof Error
+            ? error.message
+            : "Unable to continue this deep-dive session right now.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <form className="space-y-4" onSubmit={handleSubmit}>
+      <label className="block space-y-2">
+        <span className="text-sm font-medium text-text-strong">Your answer</span>
+        <Textarea
+          className="min-h-[140px]"
+          onChange={(event) => setAnswer(event.target.value)}
+          placeholder="Answer the latest project deep-dive question with your own role, trade-offs, and outcomes."
+          required
+          value={answer}
+        />
+      </label>
+
+      {feedback ? (
+        <div
+          className={cn(
+            "rounded-xl border px-4 py-4",
+            feedback.tone === "success"
+              ? "border-emerald-200 bg-emerald-50"
+              : "border-amber-200 bg-amber-50",
+          )}
+        >
+          <p className="text-sm font-semibold text-text-strong">{feedback.title}</p>
+          <p className="mt-2 text-sm leading-6 text-text-muted">{feedback.body}</p>
+        </div>
+      ) : null}
+
+      <div className="flex flex-wrap gap-3">
+        <Button disabled={isSubmitting} type="submit" variant="primary">
+          {isSubmitting ? "Submitting..." : "Submit answer"}
+        </Button>
+        <Button href={`/resume/projects/${projectId}`}>Back to project</Button>
+      </div>
+    </form>
+  );
+}

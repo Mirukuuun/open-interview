@@ -3,16 +3,16 @@ import { count, eq } from "drizzle-orm";
 import type {
   AskQaSessionRequest,
   QaCitation,
-  RetrievalLog,
 } from "@/lib/schemas/qa";
 import {
   qaCitationSchema,
   qaSessionSchema,
   qaSessionTurnSchema,
+} from "@/lib/schemas/qa";
+import {
   retrievalFinalContextSchema,
   retrievalHitSchema,
-  retrievalLogSchema,
-} from "@/lib/schemas/qa";
+} from "@/lib/schemas/retrieval";
 import { openClawGroundedQaAdapter } from "@/server/adapters/openclaw/generate-grounded-qa";
 import { db, sqlite } from "@/server/db/client";
 import { questionItems } from "@/server/db/schema";
@@ -23,6 +23,11 @@ import {
   retrievalLogRepository,
 } from "@/server/repositories";
 import { retrieveHybridQaContext } from "@/server/retrieval/hybrid-qa-retrieval";
+import {
+  buildSessionTitle as buildStoredSessionTitle,
+  parseJsonArray,
+  parseStoredRetrievalLog,
+} from "@/server/services/session-artifacts";
 
 export class QaSessionServiceError extends Error {
   code: string;
@@ -43,30 +48,6 @@ export class QaSessionServiceError extends Error {
   }
 }
 
-function truncateText(value: string, maxLength: number) {
-  const compactValue = value.replace(/\s+/g, " ").trim();
-
-  if (compactValue.length <= maxLength) {
-    return compactValue;
-  }
-
-  return `${compactValue.slice(0, maxLength - 3).trimEnd()}...`;
-}
-
-function parseJsonArray<T>(value: string | null | undefined, fallback: T[] = []) {
-  if (!value) {
-    return fallback;
-  }
-
-  try {
-    const parsed = JSON.parse(value);
-
-    return Array.isArray(parsed) ? (parsed as T[]) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
 function toApiSession(
   session: NonNullable<ReturnType<typeof qaSessionRepository.findById>>,
 ) {
@@ -78,41 +59,6 @@ function toApiSession(
     title: session.title,
     created_at: session.createdAt,
     updated_at: session.updatedAt,
-  });
-}
-
-function parseRetrievalLog(
-  retrievalLog: ReturnType<typeof retrievalLogRepository.findById> | null,
-): RetrievalLog | null {
-  if (!retrievalLog) {
-    return null;
-  }
-
-  const hits = retrievalHitSchema.array().safeParse(
-    parseJsonArray(retrievalLog.hitsJson),
-  );
-  const finalContext = retrievalFinalContextSchema.safeParse(
-    (() => {
-      try {
-        return JSON.parse(retrievalLog.finalContextJson);
-      } catch {
-        return {};
-      }
-    })(),
-  );
-
-  if (!hits.success || !finalContext.success) {
-    return null;
-  }
-
-  return retrievalLogSchema.parse({
-    id: retrievalLog.id,
-    query_text: retrievalLog.queryText,
-    query_type: retrievalLog.queryType,
-    strategy: retrievalLog.strategy,
-    hits: hits.data,
-    final_context: finalContext.data,
-    created_at: retrievalLog.createdAt,
   });
 }
 
@@ -136,11 +82,7 @@ function resolveRelatedQuestions(questionIds: string[]) {
 }
 
 function buildSessionTitle(title: string | null | undefined, fallbackQuery: string) {
-  if (title && title.trim().length > 0) {
-    return title.trim();
-  }
-
-  return truncateText(fallbackQuery, 72);
+  return buildStoredSessionTitle(title, fallbackQuery);
 }
 
 export const qaSessionService = {
@@ -199,7 +141,7 @@ export const qaSessionService = {
       const citations = qaCitationSchema
         .array()
         .safeParse(parseJsonArray<QaCitation>(turn.citationsJson));
-      const retrievalLog = parseRetrievalLog(
+      const retrievalLog = parseStoredRetrievalLog(
         turn.retrievalLogId ? retrievalLogRepository.findById(turn.retrievalLogId) : null,
       );
       const relatedQuestions = retrievalLog

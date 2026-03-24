@@ -1,4 +1,7 @@
-import { ProjectSessionPlaceholder } from "@/features/resume/project-session-placeholder";
+import { notFound } from "next/navigation";
+
+import { ProjectSessionWorkbench } from "@/features/resume/project-session-workbench";
+import { resumeDeepDiveService } from "@/server/services/resume-deep-dive-service";
 
 type ProjectSessionPageProps = {
   params: Promise<{
@@ -11,8 +14,11 @@ export default async function ProjectSessionPage({
   params,
 }: ProjectSessionPageProps) {
   const { projectId, sessionId } = await params;
+  const detail = resumeDeepDiveService.getSessionDetail(projectId, sessionId);
 
-  return (
-    <ProjectSessionPlaceholder projectId={projectId} sessionId={sessionId} />
-  );
+  if (!detail) {
+    notFound();
+  }
+
+  return <ProjectSessionWorkbench detail={detail} />;
 }

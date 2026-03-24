@@ -156,7 +156,7 @@ Done when:
 - grounded answers with citations work on local data
 
 ### Slice 6 — Resume / deep dive
-Status: pending
+Status: done
 Goal:
 - implement resume parse flow and project deep-dive routes
 
@@ -166,13 +166,13 @@ Done when:
 ## 5. Immediate next action
 
 Next recommended action:
-- prepare bounded Codex run for Slice 6（Resume / deep dive）
-- keep scope bounded to resume parse flow、resume/project detail、deep-dive session creation / ask 主链
-- reuse Slice 5 已完成的 grounded QA / retrieval trace 能力；不要并行扩到 auth / 外部向量基础设施
+- commit/push Slice 6 close-out on `dev/mvp-delivery`
+- then decide the next post-MVP slice / hardening target（例如 parser-focused tests、tech-stack heuristic tightening、or broader planning）
+- keep follow-up bounded; do not immediately expand into auth / external infra / grading systems
 
 Reason:
-- Slice 5 已经完成实现、独立验证与 reviewer 正式验收，grounded QA 主链已可用。
-- 当前最有价值的是把 resume / project deep-dive 这条剩余 MVP 主链补齐，完成端到端产品叙事。
+- Slice 6 已完成实现、reviewer 复验与 blocker rework，MVP 的 resume / project deep-dive 主链已经收口。
+- 当前最有价值的是先把通过验收的状态与代码正式落到远端，再决定下一阶段是做质量加固还是扩后续产品能力。
 
 ## 6. Review protocol
 
@@ -211,3 +211,10 @@ Escalation rule:
 - 2026-03-24: Slice 5 validation 通过：`db:init` / `typecheck` / `lint` / `build --webpack` 全绿。
 - 2026-03-24: Slice 5 real local HTTP smoke 通过：`GET /qa` -> 200；`POST /api/qa/sessions` -> 201；`POST /api/qa/sessions/:sessionId/ask` -> 200；`GET /api/qa/sessions/:sessionId` -> 200；`GET /qa/:sessionId` -> 200，并确认 answer / citations / related questions / retrieval_log / retrieval trace 可见；negative-path 对无 grounding 的 nonsense query 返回 `409 retrieval_unavailable`。
 - 2026-03-24: Slice 5 经 reviewer 正式验收通过（PASS_WITH_NOTES）：Lightweight RAG QA 已达成合同范围；非阻塞 note 为当前 citations 仍以 question-centric owner 为主、仅带 source/interview backref，这在本 slice 的最小合同内可接受。
+- 2026-03-24: Slice 6（Resume / deep dive）已切到 in_progress，进入 execution；本轮目标是打通 resume source ingestion、structured project entities、`/resume`、project detail 与 deep-dive session 主链，不扩到 mock interviewer persona / grading system / auth / 外部基础设施。
+- 2026-03-24: Slice 6（Resume / deep dive）execution 完成：resume source ingestion -> parse -> structured resume/project persistence、`/resume`、`/resume/:resumeId`、`/resume/projects/:projectId`、`/api/resumes/from-source`、`/api/resumes/:resumeId/projects`、`/api/resume-projects/:projectId`、deep-dive session create / ask 主链已打通，并复用 Slice 5 的 retrieval/session 基础能力但未扩成通用聊天壳。
+- 2026-03-24: Slice 6 validation 通过：`db:init` / `typecheck` / `lint` / `build --webpack` 全绿。
+- 2026-03-24: Slice 6 real local HTTP smoke 通过：`POST /api/sources/text`（resume）-> 201；`POST /api/parse-jobs`（`extract_resume`）-> 201 / `needs_review`；`POST /api/resumes/from-source` -> 201；`GET /resume` -> 200；`GET /resume/:resumeId` -> 200；`GET /resume/projects/:projectId` -> 200；`POST /api/resume-projects/:projectId/deep-dive-sessions` -> 201；`POST /api/resume-projects/:projectId/deep-dive-sessions/:sessionId/ask` -> 200；`GET /resume/projects/:projectId/session/:sessionId` -> 200。
+- 2026-03-24: Slice 6 首轮 reviewer 复验 BLOCK：发现 `parse-source.ts` 在 Projects section 内会把相邻 plain project titles 合并成一个 `resume_project`，导致 structured project entities 不稳定；需做最小 parser rework 后再复验。
+- 2026-03-24: Slice 6 blocker rework 完成：`parse-source.ts` 增补 plain-title boundary 判断，修复多 plain-title project 样本的 block splitting；多项目 parse result 与 `resume_projects` persistence 已通过真实 HTTP smoke 复验，且 Slice 5 QA sanity smoke 无明显回归。
+- 2026-03-24: Slice 6 经 reviewer 最终复验通过（PASS_WITH_NOTES）：resume / project deep-dive 主链达成合同范围；非阻塞 note 为 `tech_stack` heuristic 仍可能有轻微误判，以及 repo 状态需在 commit 前收口。

@@ -567,6 +567,7 @@ export function retrieveHybridQaContext(input: {
           ),
       ),
     ),
+    resume_project_ids: [],
     strategy_notes:
       input.strategy === "hybrid"
         ? [
