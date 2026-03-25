@@ -29,7 +29,6 @@ export function ResumeDetailWorkbench({ detail }: { detail: ResumeDetail }) {
             ) : null}
           </>
         }
-        description="查看一份结构化简历及其提取项目。"
         routeLabel={`/resume/${detail.resumeDocument.id}`}
         title={detail.resumeDocument.candidate_name ?? "结构化简历"}
       />
@@ -53,14 +52,7 @@ export function ResumeDetailWorkbench({ detail }: { detail: ResumeDetail }) {
           </div>
 
           {detail.projects.length === 0 ? (
-            <EmptyList
-              bullets={[
-                "如果项目区块不清晰，可以回到 /resume 重新解析。",
-                "当前只有简历记录，还没有项目实体。",
-              ]}
-              description="这份简历还没有提取到项目。"
-              title="没有项目"
-            />
+            <EmptyList title="没有项目" />
           ) : (
             <div className="space-y-3">
               {detail.projects.map((project) => (

@@ -52,22 +52,18 @@ type ImportActionsPanelProps = {
 const importModes: Array<{
   id: ImportMode;
   title: string;
-  description: string;
 }> = [
   {
     id: "manual",
     title: "手工录入",
-    description: "直接写入题目、答案和可追溯来源。",
   },
   {
     id: "paste",
     title: "粘贴原文",
-    description: "保存原文来源，需要时再送去解析审核。",
   },
   {
     id: "upload",
     title: "文件上传",
-    description: "本轮暂不展开，保留入口说明。",
   },
 ];
 
@@ -143,7 +139,7 @@ export function ImportActionsPanel({
   const [manualQaForm, setManualQaForm] = useState({
     questionText: "",
     answerText: "",
-    category: [] as string[],
+    categories: [] as string[],
     tags: [] as string[],
   });
 
@@ -249,7 +245,7 @@ export function ImportActionsPanel({
         body: JSON.stringify({
           question_text: manualQaForm.questionText,
           answer_text: manualQaForm.answerText,
-          category: manualQaForm.category[0] ?? null,
+          categories: manualQaForm.categories,
           tags: manualQaForm.tags,
         }),
       });
@@ -265,7 +261,7 @@ export function ImportActionsPanel({
       setManualQaForm({
         questionText: "",
         answerText: "",
-        category: [],
+        categories: [],
         tags: [],
       });
       router.refresh();
@@ -306,9 +302,6 @@ export function ImportActionsPanel({
                 <p className="text-sm font-semibold text-text-strong">{mode.title}</p>
                 {isActive ? <Badge tone="accent">当前</Badge> : null}
               </div>
-              <p className="mt-2 text-sm leading-6 text-text-muted">
-                {mode.description}
-              </p>
             </button>
           );
         })}
@@ -334,9 +327,6 @@ export function ImportActionsPanel({
             <Badge tone="warning">暂缓</Badge>
             <p className="text-sm font-semibold text-text-strong">文件上传本轮不展开。</p>
           </div>
-          <p className="mt-3 text-sm leading-6 text-text-muted">
-            需要立即处理内容时，优先使用“手工录入”；原文较长时再用“粘贴原文”。
-          </p>
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <Button
               onClick={() => {
@@ -472,33 +462,29 @@ export function ImportActionsPanel({
           </Field>
 
           <div className="grid gap-4 xl:grid-cols-2">
-            <Field
-              description="单选；可从已有项选择，也可直接新建。"
-              label="分类"
-            >
+            <Field label="分类">
               <CreatableMultiSelect
                 createText="新建分类"
-                emptyText="未选择分类"
-                maxSelected={1}
+                createPlaceholder="新分类"
+                emptyText="未选择"
                 onChange={(nextValue) =>
                   setManualQaForm((current) => ({
                     ...current,
-                    category: nextValue,
+                    categories: nextValue,
                   }))
                 }
                 options={manualQaOptions.categories}
-                placeholder="输入或搜索分类，如 distributed_system"
-                value={manualQaForm.category}
+                searchPlaceholder="搜索分类"
+                triggerPlaceholder="选择分类"
+                value={manualQaForm.categories}
               />
             </Field>
 
-            <Field
-              description="多选；支持复用已有标签，也支持新建。"
-              label="标签"
-            >
+            <Field label="标签">
               <CreatableMultiSelect
                 createText="新建标签"
-                emptyText="未选择标签"
+                createPlaceholder="新标签"
+                emptyText="未选择"
                 onChange={(nextValue) =>
                   setManualQaForm((current) => ({
                     ...current,
@@ -506,7 +492,8 @@ export function ImportActionsPanel({
                   }))
                 }
                 options={manualQaOptions.tags}
-                placeholder="输入或搜索标签，如 redis"
+                searchPlaceholder="搜索标签"
+                triggerPlaceholder="选择标签"
                 value={manualQaForm.tags}
               />
             </Field>

@@ -36,7 +36,6 @@ export function ResumeWorkbench({ workspace }: { workspace: ResumeWorkspace }) {
             ) : null}
           </>
         }
-        description="导入简历、提取项目，并进入项目深挖。"
         routeLabel="/resume"
         title="简历 / 项目"
       />
@@ -71,15 +70,7 @@ export function ResumeWorkbench({ workspace }: { workspace: ResumeWorkspace }) {
           <SurfaceCard className="space-y-5">
             <SectionHeading title="项目列表" />
             {!newestResume || newestResume.projects.length === 0 ? (
-              <EmptyList
-                bullets={[
-                  "先保存简历来源并执行解析。",
-                  "再把预览结果写入简历和项目实体。",
-                  "然后进入项目详情开始深挖。",
-                ]}
-                description="还没有结构化项目。"
-                title="还没有项目"
-              />
+              <EmptyList title="还没有项目" />
             ) : (
               <div className="space-y-3">
                 {newestResume.projects.map((project) => (

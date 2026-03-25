@@ -91,7 +91,6 @@ export function ImportWorkbench({
             <Button href="/questions">打开题库</Button>
           </>
         }
-        description="手工录入是默认入口，会直接写入题库；粘贴原文作为次级入口，用于后续解析和审核。"
         routeLabel="/import"
         title="导入内容"
       />
@@ -112,29 +111,6 @@ export function ImportWorkbench({
         </SurfaceCard>
 
         <div className="space-y-6">
-          <SurfaceCard muted className="space-y-5">
-            <SectionHeading
-              description="手工录入会直接入库；粘贴原文需要显式创建解析任务，再进入人工审核。"
-              title="处理路径"
-            />
-            <div className="rounded-xl border border-border-strong bg-white p-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <Badge tone="accent">下一步</Badge>
-                    <span className="font-mono text-xs text-text-muted">/review</span>
-                  </div>
-                  <p className="text-sm font-semibold text-text-strong">
-                    粘贴原文后，到审核队列创建任务并确认导入。
-                  </p>
-                </div>
-                <Button href="/review" variant="primary">
-                  打开审核队列
-                </Button>
-              </div>
-            </div>
-          </SurfaceCard>
-
           <SurfaceCard className="space-y-5">
             <SectionHeading
               title={`最近来源（${totalSources}）`}
@@ -142,13 +118,6 @@ export function ImportWorkbench({
 
             {recentSources.length === 0 ? (
               <EmptyList
-                bullets={[
-                  "默认先用手工录入，直接补齐题目和答案。",
-                  "原文较长时再使用粘贴入口，保存为可追溯来源。",
-                  "手工录入会同时写入题目、答案和原始来源。",
-                  "粘贴原文后，可在审核队列继续解析和确认。",
-                ]}
-                description="还没有来源记录。左侧提交后会立即出现在这里。"
                 title="还没有导入内容"
               />
             ) : (

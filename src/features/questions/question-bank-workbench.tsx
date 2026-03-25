@@ -130,7 +130,6 @@ export function QuestionBankWorkbench({
             </Button>
           </>
         }
-        description="按关键词、分类和标签浏览已确认题目。"
         routeLabel="/questions"
         title="题库"
       />
@@ -273,15 +272,7 @@ export function QuestionBankWorkbench({
           </div>
 
           {result.items.length === 0 ? (
-            <EmptyList
-              bullets={[
-                "确认后的题目会出现在这里。",
-                "关键词会覆盖题目、标准答案、分类和标签。",
-                "题目详情页会保留答案变体和来源链接。",
-              ]}
-              description="当前筛选下没有匹配题目。"
-              title="没有匹配题目"
-            />
+            <EmptyList title="没有匹配题目" />
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full border-separate border-spacing-0">

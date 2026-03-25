@@ -12,3 +12,7 @@ export function normalizeQuestionText(value: string) {
 export function normalizeTagName(value: string) {
   return collapseWhitespace(value).toLowerCase();
 }
+
+export function normalizeCategoryName(value: string) {
+  return collapseWhitespace(value).toLowerCase();
+}

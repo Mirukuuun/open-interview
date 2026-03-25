@@ -145,7 +145,6 @@ export function QaSessionWorkbench({ detail }: QaSessionWorkbenchProps) {
             ) : null}
           </>
         }
-        description="查看会话轮次、引用和检索轨迹。"
         routeLabel={`/qa/${detail.aiSession.id}`}
         title={detail.aiSession.title ?? "QA 会话"}
       />
@@ -162,27 +161,14 @@ export function QaSessionWorkbench({ detail }: QaSessionWorkbenchProps) {
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
         <div className="space-y-6">
           <SurfaceCard className="space-y-5">
-            <SectionHeading
-              description="Continue the existing grounded session without losing citation or retrieval trace visibility."
-              title="Continue session"
-            />
+            <SectionHeading title="Continue session" />
             <QaAskForm mode="existing" sessionId={detail.aiSession.id} />
           </SurfaceCard>
 
           <SurfaceCard className="space-y-5">
-            <SectionHeading
-              description="Turn history is ordered, reloadable, and keeps the grounding artifacts next to each assistant answer."
-              title="Session transcript"
-            />
+            <SectionHeading title="Session transcript" />
             {detail.turns.length === 0 ? (
-              <EmptyList
-                bullets={[
-                  "Use the ask form above to create the first grounded turn.",
-                  "Assistant turns will store citations plus retrieval trace.",
-                ]}
-                description="This QA session has no turns yet."
-                title="No turns"
-              />
+              <EmptyList title="No turns" />
             ) : (
               <div className="space-y-4">
                 {detail.turns.map((turn) => (
@@ -205,10 +191,7 @@ export function QaSessionWorkbench({ detail }: QaSessionWorkbenchProps) {
                     {turn.role === "assistant" ? (
                       <div className="mt-5 space-y-5">
                         <div className="space-y-3">
-                          <SectionHeading
-                            description="Citations are mandatory for grounded answers."
-                            title={`Citations (${turn.citations.length})`}
-                          />
+                          <SectionHeading title={`Citations (${turn.citations.length})`} />
                           {renderCitations(turn.citations)}
                         </div>
                         {renderTrace(turn.retrieval_log)}
@@ -223,10 +206,7 @@ export function QaSessionWorkbench({ detail }: QaSessionWorkbenchProps) {
 
         <div className="space-y-6">
           <SurfaceCard className="space-y-4" muted>
-            <SectionHeading
-              description="The latest related items stay visible without hiding the main answer thread."
-              title="Related questions"
-            />
+            <SectionHeading title="Related questions" />
             {latestAssistantTurn?.related_questions.length ? (
               <div className="space-y-3">
                 {latestAssistantTurn.related_questions.map((question) => (
@@ -252,10 +232,7 @@ export function QaSessionWorkbench({ detail }: QaSessionWorkbenchProps) {
           </SurfaceCard>
 
           <SurfaceCard className="space-y-4">
-            <SectionHeading
-              description="The newest trace summary stays visible for quick debugging."
-              title="Latest retrieval summary"
-            />
+            <SectionHeading title="Latest retrieval summary" />
             {latestAssistantTurn?.retrieval_log ? (
               <div className="space-y-3 text-sm text-text-strong">
                 <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">

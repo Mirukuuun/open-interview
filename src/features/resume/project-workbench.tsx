@@ -32,7 +32,6 @@ export function ProjectWorkbench({ project }: { project: ResumeProjectDetail }) 
             <StartDeepDiveSessionButton projectId={project.id} />
           </>
         }
-        description="以单个项目为单位查看上下文、会话历史和建议追问。"
         routeLabel={`/resume/projects/${project.id}`}
         title={project.name}
       />
@@ -115,14 +114,7 @@ export function ProjectWorkbench({ project }: { project: ResumeProjectDetail }) 
           <SurfaceCard className="space-y-5">
             <SectionHeading title="会话历史" />
             {project.sessions.length === 0 ? (
-              <EmptyList
-                bullets={[
-                  "从当前页面开始一次项目深挖。",
-                  "首轮问题会优先使用项目建议追问。",
-                ]}
-                description="这个项目还没有深挖会话。"
-                title="还没有会话"
-              />
+              <EmptyList title="还没有会话" />
             ) : (
               <div className="space-y-3">
                 {project.sessions.map((session) => (

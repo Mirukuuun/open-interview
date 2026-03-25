@@ -52,7 +52,6 @@ export function InterviewDetailWorkbench({
             </Button>
           </>
         }
-        description="集中查看面经元信息、关联题目和来源原文。"
         routeLabel={`/interviews/${interview.id}`}
         title={titleParts.join(" / ")}
       />

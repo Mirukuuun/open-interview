@@ -86,7 +86,6 @@ export function ProjectSessionWorkbench({
             />
           </>
         }
-        description="查看深挖对话、提示和检索轨迹。"
         routeLabel={`/resume/projects/${detail.resumeProject.id}/session/${detail.aiSession.id}`}
         title={detail.aiSession.title ?? `${detail.resumeProject.name} 深挖`}
       />
@@ -106,10 +105,7 @@ export function ProjectSessionWorkbench({
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
         <div className="space-y-6">
           <SurfaceCard className="space-y-5">
-            <SectionHeading
-              description="Submit the next project answer while keeping the latest interviewer prompt visible above."
-              title="Continue deep dive"
-            />
+            <SectionHeading title="Continue deep dive" />
             <DeepDiveAnswerForm
               projectId={detail.resumeProject.id}
               sessionId={detail.aiSession.id}
@@ -117,19 +113,9 @@ export function ProjectSessionWorkbench({
           </SurfaceCard>
 
           <SurfaceCard className="space-y-5">
-            <SectionHeading
-              description="Turns are preserved in order so the project narrative can be reviewed, not just improvised once."
-              title="Session transcript"
-            />
+            <SectionHeading title="Session transcript" />
             {detail.turns.length === 0 ? (
-              <EmptyList
-                bullets={[
-                  "Start a deep-dive session from the project page.",
-                  "The first assistant turn will seed the project prompt.",
-                ]}
-                description="This session has no turns yet."
-                title="No turns"
-              />
+              <EmptyList title="No turns" />
             ) : (
               <div className="space-y-4">
                 {detail.turns.map((turn) => (
@@ -151,10 +137,7 @@ export function ProjectSessionWorkbench({
 
                     {turn.role === "assistant" && turn.coach_hints.length > 0 ? (
                       <div className="mt-5 space-y-3">
-                        <SectionHeading
-                          description="Hints stay explicit so the session remains a workbench, not a mystery box."
-                          title={`Coach hints (${turn.coach_hints.length})`}
-                        />
+                        <SectionHeading title={`Coach hints (${turn.coach_hints.length})`} />
                         {turn.coach_hints.map((hint) => (
                           <div
                             className="rounded-xl border border-border-muted bg-white px-4 py-4 text-sm leading-6 text-text-strong"
@@ -169,7 +152,6 @@ export function ProjectSessionWorkbench({
                     {turn.role === "assistant" && turn.related_questions.length > 0 ? (
                       <div className="mt-5 space-y-3">
                         <SectionHeading
-                          description="Related question-bank items are optional supporting context, not the main surface."
                           title={`Related questions (${turn.related_questions.length})`}
                         />
                         <div className="space-y-3">
@@ -201,10 +183,7 @@ export function ProjectSessionWorkbench({
 
         <div className="space-y-6">
           <SurfaceCard className="space-y-4" muted>
-            <SectionHeading
-              description="Project context stays visible while the conversation evolves."
-              title="Project context"
-            />
+            <SectionHeading title="Project context" />
             <div className="rounded-xl border border-border-strong bg-white px-4 py-4 text-sm leading-6 text-text-muted">
               {detail.resumeProject.summary ?? "No summary extracted."}
             </div>
@@ -230,10 +209,7 @@ export function ProjectSessionWorkbench({
           </SurfaceCard>
 
           <SurfaceCard className="space-y-4">
-            <SectionHeading
-              description="The latest interviewer question stays easy to revisit before answering."
-              title="Latest prompt"
-            />
+            <SectionHeading title="Latest prompt" />
             {latestAssistantTurn ? (
               <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-4 text-sm leading-6 text-text-strong">
                 {latestAssistantTurn.content}

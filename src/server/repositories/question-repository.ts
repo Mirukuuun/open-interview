@@ -4,13 +4,17 @@ import { z } from "zod";
 import { db, sqlite } from "@/server/db/client";
 import {
   answerVariants,
+  questionCategories,
   questionItems,
   questionTags,
   sourceQuestionRefs,
   tags,
 } from "@/server/db/schema";
 import { createOpaqueId, nowUtcIso } from "@/server/repositories/ids";
-import { normalizeQuestionText } from "@/server/repositories/normalization";
+import {
+  normalizeCategoryName,
+  normalizeQuestionText,
+} from "@/server/repositories/normalization";
 import { searchIndexRepository } from "@/server/repositories/search-index-repository";
 import { tagRepository } from "@/server/repositories/tag-repository";
 
@@ -78,6 +82,18 @@ function getQuestionTagRows(questionItemId: string) {
     .innerJoin(tags, eq(questionTags.tagId, tags.id))
     .where(eq(questionTags.questionItemId, questionItemId))
     .orderBy(tags.name)
+    .all();
+}
+
+function getQuestionCategoryRows(questionItemId: string) {
+  return db
+    .select({
+      name: questionCategories.name,
+      normalizedName: questionCategories.normalizedName,
+    })
+    .from(questionCategories)
+    .where(eq(questionCategories.questionItemId, questionItemId))
+    .orderBy(questionCategories.name)
     .all();
 }
 
@@ -172,7 +188,7 @@ export const questionRepository = {
   },
 
   listCategories(limit = 24) {
-    return (
+    const legacyCategories = (
       sqlite
         .prepare(
           `
@@ -190,6 +206,73 @@ export const questionRepository = {
         category: string;
       }>
     ).map((item) => item.category);
+    const multiCategories = (
+      sqlite
+        .prepare(
+          `
+            SELECT qc.name AS name
+            FROM question_categories qc
+            INNER JOIN question_items q
+              ON q.id = qc.question_item_id
+            WHERE q.review_status = 'active'
+              AND TRIM(qc.name) <> ''
+            GROUP BY qc.normalized_name
+            ORDER BY COUNT(*) DESC, qc.name COLLATE NOCASE ASC
+            LIMIT ?
+          `,
+        )
+        .all(limit) as Array<{
+        name: string;
+      }>
+    ).map((item) => item.name);
+
+    return Array.from(
+      new Map(
+        [...legacyCategories, ...multiCategories].map((category) => [
+          normalizeCategoryName(category),
+          category,
+        ]),
+      ).values(),
+    ).slice(0, limit);
+  },
+
+  replaceCategories(questionItemId: string, categoryNames: string[]) {
+    const normalizedCategoryNames = Array.from(
+      new Map(
+        categoryNames
+          .map((name) => name.trim())
+          .filter((name) => name.length > 0)
+          .map((name) => [normalizeCategoryName(name), name]),
+      ).entries(),
+    ).map(([normalizedName, name]) => ({
+      name,
+      normalizedName,
+    }));
+
+    db.delete(questionCategories)
+      .where(eq(questionCategories.questionItemId, questionItemId))
+      .run();
+
+    if (normalizedCategoryNames.length === 0) {
+      return [];
+    }
+
+    db.insert(questionCategories)
+      .values(
+        normalizedCategoryNames.map((category) => ({
+          questionItemId,
+          name: category.name,
+          normalizedName: category.normalizedName,
+        })),
+      )
+      .onConflictDoNothing()
+      .run();
+
+    return getQuestionCategoryRows(questionItemId);
+  },
+
+  listQuestionCategories(questionItemId: string) {
+    return getQuestionCategoryRows(questionItemId);
   },
 
   createAnswerVariant(input: z.input<typeof createAnswerVariantInputSchema>) {

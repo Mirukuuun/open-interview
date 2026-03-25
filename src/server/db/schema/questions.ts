@@ -1,6 +1,7 @@
 import {
   index,
   integer,
+  primaryKey,
   sqliteTable,
   text,
   uniqueIndex,
@@ -68,6 +69,24 @@ export const answerVariants = sqliteTable(
   (table) => [
     index("answer_variants_question_item_idx").on(table.questionItemId),
     index("answer_variants_variant_type_idx").on(table.variantType),
+  ],
+);
+
+export const questionCategories = sqliteTable(
+  "question_categories",
+  {
+    questionItemId: text("question_item_id")
+      .notNull()
+      .references(() => questionItems.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    normalizedName: text("normalized_name").notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.questionItemId, table.normalizedName],
+      name: "question_categories_pk",
+    }),
+    index("question_categories_normalized_name_idx").on(table.normalizedName),
   ],
 );
 

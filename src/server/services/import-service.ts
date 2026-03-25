@@ -16,7 +16,7 @@ type CreateTextSourceInput = {
 type CreateManualQaInput = {
   questionText: string;
   answerText: string;
-  category?: string | null;
+  categories: string[];
   tags: string[];
 };
 
@@ -83,8 +83,8 @@ function buildManualSourceRawText(input: CreateManualQaInput) {
     `Answer: ${input.answerText}`,
   ];
 
-  if (input.category) {
-    lines.push("", `Category: ${input.category}`);
+  if (input.categories.length > 0) {
+    lines.push("", `Categories: ${input.categories.join(", ")}`);
   }
 
   if (input.tags.length > 0) {
@@ -110,6 +110,25 @@ function mergeQuestionTags(questionItemId: string, tags: string[]) {
   return questionRepository.replaceTags(questionItemId, [...existingTagNames, ...tags]);
 }
 
+function mergeQuestionCategories(questionItemId: string, categories: string[]) {
+  if (categories.length === 0) {
+    return [];
+  }
+
+  const questionItem = questionRepository.findById(questionItemId);
+  const existingCategoryNames = [
+    ...(questionItem?.category ? [questionItem.category] : []),
+    ...questionRepository
+      .listQuestionCategories(questionItemId)
+      .map((category) => category.name),
+  ];
+
+  return questionRepository.replaceCategories(questionItemId, [
+    ...existingCategoryNames,
+    ...categories,
+  ]);
+}
+
 function pickManualAnswerVariantType(
   canonicalAnswer: string | null,
   answerText: string,
@@ -133,6 +152,7 @@ export const importService = {
 
   createManualQa(input: CreateManualQaInput) {
     return sqlite.transaction(() => {
+      const primaryCategory = input.categories[0] ?? null;
       const sourceDocument = sourceDocumentRepository.create({
         kind: "manual_input",
         title: buildManualSourceTitle(input.questionText),
@@ -146,7 +166,7 @@ export const importService = {
         questionItem = questionRepository.create({
           questionText: input.questionText,
           canonicalAnswer: input.answerText,
-          category: input.category ?? null,
+          category: primaryCategory,
           reviewStatus: "active",
           createdFrom: "manual",
         });
@@ -156,9 +176,9 @@ export const importService = {
             ...(questionItem.canonicalAnswer
               ? {}
               : { canonicalAnswer: input.answerText }),
-            ...(questionItem.category || !input.category
+            ...(questionItem.category || !primaryCategory
               ? {}
-              : { category: input.category }),
+              : { category: primaryCategory }),
             ...(questionItem.reviewStatus === "draft"
               ? { reviewStatus: "active" as const }
               : {}),
@@ -187,6 +207,7 @@ export const importService = {
         sourceSnippet: buildManualSourceSnippet(input),
       });
 
+      mergeQuestionCategories(questionItem.id, input.categories);
       mergeQuestionTags(questionItem.id, input.tags);
 
       return {

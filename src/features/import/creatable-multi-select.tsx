@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,11 +10,12 @@ type CreatableMultiSelectProps = {
   options: string[];
   value: string[];
   onChange: (nextValue: string[]) => void;
-  placeholder: string;
+  triggerPlaceholder: string;
+  searchPlaceholder: string;
+  createPlaceholder: string;
   emptyText: string;
   createText: string;
   disabled?: boolean;
-  maxSelected?: number;
 };
 
 function normalizeValue(value: string) {
@@ -31,13 +32,18 @@ export function CreatableMultiSelect({
   options,
   value,
   onChange,
-  placeholder,
+  triggerPlaceholder,
+  searchPlaceholder,
+  createPlaceholder,
   emptyText,
   createText,
   disabled = false,
-  maxSelected,
 }: CreatableMultiSelectProps) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const [draftValue, setDraftValue] = useState("");
+  const normalizedQuery = normalizeValue(query);
   const normalizedDraft = normalizeValue(draftValue);
   const allOptions = useMemo(
     () =>
@@ -52,23 +58,65 @@ export function CreatableMultiSelect({
     [options, value],
   );
   const visibleOptions = useMemo(() => {
-    const query = normalizedDraft.toLowerCase();
+    const selectedValues = new Set(value.map((item) => item.toLowerCase()));
+    const currentQuery = normalizedQuery.toLowerCase();
 
     return allOptions
       .filter((option) =>
-        query.length === 0 ? true : option.toLowerCase().includes(query),
+        currentQuery.length === 0
+          ? true
+          : option.toLowerCase().includes(currentQuery),
       )
+      .sort((left, right) => {
+        const leftSelected = selectedValues.has(left.toLowerCase());
+        const rightSelected = selectedValues.has(right.toLowerCase());
+
+        if (leftSelected === rightSelected) {
+          return left.localeCompare(right, "zh-CN", {
+            sensitivity: "base",
+          });
+        }
+
+        return leftSelected ? -1 : 1;
+      })
       .slice(0, 12);
-  }, [allOptions, normalizedDraft]);
+  }, [allOptions, normalizedQuery, value]);
   const canCreate =
     normalizedDraft.length > 0 && !includesValue(allOptions, normalizedDraft);
 
-  function setSelectedValue(nextValue: string) {
-    if (maxSelected === 1) {
-      onChange([nextValue]);
+  function closePanel() {
+    setIsOpen(false);
+    setQuery("");
+    setDraftValue("");
+  }
+
+  useEffect(() => {
+    if (!isOpen) {
       return;
     }
 
+    function handlePointerDown(event: MouseEvent) {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        closePanel();
+      }
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        closePanel();
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [isOpen]);
+
+  function toggleValue(nextValue: string) {
     if (includesValue(value, nextValue)) {
       onChange(
         value.filter(
@@ -92,12 +140,54 @@ export function CreatableMultiSelect({
       return;
     }
 
-    setSelectedValue(normalizedDraft);
+    onChange([...value, normalizedDraft]);
     setDraftValue("");
+    setQuery("");
+  }
+
+  function summarizeSelection() {
+    if (value.length === 0) {
+      return triggerPlaceholder;
+    }
+
+    if (value.length <= 2) {
+      return value.join("、");
+    }
+
+    return `已选 ${value.length} 项`;
   }
 
   return (
-    <div className="space-y-3">
+    <div className="relative space-y-3" ref={rootRef}>
+      <button
+        aria-expanded={isOpen}
+        aria-haspopup="dialog"
+        className={cn(
+          "flex min-h-10 w-full items-center justify-between gap-3 rounded-lg border border-border-strong bg-white px-3 py-2 text-left text-sm outline-none transition-colors focus-visible:border-accent",
+          isOpen ? "border-accent" : "hover:border-border-strong",
+        )}
+        disabled={disabled}
+        onClick={() => {
+          if (isOpen) {
+            closePanel();
+            return;
+          }
+
+          setIsOpen(true);
+        }}
+        type="button"
+      >
+        <span
+          className={cn(
+            "truncate",
+            value.length === 0 ? "text-text-muted" : "text-text-strong",
+          )}
+        >
+          {summarizeSelection()}
+        </span>
+        <span className="text-xs text-text-muted">{isOpen ? "收起" : "展开"}</span>
+      </button>
+
       <div className="flex flex-wrap gap-2">
         {value.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border-strong px-3 py-2 text-sm text-text-muted">
@@ -119,58 +209,78 @@ export function CreatableMultiSelect({
         )}
       </div>
 
-      <div className="flex flex-col gap-3 md:flex-row">
-        <Input
-          disabled={disabled}
-          onChange={(event) => setDraftValue(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === ",") {
-              event.preventDefault();
-              addDraftValue();
-            }
-          }}
-          placeholder={placeholder}
-          value={draftValue}
-        />
-        <Button
-          className="shrink-0"
-          disabled={disabled || !canCreate}
-          onClick={addDraftValue}
-          type="button"
-        >
-          {createText}
-        </Button>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        {visibleOptions.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-border-strong px-3 py-2 text-sm text-text-muted">
-            没有匹配项，可直接新建。
+      {isOpen ? (
+        <div className="absolute top-full left-0 z-20 mt-2 w-full rounded-xl border border-border-strong bg-white shadow-lg">
+          <div className="border-b border-border-muted p-3">
+            <Input
+              disabled={disabled}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={searchPlaceholder}
+              value={query}
+            />
           </div>
-        ) : (
-          visibleOptions.map((option) => {
-            const selected = includesValue(value, option);
 
-            return (
-              <button
-                aria-pressed={selected}
-                className={cn(
-                  "rounded-full border px-3 py-1.5 text-sm transition-colors",
-                  selected
-                    ? "border-accent bg-accent-soft text-accent"
-                    : "border-border-muted bg-surface-muted text-text-strong hover:border-border-strong hover:bg-white",
-                )}
+          <div className="max-h-64 overflow-auto p-2">
+            {visibleOptions.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-border-strong px-3 py-4 text-sm text-text-muted">
+                没有匹配项
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {visibleOptions.map((option) => {
+                  const selected = includesValue(value, option);
+
+                  return (
+                    <button
+                      aria-pressed={selected}
+                      className={cn(
+                        "flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors",
+                        selected
+                          ? "bg-accent-soft text-accent"
+                          : "text-text-strong hover:bg-surface-muted",
+                      )}
+                      disabled={disabled}
+                      key={option}
+                      onClick={() => toggleValue(option)}
+                      type="button"
+                    >
+                      <span>{option}</span>
+                      <span className="text-xs">
+                        {selected ? "已选" : "选择"}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="border-t border-border-muted p-3">
+            <div className="flex flex-col gap-3 md:flex-row">
+              <Input
                 disabled={disabled}
-                key={option}
-                onClick={() => setSelectedValue(option)}
+                onChange={(event) => setDraftValue(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === ",") {
+                    event.preventDefault();
+                    addDraftValue();
+                  }
+                }}
+                placeholder={createPlaceholder}
+                value={draftValue}
+              />
+              <Button
+                className="shrink-0"
+                disabled={disabled || !canCreate}
+                onClick={addDraftValue}
                 type="button"
               >
-                {option}
-              </button>
-            );
-          })
-        )}
-      </div>
+                {createText}
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

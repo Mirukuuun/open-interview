@@ -54,7 +54,6 @@ export function QaWorkbench({
             </Button>
           </>
         }
-        description="基于本地题库提问，答案会附带引用和检索轨迹。"
         routeLabel="/qa"
         title="AI 问答"
       />
@@ -75,23 +74,13 @@ export function QaWorkbench({
         <SurfaceCard className="space-y-5">
           <SectionHeading title="提问" />
           <QaAskForm initialQuery={initialQuery} mode="new" />
-          <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-4 text-sm leading-6 text-text-muted">
-            当前默认使用本地 FTS 和结构化召回，不依赖外部向量服务。
-          </div>
         </SurfaceCard>
 
         <div className="space-y-6">
           <SurfaceCard className="space-y-4" muted>
             <SectionHeading title="最近会话" />
             {recentSessions.length === 0 ? (
-              <EmptyList
-                bullets={[
-                  "先提一个问题创建会话。",
-                  "会话详情页会保留轮次、引用和检索轨迹。",
-                ]}
-                description="还没有 QA 会话。"
-                title="还没有会话"
-              />
+              <EmptyList title="还没有会话" />
             ) : (
               <div className="space-y-3">
                 {recentSessions.map((session) => (
@@ -122,21 +111,6 @@ export function QaWorkbench({
                 ))}
               </div>
             )}
-          </SurfaceCard>
-
-          <SurfaceCard className="space-y-4">
-            <SectionHeading title="轨迹说明" />
-            <div className="space-y-3 text-sm text-text-muted">
-              <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
-                每次回答都会存 `retrieval_log` 和引用数据。
-              </div>
-              <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
-                来源摘录、题目分块和答案分块都会本地持久化。
-              </div>
-              <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
-                `/qa/:sessionId` 会展示命中片段、策略说明和相关题目。
-              </div>
-            </div>
           </SurfaceCard>
         </div>
       </div>

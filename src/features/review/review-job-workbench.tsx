@@ -315,7 +315,6 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
             </Button>
           </>
         }
-        description="左侧看原文，中间处理候选题，右侧看导入预览。"
         routeLabel={`/review/${jobSummary.id}`}
         title="审核解析结果"
       />
@@ -411,7 +410,7 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
                 value={interviewDraft.roundInfo}
               />
             </Field>
-            <Field label="标签" description="逗号分隔。">
+            <Field label="标签">
               <Input
                 disabled={jobSummary.job_type !== "extract_interview"}
                 onChange={(event) =>
@@ -453,25 +452,9 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
           <SectionHeading title={`候选题（${questionDrafts.length}）`} />
 
           {!detail.result ? (
-            <EmptyList
-              bullets={[
-                "任务可能失败了，或结果还没有落到 result_json。",
-                "可以先检查左侧原文，再重试解析。",
-                "没有结果时不会执行入库。",
-              ]}
-              description="当前任务没有可展示的解析结果。"
-              title="暂无解析结果"
-            />
+            <EmptyList title="暂无解析结果" />
           ) : questionDrafts.length === 0 ? (
-            <EmptyList
-              bullets={[
-                "这通常表示解析没有稳定识别出候选题。",
-                "你仍然可以保留这次审核记录，然后决定是否重试。",
-                "如果是简历任务，结构化确认会留到后续流程。",
-              ]}
-              description="result_json 已持久化，但 questions 为空。"
-              title="没有提取到候选题"
-            />
+            <EmptyList title="没有提取到候选题" />
           ) : (
             <div className="space-y-4">
               {questionDrafts.map((question, index) => (
@@ -619,7 +602,7 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
                           </Select>
                         </Field>
 
-                        <Field description="仅在合并时需要。" label="目标题目 ID">
+                        <Field label="目标题目 ID">
                           <Input
                             disabled={question.action !== "merge"}
                             onChange={(event) =>
@@ -653,25 +636,9 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
             <SectionHeading title="导入预览" />
 
             {jobSummary.job_type !== "extract_interview" ? (
-              <EmptyList
-                bullets={[
-                  "当前只支持面经解析结果的人工确认。",
-                  "简历解析结果会保留在 parse_job.result_json 中。",
-                  "后续会补简历 / 项目的写入路径。",
-                ]}
-                description="这个任务类型暂不支持确认写入。"
-                title="当前类型仅支持查看，不支持确认写入"
-              />
+              <EmptyList title="当前类型仅支持查看，不支持确认写入" />
             ) : !activeCandidate ? (
-              <EmptyList
-                bullets={[
-                  "没有候选题时，右侧只保留批量摘要和操作说明。",
-                  "你仍然可以决定是否把这次审核标记为已确认。",
-                  "如果需要重新提取，可以直接重试解析。",
-                ]}
-                description="当前没有选中的候选题。"
-                title="暂无候选题预览"
-              />
+              <EmptyList title="暂无候选题预览" />
             ) : activeCandidate.action === "merge" ? (
               activeMergeTarget ? (
                   <div className="space-y-4">
@@ -702,26 +669,10 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
                   </Field>
                 </div>
               ) : (
-                <EmptyList
-                  bullets={[
-                    "手填的 target_question_id 如果不在当前已加载预览里，这里不会自动补全。",
-                    "确认时服务层仍会校验目标题目是否存在。",
-                    "如果只想新建，请把处理方式改成新建。",
-                  ]}
-                  description="当前合并目标没有现成预览。"
-                  title="未找到合并目标预览"
-                />
+                <EmptyList title="未找到合并目标预览" />
               )
             ) : activeCandidate.action === "skip" ? (
-              <EmptyList
-                bullets={[
-                  "跳过不会写入 question_item，也不会创建 source_question_ref。",
-                  "这条候选题仍会保留在 parse_job.result_json 里供回看。",
-                  "如果只是暂时不确定，可以先保留跳过，后续再重跑或人工处理。",
-                ]}
-                description="这条候选题被标记为跳过。"
-                title="当前候选题不会导入"
-              />
+              <EmptyList title="当前候选题不会导入" />
             ) : (
               <div className="space-y-4">
                 <div className="flex flex-wrap items-center gap-2">

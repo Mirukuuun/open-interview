@@ -108,7 +108,6 @@ export function InterviewListWorkbench({
             </Button>
           </>
         }
-        description="按公司、标签和来源上下文浏览已确认面经。"
         routeLabel="/interviews"
         title="面经"
       />
@@ -198,15 +197,7 @@ export function InterviewListWorkbench({
           </div>
 
           {result.items.length === 0 ? (
-            <EmptyList
-              bullets={[
-                "确认后的面经会出现在这里。",
-                "关键词会覆盖面经元数据和来源文本。",
-                "详情页会同时保留原文和关联题目。",
-              ]}
-              description="当前筛选下没有匹配面经。"
-              title="没有匹配面经"
-            />
+            <EmptyList title="没有匹配面经" />
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full border-separate border-spacing-0">

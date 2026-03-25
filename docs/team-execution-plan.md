@@ -166,13 +166,14 @@ Done when:
 ## 5. Immediate next action
 
 Next recommended action:
-- commit/push Slice 6 close-out on `dev/mvp-delivery`
-- then decide the next post-MVP slice / hardening target（例如 parser-focused tests、tech-stack heuristic tightening、or broader planning）
+- commit/push AT-V1-010 acceptance-fix round 2 close-out on `dev/mvp-delivery`
+- redeploy the production service to latest commit for Miruku's continued acceptance
+- then wait for the next acceptance round / screenshots before deciding whether to open a bounded round 3
 - keep follow-up bounded; do not immediately expand into auth / external infra / grading systems
 
 Reason:
-- Slice 6 已完成实现、reviewer 复验与 blocker rework，MVP 的 resume / project deep-dive 主链已经收口。
-- 当前最有价值的是先把通过验收的状态与代码正式落到远端，再决定下一阶段是做质量加固还是扩后续产品能力。
+- AT-V1-010 已经通过 reviewer 正式复验（PASS_WITH_NOTES），当前剩余工作只是在 task / plan 收口后把代码推远端并切上线。
+- Miruku 正处于连续人工验收阶段，最有价值的是先交付当前 accepted fixes，再根据下一轮反馈决定是否继续做局部 polish。
 
 ## 6. Review protocol
 
@@ -221,3 +222,6 @@ Escalation rule:
 - 2026-03-24: 启动 AT-V1-009（Open Interview 验收改动 Round 1），范围聚焦：首轮中文化、`/review` 列表减负、`/import` 默认 manual direct-ingest、manual entry category/tag 受控可创建，以及削减冗长解释文案。
 - 2026-03-24: AT-V1-009 首轮 execution 曾短暂漂移到被禁止的 parse 后 silent auto-confirm 方向；该方向已在 bounded recovery 中明确移除，parse-review-confirm 主链保持显式 review gate。
 - 2026-03-24: AT-V1-009 经 reviewer 正式验收通过（PASS_WITH_NOTES）：major surfaces 首轮中文化达标，`/review` 明显减负，`/import` 默认回到 manual direct-ingest，category/tag 受控可创建并可复用持久化值；非阻塞 note 为中文化仍属 first pass，且 repo/task 状态需在 commit 前收口。
+除冗余解释性文本；把 `/import` 手工录入的 category / tags 改成真正的下拉面板式多选 + 面板底部创建 + 持久化复用 + 中文化。
+- 2026-03-25: AT-V1-010 中途因 Codex workspace 失效（`402 deactivated_workspace`）短暂阻塞；恢复可用账号后继续在 bounded 范围内完成实现。
+- 2026-03-25: AT-V1-010 closeout validation 与 reviewer 独立复验均通过（PASS_WITH_NOTES）：validation（`typecheck` / `lint` / `build --webpack`）全绿，`/import` 的 category / tags 已真实变成下拉面板多选并支持面板底部创建与持久化复用，多处 workbench 冗余说明文案进一步减少；非阻塞 note 为 category 当前仍是 legacy 主字段 + `question_categories` 多值表并存的过渡形态，后续如深化 category 语义可再统一读取/展示口径。

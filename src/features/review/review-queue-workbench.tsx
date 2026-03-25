@@ -233,7 +233,6 @@ export function ReviewQueueWorkbench({
             </Button>
           </>
         }
-        description="所有 canonical 写入都必须经过明确确认。这里负责创建解析任务、查看失败状态，并进入审核详情。"
         routeLabel="/review"
         title="审核队列"
       />
@@ -336,15 +335,7 @@ export function ReviewQueueWorkbench({
         </div>
 
         {visiblePendingSources.length === 0 ? (
-          <EmptyList
-            bullets={[
-              "新导入且尚未解析的来源会出现在这里。",
-              "创建任务后会直接进入审核详情页。",
-              "手工录入不会进入这一队列。",
-            ]}
-            description="当前没有待创建任务的来源。"
-            title="没有待处理来源"
-          />
+          <EmptyList title="没有待处理来源" />
         ) : (
           <div className="space-y-3">
             {visiblePendingSources.map((sourceDocument) => {
@@ -400,19 +391,10 @@ export function ReviewQueueWorkbench({
       <SurfaceCard className="space-y-5">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <SectionHeading title={`解析任务（${visibleJobs.length}）`} />
-          <p className="text-sm text-text-muted">保留任务记录，便于扫描状态、进入审核和重试。</p>
         </div>
 
         {visibleJobs.length === 0 ? (
-          <EmptyList
-            bullets={[
-              "先从上方待处理来源创建任务。",
-              "失败任务会保留在这里，便于重试。",
-              "待审核任务可一键进入详情页确认导入。",
-            ]}
-            description="当前筛选下没有匹配的解析任务。"
-            title="没有可见任务"
-          />
+          <EmptyList title="没有可见任务" />
         ) : (
           <div className="overflow-hidden rounded-xl border border-border-strong">
             <table className="min-w-full border-collapse text-left text-sm">

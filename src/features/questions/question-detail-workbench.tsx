@@ -55,7 +55,6 @@ export function QuestionDetailWorkbench({
             )}
           </>
         }
-        description="集中查看标准答案、答案变体和关联来源。"
         routeLabel={`/questions/${question.id}`}
         title={question.questionText}
       />

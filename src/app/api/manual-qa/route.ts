@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     const result = importService.createManualQa({
       questionText: parseResult.data.question_text,
       answerText: parseResult.data.answer_text,
-      category: parseResult.data.category ?? null,
+      categories: parseResult.data.categories,
       tags: parseResult.data.tags,
     });
 

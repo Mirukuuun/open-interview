@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 type PageHeaderProps = {
   eyebrow?: string;
   title: string;
-  description: string;
+  description?: string;
   routeLabel: string;
   actions?: React.ReactNode;
   className?: string;
@@ -34,9 +34,11 @@ export function PageHeader({
           <h1 className="text-2xl font-semibold tracking-[-0.03em] text-text-strong">
             {title}
           </h1>
-          <p className="max-w-3xl text-sm leading-6 text-text-muted">
-            {description}
-          </p>
+          {description ? (
+            <p className="max-w-3xl text-sm leading-6 text-text-muted">
+              {description}
+            </p>
+          ) : null}
         </div>
       </div>
       {actions ? (

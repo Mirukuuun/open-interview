@@ -67,6 +67,16 @@ function coercePositiveInteger(defaultValue: number, maxValue: number) {
   );
 }
 
+function dedupeStringArray(values: string[]) {
+  return Array.from(
+    new Set(
+      values
+        .map((value) => value.trim())
+        .filter((value) => value.length > 0),
+    ),
+  );
+}
+
 export const createTextSourceRequestSchema = z.object({
   title: z.string().trim().min(1),
   kind: ingestableSourceDocumentKindSchema,
@@ -80,22 +90,8 @@ export const createTextSourceRequestSchema = z.object({
 export const createManualQaRequestSchema = z.object({
   question_text: z.string().trim().min(1),
   answer_text: z.string().trim().min(1),
-  category: z.preprocess(
-    coerceNullableString,
-    z.string().min(1).nullable().optional(),
-  ),
-  tags: z
-    .array(z.string())
-    .default([])
-    .transform((values) =>
-      Array.from(
-        new Set(
-          values
-            .map((value) => value.trim())
-            .filter((value) => value.length > 0),
-        ),
-      ),
-    ),
+  categories: z.array(z.string()).default([]).transform(dedupeStringArray),
+  tags: z.array(z.string()).default([]).transform(dedupeStringArray),
 });
 
 export const listSourcesQuerySchema = z.object({
