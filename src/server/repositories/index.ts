@@ -4,6 +4,7 @@ export * from "@/server/repositories/question-repository";
 export * from "@/server/repositories/interview-experience-repository";
 export * from "@/server/repositories/tag-repository";
 export * from "@/server/repositories/chunk-repository";
+export * from "@/server/repositories/vector-sync-repository";
 export * from "@/server/repositories/retrieval-log-repository";
 export * from "@/server/repositories/qa-session-repository";
 export * from "@/server/repositories/resume-repository";

@@ -6,6 +6,7 @@ import {
   createdAtColumn,
   idColumn,
   parseJobProviders,
+  qaAnswerModes,
   sessionTurnRoles,
   updatedAtColumn,
 } from "@/server/db/schema/_common";
@@ -42,6 +43,8 @@ export const sessionTurns = sqliteTable(
     role: text("role", { enum: sessionTurnRoles }).notNull(),
     content: text("content").notNull(),
     citationsJson: text("citations_json"),
+    answerMode: text("answer_mode", { enum: qaAnswerModes }),
+    supportSummary: text("support_summary"),
     retrievalLogId: text("retrieval_log_id").references(() => retrievalLogs.id, {
       onDelete: "set null",
     }),

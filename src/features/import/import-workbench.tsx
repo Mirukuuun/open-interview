@@ -75,6 +75,17 @@ function parseStatusBadge(
   }
 }
 
+function reviewActionLabel(parseStatus: SourceDocumentRecord["parseStatus"]) {
+  switch (parseStatus) {
+    case "not_started":
+      return "去审核队列创建任务";
+    case "needs_review":
+      return "去审核队列处理候选";
+    default:
+      return "打开审核队列";
+  }
+}
+
 export function ImportWorkbench({
   manualQaOptions,
   recentSources,
@@ -97,7 +108,7 @@ export function ImportWorkbench({
 
       <DetailGrid
         items={[
-          { label: "当前重点", value: "手工录入 / 直接入库" },
+          { label: "当前重点", value: "手工录入 / 文件上传" },
           { label: "次级入口", value: "粘贴原文" },
           { label: "最近来源", value: `${recentSources.length} 条` },
           { label: "后续处理", value: "审核队列" },
@@ -155,6 +166,21 @@ export function ImportWorkbench({
                       </p>
 
                       <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-text-muted">
+                        {source.fileName ? (
+                          <span className="rounded-full bg-white px-3 py-1">
+                            文件: {source.fileName}
+                          </span>
+                        ) : null}
+                        {source.mimeType ? (
+                          <span className="rounded-full bg-white px-3 py-1">
+                            MIME: {source.mimeType}
+                          </span>
+                        ) : null}
+                        {source.filePath ? (
+                          <span className="rounded-full bg-white px-3 py-1 font-mono text-xs">
+                            路径: {source.filePath}
+                          </span>
+                        ) : null}
                         {source.sourceUrl ? (
                           <span className="rounded-full bg-white px-3 py-1">
                             来源链接: {source.sourceUrl}
@@ -166,7 +192,7 @@ export function ImportWorkbench({
                           </Button>
                         ) : (
                           <Button href="/review" variant="ghost">
-                            打开审核队列
+                            {reviewActionLabel(source.parseStatus)}
                           </Button>
                         )}
                       </div>

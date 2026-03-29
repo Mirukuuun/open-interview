@@ -10,6 +10,7 @@ import { DetailGrid } from "@/components/workbench/detail-grid";
 import { EmptyList } from "@/components/workbench/empty-list";
 import { PageHeader } from "@/components/workbench/page-header";
 import { SectionHeading } from "@/components/workbench/section-heading";
+import { formatTagLabel } from "@/lib/taxonomy-display";
 import { interviewBrowseService } from "@/server/services/interview-browse-service";
 
 type InterviewListWorkbenchProps = {
@@ -63,7 +64,7 @@ function renderTagList(tags: string[]) {
   return (
     <div className="flex flex-wrap gap-2">
       {tags.map((tag) => (
-        <Badge key={tag}>{tag}</Badge>
+        <Badge key={tag}>{formatTagLabel(tag) ?? tag}</Badge>
       ))}
     </div>
   );
@@ -171,7 +172,7 @@ export function InterviewListWorkbench({
                 <option value="">全部标签</option>
                 {facets.tags.map((tag) => (
                   <option key={tag.name} value={tag.name}>
-                    {tag.name} ({tag.count})
+                    {formatTagLabel(tag.name) ?? tag.name} ({tag.count})
                   </option>
                 ))}
               </Select>

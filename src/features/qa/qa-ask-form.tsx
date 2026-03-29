@@ -1,23 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import type {
   AskQaSessionResponseData,
   CreateQaSessionResponseData,
 } from "@/lib/schemas/qa";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
 
 type QaAskFormProps = {
-  mode: "new" | "existing";
   sessionId?: string;
   initialQuery?: string;
+  hasTurns?: boolean;
+  promptSuggestions?: string[];
+  mode?: "new" | "existing";
   initialTitle?: string | null;
 };
 
@@ -34,14 +33,6 @@ type ApiFailure = {
     details?: unknown;
   };
 };
-
-type FeedbackState =
-  | {
-      tone: "success" | "error";
-      title: string;
-      body: string;
-    }
-  | undefined;
 
 async function readApiResponse<T>(response: Response) {
   const payload = (await response.json().catch(() => null)) as
@@ -61,18 +52,18 @@ async function readApiResponse<T>(response: Response) {
 }
 
 export function QaAskForm({
-  mode,
   sessionId,
   initialQuery = "",
-  initialTitle = "",
+  hasTurns = false,
+  promptSuggestions = [],
 }: QaAskFormProps) {
   const router = useRouter();
-  const [feedback, setFeedback] = useState<FeedbackState>();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [sessionTitle, setSessionTitle] = useState(initialTitle ?? "");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [query, setQuery] = useState(initialQuery);
   const [strategy, setStrategy] = useState<"fts" | "hybrid">("hybrid");
   const [topK, setTopK] = useState("8");
+  const [errorMessage, setErrorMessage] = useState<string>();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -82,7 +73,7 @@ export function QaAskForm({
     }
 
     setIsSubmitting(true);
-    setFeedback(undefined);
+    setErrorMessage(undefined);
 
     try {
       let activeSessionId = sessionId;
@@ -93,9 +84,7 @@ export function QaAskForm({
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            title: sessionTitle.trim() || undefined,
-          }),
+          body: JSON.stringify({}),
         });
         const sessionData = await readApiResponse<CreateQaSessionResponseData>(
           createResponse,
@@ -104,125 +93,153 @@ export function QaAskForm({
         activeSessionId = sessionData.ai_session.id;
       }
 
-      const askResponse = await fetch(`/api/qa/sessions/${activeSessionId}/ask`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          query: query.trim(),
-          top_k: Number(topK),
-          strategy,
+      await readApiResponse<AskQaSessionResponseData>(
+        await fetch(`/api/qa/sessions/${activeSessionId}/ask`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            query: query.trim(),
+            top_k: Number(topK),
+            strategy,
+          }),
         }),
-      });
-      const data = await readApiResponse<AskQaSessionResponseData>(askResponse);
+      );
 
-      setFeedback({
-        tone: "success",
-        title: "答案已保存",
-        body: `已保存 ${data.citations.length} 条引用，检索日志 ${data.retrieval_log_id}。`,
-      });
       setQuery("");
 
-      if (mode === "new") {
+      if (!sessionId) {
         router.push(`/qa/${activeSessionId}`);
         return;
       }
 
       router.refresh();
     } catch (error) {
-      setFeedback({
-        tone: "error",
-        title: "提问失败",
-        body:
-          error instanceof Error
-            ? error.message
-            : "当前无法完成这次提问。",
-      });
+      setErrorMessage(
+        error instanceof Error ? error.message : "当前无法完成这次提问。",
+      );
     } finally {
       setIsSubmitting(false);
     }
   }
 
+  function handleTextareaKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.nativeEvent.isComposing) {
+      return;
+    }
+
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      event.currentTarget.form?.requestSubmit();
+    }
+  }
+
+  function applyPromptSuggestion(suggestion: string) {
+    setQuery(suggestion);
+    textareaRef.current?.focus();
+  }
+
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
-      <div className="flex flex-wrap items-center gap-2">
-        <Badge tone="accent">仅引用式回答</Badge>
-        <Badge>{strategy}</Badge>
-        <Badge>{`top_k=${topK}`}</Badge>
-      </div>
-
-      {mode === "new" ? (
-        <label className="block space-y-2">
-          <span className="text-sm font-medium text-text-strong">会话标题</span>
-          <Input
-            onChange={(event) => setSessionTitle(event.target.value)}
-            placeholder="可选，不填则使用第一条问题"
-            value={sessionTitle}
-          />
-        </label>
-      ) : null}
-
-      <label className="block space-y-2">
-        <span className="text-sm font-medium text-text-strong">问题</span>
+    <form className="space-y-3" onSubmit={handleSubmit}>
+      <div className="rounded-[28px] border border-border-strong bg-surface-muted p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
         <Textarea
+          className="min-h-[110px] resize-none border-0 bg-transparent px-2 py-2 text-[15px] leading-7 shadow-none focus:border-0"
+          disabled={isSubmitting}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="基于本地题库提问"
-          required
-          rows={5}
+          onKeyDown={handleTextareaKeyDown}
+          placeholder={
+            hasTurns
+              ? "继续追问，或者让 AI 帮你把回答改成更像面试时会说出口的版本。"
+              : "直接输入问题，比如“请你做个自我介绍”或“Redis 分布式锁这题怎么答”。"
+          }
+          ref={textareaRef}
+          rows={4}
           value={query}
         />
-      </label>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <label className="block space-y-2">
-          <span className="text-sm font-medium text-text-strong">检索策略</span>
-          <Select
-            onChange={(event) => setStrategy(event.target.value as "fts" | "hybrid")}
-            value={strategy}
-          >
-            <option value="hybrid">混合</option>
-            <option value="fts">仅 FTS</option>
-          </Select>
-        </label>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-border-muted px-2 pt-3">
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-text-strong">
+              {isSubmitting ? "AI 正在整理回答…" : "Enter 发送，Shift + Enter 换行"}
+            </p>
+            <p className="text-xs text-text-muted">
+              默认优先结合本地材料回答，依据不足时也会先给出一版可用思路。
+            </p>
+          </div>
 
-        <label className="block space-y-2">
-          <span className="text-sm font-medium text-text-strong">Top K</span>
-          <Select onChange={(event) => setTopK(event.target.value)} value={topK}>
-            <option value="4">4</option>
-            <option value="6">6</option>
-            <option value="8">8</option>
-            <option value="12">12</option>
-          </Select>
-        </label>
+          <div className="flex flex-wrap items-center gap-2">
+            {sessionId ? (
+              <Button className="h-10 px-4" href="/qa">
+                新会话
+              </Button>
+            ) : null}
+            <Button
+              className="h-10 px-4"
+              disabled={isSubmitting || query.trim().length === 0}
+              type="submit"
+              variant="primary"
+            >
+              {isSubmitting ? "思考中..." : "发送"}
+            </Button>
+          </div>
+        </div>
       </div>
 
-      {feedback ? (
-        <div
-          className={cn(
-            "rounded-xl border px-4 py-4",
-            feedback.tone === "success"
-              ? "border-emerald-200 bg-emerald-50"
-              : "border-amber-200 bg-amber-50",
-          )}
-        >
-          <p className="text-sm font-semibold text-text-strong">{feedback.title}</p>
-          <p className="mt-2 text-sm leading-6 text-text-muted">{feedback.body}</p>
+      {!hasTurns && query.trim().length === 0 && promptSuggestions.length > 0 ? (
+        <div className="flex flex-wrap gap-2">
+          {promptSuggestions.map((suggestion) => (
+            <button
+              className="rounded-full border border-border-muted bg-white px-3 py-2 text-sm text-text-strong transition-colors hover:border-accent hover:bg-accent-soft/30"
+              key={suggestion}
+              onClick={() => applyPromptSuggestion(suggestion)}
+              type="button"
+            >
+              {suggestion}
+            </button>
+          ))}
         </div>
       ) : null}
 
-      <div className="flex flex-wrap gap-3">
-        <Button disabled={isSubmitting} type="submit" variant="primary">
-          {isSubmitting
-            ? mode === "new"
-              ? "创建中..."
-              : "发送中..."
-            : mode === "new"
-              ? "在新会话中提问"
-              : "继续提问"}
-        </Button>
-        {mode === "existing" ? <Button href="/qa">新建 QA 会话</Button> : null}
-      </div>
+      {errorMessage ? (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+          {errorMessage}
+        </div>
+      ) : null}
+
+      <details className="rounded-2xl border border-border-muted bg-white px-4 py-3">
+        <summary className="cursor-pointer text-xs font-semibold tracking-[0.14em] text-text-muted uppercase">
+          检索选项
+        </summary>
+
+        <div className="mt-3 grid gap-3 md:grid-cols-2">
+          <label className="block space-y-2">
+            <span className="text-sm font-medium text-text-strong">检索策略</span>
+            <Select
+              disabled={isSubmitting}
+              onChange={(event) => setStrategy(event.target.value as "fts" | "hybrid")}
+              value={strategy}
+            >
+              <option value="hybrid">混合检索</option>
+              <option value="fts">仅关键词</option>
+            </Select>
+          </label>
+
+          <label className="block space-y-2">
+            <span className="text-sm font-medium text-text-strong">召回数量</span>
+            <Select
+              disabled={isSubmitting}
+              onChange={(event) => setTopK(event.target.value)}
+              value={topK}
+            >
+              <option value="4">4</option>
+              <option value="6">6</option>
+              <option value="8">8</option>
+              <option value="12">12</option>
+            </Select>
+          </label>
+        </div>
+      </details>
     </form>
   );
 }

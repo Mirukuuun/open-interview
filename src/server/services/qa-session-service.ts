@@ -2,9 +2,11 @@ import { count, eq } from "drizzle-orm";
 
 import type {
   AskQaSessionRequest,
+  QaAnswerMode,
   QaCitation,
 } from "@/lib/schemas/qa";
 import {
+  qaAnswerModeSchema,
   qaCitationSchema,
   qaSessionSchema,
   qaSessionTurnSchema,
@@ -13,7 +15,6 @@ import {
   retrievalFinalContextSchema,
   retrievalHitSchema,
 } from "@/lib/schemas/retrieval";
-import { openClawGroundedQaAdapter } from "@/server/adapters/openclaw/generate-grounded-qa";
 import { db, sqlite } from "@/server/db/client";
 import { questionItems } from "@/server/db/schema";
 import { questionBrowseRepository } from "@/server/repositories/question-browse-repository";
@@ -23,11 +24,23 @@ import {
   retrievalLogRepository,
 } from "@/server/repositories";
 import { retrieveHybridQaContext } from "@/server/retrieval/hybrid-qa-retrieval";
+import { answerGroundedQa } from "@/server/retrieval/qa-grounded-answer-chain";
+import { rewriteQaQuery } from "@/server/retrieval/qa-rewrite-chain";
 import {
   buildSessionTitle as buildStoredSessionTitle,
   parseJsonArray,
   parseStoredRetrievalLog,
 } from "@/server/services/session-artifacts";
+import { qaMilvusFoundationService } from "@/server/vector/qa-milvus-foundation";
+
+/**
+ * [POS] 编排 QA session 的 rewrite、hybrid retrieval、grounded answer 与 assistant turn 持久化。
+ * [IN] QA session id、用户 query、top_k / strategy 等 API 边界输入。
+ * [OUT] 返回 grounded answer、answer_mode、citations、retrieval_log，并持久化 session turns。
+ *
+ * @feature open-interview-qa-feature.md
+ * @AI_INSTRUCTION 一旦本文件被更新，务必同步更新本注释，以及对应的 L2 feature 文档。
+ */
 
 export class QaSessionServiceError extends Error {
   code: string;
@@ -85,6 +98,38 @@ function buildSessionTitle(title: string | null | undefined, fallbackQuery: stri
   return buildStoredSessionTitle(title, fallbackQuery);
 }
 
+function parseAssistantAnswerMode(value: string | null | undefined): QaAnswerMode {
+  const parsedValue = qaAnswerModeSchema.safeParse(value);
+
+  return parsedValue.success ? parsedValue.data : "grounded_answered";
+}
+
+function buildSessionHistory(
+  turns: ReturnType<typeof qaSessionRepository.listTurns>,
+) {
+  return turns
+    .filter(
+      (turn): turn is typeof turn & { role: "user" | "assistant" } =>
+        turn.role === "user" || turn.role === "assistant",
+    )
+    .slice(-6)
+    .map((turn) => ({
+      role: turn.role,
+      content: turn.content,
+    }));
+}
+
+function buildQuestionContexts(
+  questions: Array<NonNullable<ReturnType<typeof questionBrowseRepository.findById>>>,
+) {
+  return questions.map((question) => ({
+    questionText: question.questionText,
+    canonicalAnswer: question.canonicalAnswer,
+    personalAnswer: null,
+    sourceSnippet: question.sources[0]?.sourceSnippet ?? null,
+  }));
+}
+
 export const qaSessionService = {
   createSession(input: {
     title?: string | null;
@@ -94,6 +139,30 @@ export const qaSessionService = {
     });
 
     return toApiSession(session);
+  },
+
+  archiveSession(sessionId: string) {
+    const session = qaSessionRepository.findById(sessionId);
+
+    if (!session || session.sessionType !== "qa") {
+      throw new QaSessionServiceError("not_found", "QA session was not found.", 404);
+    }
+
+    if (session.status === "archived") {
+      return toApiSession(session);
+    }
+
+    const archivedSession = qaSessionRepository.archive(sessionId);
+
+    if (!archivedSession) {
+      throw new QaSessionServiceError(
+        "not_found",
+        "QA session was not found after archive.",
+        404,
+      );
+    }
+
+    return toApiSession(archivedSession);
   },
 
   listRecentSessions(limit = 8) {
@@ -133,7 +202,7 @@ export const qaSessionService = {
   getSessionDetail(sessionId: string) {
     const session = qaSessionRepository.findById(sessionId);
 
-    if (!session || session.sessionType !== "qa") {
+    if (!session || session.sessionType !== "qa" || session.status === "archived") {
       return undefined;
     }
 
@@ -153,6 +222,9 @@ export const qaSessionService = {
         role: turn.role,
         content: turn.content,
         citations: citations.success ? citations.data : [],
+        answer_mode:
+          turn.role === "assistant" ? parseAssistantAnswerMode(turn.answerMode) : undefined,
+        support_summary: turn.supportSummary,
         related_questions: relatedQuestions,
         retrieval_log_id: turn.retrievalLogId,
         retrieval_log: retrievalLog,
@@ -183,61 +255,41 @@ export const qaSessionService = {
 
     const query = input.query.trim();
     const existingTurns = qaSessionRepository.listTurns(sessionId);
-    const retrieval = retrieveHybridQaContext({
+    const sessionHistory = buildSessionHistory(existingTurns);
+    const rewriteResult = await rewriteQaQuery({
       query,
+      sessionHistory,
+    });
+    const foundationSnapshot = await qaMilvusFoundationService.prepare({
+      runSync: input.strategy === "hybrid",
+      maxChunks: input.top_k,
+    });
+    const retrieval = await retrieveHybridQaContext({
+      query,
+      effectiveQuery: rewriteResult.effectiveQuery,
+      normalizedQuery: rewriteResult.normalizedQuery,
+      rewrittenQuery: rewriteResult.rewrittenQuery,
+      rewriteApplied: rewriteResult.rewriteApplied,
       topK: input.top_k,
       strategy: input.strategy,
+      foundationSnapshot,
     });
-
-    if (retrieval.citations.length === 0) {
-      throw new QaSessionServiceError(
-        "retrieval_unavailable",
-        "No grounded local citations were found for this query.",
-        409,
-        {
-          strategy: input.strategy,
-        },
-      );
-    }
-
-    const groundedAnswer = await openClawGroundedQaAdapter.answer({
+    const groundedAnswer = await answerGroundedQa({
       query,
-      sessionType: "qa",
-      contextPacket: {
-        hits: retrieval.hits.map((hit) => ({
-          owner_type: hit.owner_type,
-          owner_id: hit.owner_id,
-          snippet: hit.snippet,
-          score: hit.score,
-        })),
-        citations: retrieval.citations,
-        relatedQuestions: retrieval.relatedQuestions.map((question) => ({
-          id: question.id,
-          question_text: question.questionText,
-        })),
-        sessionHistory: existingTurns
-          .filter(
-            (turn): turn is typeof turn & { role: "user" | "assistant" } =>
-              turn.role === "user" || turn.role === "assistant",
-          )
-          .slice(-6)
-          .map((turn) => ({
-            role: turn.role,
-            content: turn.content,
-          })),
-        questionContexts: retrieval.questions.map((question) => ({
-          questionText: question.questionText,
-          canonicalAnswer: question.canonicalAnswer,
-          personalAnswer:
-            question.answerVariants.find((variant) => variant.variantType === "personal")
-              ?.content ?? null,
-          sourceSnippet: question.sources[0]?.sourceSnippet ?? null,
-        })),
-      },
+      effectiveQuery: rewriteResult.effectiveQuery,
+      supportLevel: retrieval.answerMode,
+      sessionHistory,
+      citations: retrieval.citations,
+      questionContexts: buildQuestionContexts(retrieval.questions),
     });
-    const citations = qaCitationSchema.array().parse(groundedAnswer.citations);
+    const citations = qaCitationSchema.array().parse(retrieval.citations);
     const hits = retrievalHitSchema.array().parse(retrieval.hits);
-    const finalContext = retrievalFinalContextSchema.parse(retrieval.finalContext);
+    const finalContext = retrievalFinalContextSchema.parse({
+      ...retrieval.finalContext,
+      support_level: groundedAnswer.answerMode,
+      support_summary: groundedAnswer.supportSummary,
+      retrieval_summary: retrieval.retrievalSummary,
+    });
 
     const savedResult = sqlite.transaction(() => {
       if (!session.title) {
@@ -263,6 +315,8 @@ export const qaSessionService = {
         role: "assistant",
         content: groundedAnswer.answer,
         citationsJson: JSON.stringify(citations),
+        answerMode: groundedAnswer.answerMode,
+        supportSummary: groundedAnswer.supportSummary,
         retrievalLogId: retrievalLog.id,
       });
 
@@ -273,9 +327,20 @@ export const qaSessionService = {
 
     return {
       answer: groundedAnswer.answer,
+      answerMode: groundedAnswer.answerMode,
+      supportSummary: groundedAnswer.supportSummary,
       citations,
       relatedQuestions: retrieval.relatedQuestions,
       retrievalLogId: savedResult.retrievalLog.id,
+      retrievalSummary: {
+        text: retrieval.retrievalSummary,
+        rewrite_applied: rewriteResult.rewriteApplied,
+        support_level: groundedAnswer.answerMode,
+        lexical_hits: finalContext.channel_counts?.lexical_hits ?? 0,
+        vector_hits: finalContext.channel_counts?.vector_hits ?? 0,
+        merged_hits: finalContext.channel_counts?.merged_hits ?? 0,
+      },
+      rewriteApplied: rewriteResult.rewriteApplied,
       strategy: input.strategy,
     };
   },

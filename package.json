@@ -9,8 +9,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "deploy:mvp": "bash scripts/deploy-mvp.sh",
     "start": "next start",
     "lint": "eslint .",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node scripts/db/init.mjs",
@@ -26,9 +28,11 @@
     "eslint": "^9.39.4",
     "eslint-config-next": "^16.2.1",
     "tailwindcss": "^4.2.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
   },
   "dependencies": {
+    "@langchain/core": "^0.3.79",
     "@fontsource/ibm-plex-mono": "^5.2.7",
     "@fontsource/ibm-plex-sans": "^5.2.8",
     "better-sqlite3": "^12.8.0",

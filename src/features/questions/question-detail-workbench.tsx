@@ -6,6 +6,7 @@ import { SurfaceCard } from "@/components/ui/surface-card";
 import { DetailGrid } from "@/components/workbench/detail-grid";
 import { PageHeader } from "@/components/workbench/page-header";
 import { SectionHeading } from "@/components/workbench/section-heading";
+import { formatCategoryLabel, formatTagLabel } from "@/lib/taxonomy-display";
 import { questionBankService } from "@/server/services/question-bank-service";
 
 type QuestionDetailWorkbenchProps = {
@@ -24,7 +25,7 @@ function renderTagList(tags: string[]) {
   return (
     <div className="flex flex-wrap gap-2">
       {tags.map((tag) => (
-        <Badge key={tag}>{tag}</Badge>
+        <Badge key={tag}>{formatTagLabel(tag) ?? tag}</Badge>
       ))}
     </div>
   );
@@ -34,6 +35,11 @@ export function QuestionDetailWorkbench({
   question,
 }: QuestionDetailWorkbenchProps) {
   const primaryInterview = question.sources.find((source) => source.interviewExperience);
+  const supplementalAnswerVariants = question.answerVariants.filter(
+    (answerVariant) =>
+      answerVariant.variantType !== "canonical" &&
+      answerVariant.variantType !== "personal",
+  );
 
   return (
     <div className="space-y-6">
@@ -63,7 +69,10 @@ export function QuestionDetailWorkbench({
 
       <DetailGrid
         items={[
-          { label: "分类", value: question.category ?? "未分配" },
+          {
+            label: "分类",
+            value: formatCategoryLabel(question.category) ?? "未分配",
+          },
           { label: "难度", value: question.difficulty ?? "未设置" },
           { label: "来源数", value: String(question.sourceCount) },
           { label: "更新时间", value: formatDateTime(question.updatedAt) },
@@ -73,25 +82,17 @@ export function QuestionDetailWorkbench({
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
         <div className="space-y-6">
           <SurfaceCard className="space-y-4">
-            <SectionHeading
-              title="标准答案"
-            />
+            <SectionHeading title="答案" />
             <div className="rounded-xl border border-border-muted bg-surface-muted p-4 text-sm leading-7 text-text-strong whitespace-pre-wrap">
-              {question.canonicalAnswer ?? "还没有标准答案。"}
+              {question.canonicalAnswer ?? "还没有答案。"}
             </div>
           </SurfaceCard>
 
-          <SurfaceCard className="space-y-4">
-            <SectionHeading
-              title={`答案变体（${question.answerVariants.length}）`}
-            />
-            {question.answerVariants.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border-strong bg-surface-muted p-4 text-sm text-text-muted">
-                还没有答案变体。
-              </div>
-            ) : (
+          {supplementalAnswerVariants.length > 0 ? (
+            <SurfaceCard className="space-y-4">
+              <SectionHeading title={`补充视角（${supplementalAnswerVariants.length}）`} />
               <div className="space-y-3">
-                {question.answerVariants.map((answerVariant) => (
+                {supplementalAnswerVariants.map((answerVariant) => (
                   <div
                     className="rounded-xl border border-border-muted bg-surface-muted p-4"
                     key={answerVariant.id}
@@ -105,8 +106,8 @@ export function QuestionDetailWorkbench({
                   </div>
                 ))}
               </div>
-            )}
-          </SurfaceCard>
+            </SurfaceCard>
+          ) : null}
 
           <SurfaceCard className="space-y-4">
             <SectionHeading
@@ -138,10 +139,13 @@ export function QuestionDetailWorkbench({
                     </div>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {relatedQuestion.category ? (
-                        <Badge>{relatedQuestion.category}</Badge>
+                        <Badge>
+                          {formatCategoryLabel(relatedQuestion.category) ??
+                            relatedQuestion.category}
+                        </Badge>
                       ) : null}
                       {relatedQuestion.tags.map((tag) => (
-                        <Badge key={tag}>{tag}</Badge>
+                        <Badge key={tag}>{formatTagLabel(tag) ?? tag}</Badge>
                       ))}
                     </div>
                   </div>
@@ -159,9 +163,6 @@ export function QuestionDetailWorkbench({
             <div className="space-y-3 text-sm text-text-strong">
               <div className="rounded-xl border border-border-strong bg-white px-4 py-3">
                 审核状态: {question.reviewStatus}
-              </div>
-              <div className="rounded-xl border border-border-strong bg-white px-4 py-3">
-                个人答案: {question.hasPersonalAnswer ? "有" : "无"}
               </div>
               <div className="rounded-xl border border-border-strong bg-white px-4 py-3">
                 关联来源: {question.sources.length}

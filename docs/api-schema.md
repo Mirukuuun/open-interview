@@ -3,8 +3,11 @@
 - doc_type: api_schema
 - audience: agents / implementers
 - status: draft
-- updated_at: 2026-03-23
+- updated_at: 2026-03-28
+- parent_doc: `docs/technical-design.md`
 - canonical_for: HTTP endpoints, request/response contracts, async flow conventions
+
+> 本文档是技术设计子文档，负责 API 契约；全局架构总览、最新框架图与 roadmap 见 `docs/technical-design.md`。
 
 ## 0. Agent-facing rules
 
@@ -58,6 +61,17 @@
 }
 ```
 
+## 1.4 GET `/api/health`
+Operational health probe.
+
+### Response highlights
+- `status` stays `ok` for the web service envelope.
+- `data.vector_backend` exposes Milvus foundation state:
+  - `enabled`
+  - `status = ok | pending | disabled | degraded`
+  - chunk / embedding / sync counters
+  - latest sync job snapshot
+
 ---
 
 ## 2. Ingestion APIs
@@ -87,6 +101,9 @@ Create a source from pasted text.
   }
 }
 ```
+
+### Import rule
+- 确认导入时，题库只保留一个主答案；如果同时提交 `source_answer` 和 `canonical_answer`，服务会优先将来源答案写入 `canonical_answer`。
 
 ## 2.2 POST `/api/sources/upload`
 Multipart upload for file-based source.
@@ -294,7 +311,6 @@ List question items.
 - `category?`
 - `tag?`
 - `difficulty?`
-- `has_personal_answer?`: `true | false`
 - `page?`
 - `page_size?`
 - `sort?`: `updated_at | source_count`
@@ -513,6 +529,7 @@ Generate embeddings for pending chunks.
 
 MVP note:
 - These endpoints may be admin/internal only.
+- `POST /api/embeddings/rebuild` is now expected to drive `chunk_embeddings` + Milvus sync state, not persist `vector_json` in SQLite.
 - They still deserve stable schemas because agents may call them.
 
 ---
@@ -561,6 +578,8 @@ Hybrid retrieval + grounded answer.
   "ok": true,
   "data": {
     "answer": "回答时建议先讲目标，再讲常见问题：误删、续约、主从切换一致性、超时兜底。",
+    "answer_mode": "grounded_answered",
+    "support_summary": "lexical 与 vector 都提供了稳定支持，最终收口到 2 个问题上下文和 3 条引用。",
     "citations": [
       {
         "question_item_id": "q_redis_lock_001",
@@ -573,12 +592,43 @@ Hybrid retrieval + grounded answer.
         "question_text": "RedLock 是否真的可靠？"
       }
     ],
-    "retrieval_log_id": "ret_001"
+    "retrieval_log_id": "ret_001",
+    "retrieval_summary": {
+      "text": "已应用 history-aware rewrite，lexical 命中 6 条、vector 命中 4 条，最终选择 2 个问题上下文和 3 条引用，support=grounded_answered。",
+      "rewrite_applied": true,
+      "support_level": "grounded_answered",
+      "lexical_hits": 6,
+      "vector_hits": 4,
+      "merged_hits": 9
+    },
+    "rewrite_applied": true
   }
 }
 ```
 
-## 8.3 GET `/api/qa/sessions/:sessionId`
+Rules:
+- This endpoint must always return an `answer`.
+- `answer_mode = no_grounded_support` means "the answer is mainly general guidance because local grounding is absent", not "refuse to answer".
+- `support_summary` should make the grounding strength explicit without replacing the answer itself.
+
+## 8.3 DELETE `/api/qa/sessions/:sessionId`
+Archive a QA session so it disappears from recent-session navigation.
+
+### Response
+```json
+{
+  "ok": true,
+  "data": {
+    "ai_session": {
+      "id": "sess_qa_001",
+      "session_type": "qa",
+      "status": "archived"
+    }
+  }
+}
+```
+
+## 8.4 GET `/api/qa/sessions/:sessionId`
 Return session metadata and turns.
 
 ---

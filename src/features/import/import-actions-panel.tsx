@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import type {
   CreateManualQaResponseData,
   CreateTextSourceResponseData,
+  CreateUploadSourceResponseData,
+  UploadSourceSubmitMode,
 } from "@/lib/schemas/import";
 import type { CreateParseJobResponseData } from "@/lib/schemas/parse-jobs";
 import { Badge } from "@/components/ui/badge";
@@ -13,12 +15,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { formatCategoryLabel, formatTagLabel } from "@/lib/taxonomy-display";
 import { cn } from "@/lib/utils";
 
 import { CreatableMultiSelect } from "./creatable-multi-select";
 
 type ImportMode = "upload" | "paste" | "manual";
 type TextSubmitMode = "save_only" | "save_and_review";
+type IngestableSourceKind =
+  | "interview_experience"
+  | "knowledge_note"
+  | "resume";
 
 type ApiSuccess<T> = {
   ok: true;
@@ -39,6 +46,8 @@ type FeedbackState =
       tone: "success" | "error";
       title: string;
       body: string;
+      actionHref?: string;
+      actionLabel?: string;
     }
   | undefined;
 
@@ -102,6 +111,20 @@ function sourceKindLabel(value: string) {
   }
 }
 
+function uploadNextStepLabel(
+  kind: "create_parse_job" | "open_review" | "inspect_parse_failure",
+) {
+  switch (kind) {
+    case "create_parse_job":
+      return "去审核队列创建任务";
+    case "inspect_parse_failure":
+      return "查看失败任务";
+    case "open_review":
+    default:
+      return "打开审核结果";
+  }
+}
+
 async function readApiResponse<T>(response: Response) {
   const payload = (await response.json().catch(() => null)) as
     | ApiSuccess<T>
@@ -128,12 +151,21 @@ export function ImportActionsPanel({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [textSubmitMode, setTextSubmitMode] =
     useState<TextSubmitMode>("save_only");
+  const [uploadSubmitMode, setUploadSubmitMode] =
+    useState<UploadSourceSubmitMode>("save_and_review");
 
   const [textSourceForm, setTextSourceForm] = useState({
     title: "",
-    kind: "interview_experience",
+    kind: "interview_experience" as IngestableSourceKind,
     sourceUrl: "",
     rawText: "",
+  });
+
+  const [uploadForm, setUploadForm] = useState({
+    title: "",
+    kind: "interview_experience" as IngestableSourceKind,
+    sourceUrl: "",
+    file: null as File | null,
   });
 
   const [manualQaForm, setManualQaForm] = useState({
@@ -231,6 +263,88 @@ export function ImportActionsPanel({
     }
   }
 
+  async function handleUploadSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!uploadForm.file) {
+      setFeedback({
+        tone: "error",
+        title: "上传失败",
+        body: "请选择一个 .txt、.md、.pdf 或 .docx 文件后再提交。",
+      });
+      return;
+    }
+
+    const formElement = event.currentTarget;
+
+    setIsSubmitting(true);
+    setFeedback(undefined);
+
+    try {
+      const requestBody = new FormData();
+
+      requestBody.append("file", uploadForm.file);
+      requestBody.append("kind", uploadForm.kind);
+      requestBody.append("submit_mode", uploadSubmitMode);
+
+      if (uploadForm.title.trim().length > 0) {
+        requestBody.append("title", uploadForm.title.trim());
+      }
+
+      if (uploadForm.sourceUrl.trim().length > 0) {
+        requestBody.append("source_url", uploadForm.sourceUrl.trim());
+      }
+
+      const response = await fetch("/api/sources/upload", {
+        method: "POST",
+        body: requestBody,
+      });
+
+      const data = await readApiResponse<CreateUploadSourceResponseData>(response);
+      if (data.submit_mode === "save_only") {
+        setFeedback({
+          tone: "success",
+          title: "文件已保存",
+          body: `来源 ${data.source_document.id} 已保存，文件 ${data.source_document.file_name} 的文本抽取已完成。下一步可在审核队列创建解析任务。`,
+          actionHref: data.next_step.href,
+          actionLabel: uploadNextStepLabel(data.next_step.kind),
+        });
+      } else {
+        const isParseFailed = data.parse_job.status === "failed";
+
+        setFeedback({
+          tone: isParseFailed ? "error" : "success",
+          title: isParseFailed ? "来源已保存，解析失败" : "解析任务已创建",
+          body: isParseFailed
+            ? `来源 ${data.source_document.id} 已保存，但任务 ${data.parse_job.id} 解析失败。请在审核页查看错误并重试。`
+            : data.parse_job.status === "needs_review"
+              ? `来源 ${data.source_document.id} 已创建任务 ${data.parse_job.id}，候选结果已进入待审核状态。`
+              : `来源 ${data.source_document.id} 已创建任务 ${data.parse_job.id}，当前状态为 ${data.parse_job.status}。`,
+          actionHref: data.next_step.href,
+          actionLabel: uploadNextStepLabel(data.next_step.kind),
+        });
+      }
+
+      formElement.reset();
+      setUploadForm({
+        title: "",
+        kind: "interview_experience",
+        sourceUrl: "",
+        file: null,
+      });
+      router.refresh();
+    } catch (error) {
+      setFeedback({
+        tone: "error",
+        title: "上传失败",
+        body:
+          error instanceof Error ? error.message : "当前无法上传这个文件。",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   async function handleManualQaSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSubmitting(true);
@@ -318,28 +432,130 @@ export function ImportActionsPanel({
         >
           <p className="text-sm font-semibold text-text-strong">{feedback.title}</p>
           <p className="mt-2 text-sm leading-6 text-text-muted">{feedback.body}</p>
+          {feedback.actionHref && feedback.actionLabel ? (
+            <div className="mt-3">
+              <Button href={feedback.actionHref} variant="primary">
+                {feedback.actionLabel}
+              </Button>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
       {activeMode === "upload" ? (
-        <div className="rounded-2xl border border-dashed border-border-strong bg-surface-muted p-5">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge tone="warning">暂缓</Badge>
-            <p className="text-sm font-semibold text-text-strong">文件上传本轮不展开。</p>
+        <form className="space-y-5" onSubmit={handleUploadSubmit}>
+          <div className="rounded-2xl border border-border-muted bg-surface-muted p-5">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge tone="accent">上传</Badge>
+              <p className="text-sm font-semibold text-text-strong">
+                单文件上传会保存原始文件并抽取文本，当前支持 .txt / .md / .pdf / .docx；可仅保存来源，也可直接创建解析任务进入审核。
+              </p>
+            </div>
           </div>
-          <div className="mt-4 flex flex-wrap items-center gap-3">
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field
+              description="可留空，默认使用上传文件名。"
+              label="标题"
+            >
+              <Input
+                onChange={(event) =>
+                  setUploadForm((current) => ({
+                    ...current,
+                    title: event.target.value,
+                  }))
+                }
+                placeholder="可选"
+                value={uploadForm.title}
+              />
+            </Field>
+
+            <Field label="类型">
+              <Select
+                onChange={(event) =>
+                  setUploadForm((current) => ({
+                    ...current,
+                    kind: event.target.value as IngestableSourceKind,
+                  }))
+                }
+                value={uploadForm.kind}
+              >
+                <option value="interview_experience">
+                  {sourceKindLabel("interview_experience")}
+                </option>
+                <option value="knowledge_note">
+                  {sourceKindLabel("knowledge_note")}
+                </option>
+                <option value="resume">{sourceKindLabel("resume")}</option>
+              </Select>
+            </Field>
+          </div>
+
+          <Field label="来源链接">
+            <Input
+              onChange={(event) =>
+                setUploadForm((current) => ({
+                  ...current,
+                  sourceUrl: event.target.value,
+                }))
+              }
+              placeholder="https://example.com/post/interview-note"
+              value={uploadForm.sourceUrl}
+            />
+          </Field>
+
+          <Field
+            description="服务端会把文件保存到本地 storage/raw/<source_id>/original.ext。"
+            label="选择文件"
+          >
+            <input
+              accept=".txt,.md,.pdf,.docx,text/plain,text/markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              className={cn(
+                "block w-full rounded-lg border border-border-strong bg-white px-3 py-2 text-sm text-text-strong outline-none file:mr-3 file:rounded-md file:border-0 file:bg-accent-soft file:px-3 file:py-2 file:text-sm file:font-medium file:text-accent focus:border-accent disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-text-muted",
+              )}
+              name="file"
+              onChange={(event) =>
+                setUploadForm((current) => ({
+                  ...current,
+                  file: event.target.files?.[0] ?? null,
+                }))
+              }
+              required
+              type="file"
+            />
+          </Field>
+
+          {uploadForm.file ? (
+            <p className="text-sm text-text-muted">
+              已选择: {uploadForm.file.name} ({Math.max(1, Math.ceil(uploadForm.file.size / 1024))} KB)
+            </p>
+          ) : null}
+
+          <div className="flex flex-wrap items-center gap-3">
             <Button
-              onClick={() => {
-                setActiveMode("manual");
-                setFeedback(undefined);
-              }}
+              disabled={isSubmitting}
+              onClick={() => setUploadSubmitMode("save_and_review")}
+              type="submit"
               variant="primary"
             >
-              切到手工录入
+              {isSubmitting ? "处理中..." : "上传并进入审核"}
             </Button>
-            <Button href="/review">打开审核队列</Button>
+            <Button
+              disabled={isSubmitting}
+              onClick={() => setUploadSubmitMode("save_only")}
+              type="submit"
+            >
+              仅上传保存
+            </Button>
+            <Button href="/review" variant="ghost">
+              打开审核队列
+            </Button>
           </div>
-        </div>
+
+          <p className="text-xs leading-5 text-text-muted">
+            “上传并进入审核” 会在保存 `source_document` 后立即创建解析任务，结果仍停在人工审核阶段，不会写入题库。
+          </p>
+        </form>
       ) : null}
 
       {activeMode === "paste" ? (
@@ -364,7 +580,7 @@ export function ImportActionsPanel({
                 onChange={(event) =>
                   setTextSourceForm((current) => ({
                     ...current,
-                    kind: event.target.value,
+                    kind: event.target.value as IngestableSourceKind,
                   }))
                 }
                 value={textSourceForm.kind}
@@ -467,6 +683,7 @@ export function ImportActionsPanel({
                 createText="新建分类"
                 createPlaceholder="新分类"
                 emptyText="未选择"
+                formatOptionLabel={(value) => formatCategoryLabel(value) ?? value}
                 onChange={(nextValue) =>
                   setManualQaForm((current) => ({
                     ...current,
@@ -485,6 +702,7 @@ export function ImportActionsPanel({
                 createText="新建标签"
                 createPlaceholder="新标签"
                 emptyText="未选择"
+                formatOptionLabel={(value) => formatTagLabel(value) ?? value}
                 onChange={(nextValue) =>
                   setManualQaForm((current) => ({
                     ...current,

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { QaSessionWorkbench } from "@/features/qa/qa-session-workbench";
+import { QaWorkbenchShell } from "@/features/qa/qa-workbench-shell";
 import { qaSessionService } from "@/server/services/qa-session-service";
 
 type QaSessionPageProps = {
@@ -17,5 +17,10 @@ export default async function QaSessionPage({ params }: QaSessionPageProps) {
     notFound();
   }
 
-  return <QaSessionWorkbench detail={detail} />;
+  return (
+    <QaWorkbenchShell
+      activeSession={detail}
+      recentSessions={qaSessionService.listRecentSessions(12)}
+    />
+  );
 }

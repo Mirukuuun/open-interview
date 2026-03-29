@@ -17,6 +17,7 @@ import type {
   ConfirmParseJobResponseData,
   CreateParseJobResponseData,
 } from "@/lib/schemas/parse-jobs";
+import { formatCategoryLabel, formatTagLabels } from "@/lib/taxonomy-display";
 import { cn } from "@/lib/utils";
 import type { ReviewJobDetail } from "@/server/services/parse-review-service";
 
@@ -106,6 +107,14 @@ function parseTags(value: string) {
   );
 }
 
+function formatLocalizedTagSummary(tags: string[]) {
+  if (tags.length === 0) {
+    return "无";
+  }
+
+  return formatTagLabels(tags).join(", ");
+}
+
 function actionLabel(action: QuestionDraft["action"]) {
   switch (action) {
     case "create":
@@ -150,6 +159,7 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
   const router = useRouter();
   const [feedback, setFeedback] = useState<FeedbackState>();
   const [isConfirming, setIsConfirming] = useState(false);
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
   const [jobSummary, setJobSummary] = useState(detail.parseJob);
   const [activeCandidateIndex, setActiveCandidateIndex] = useState(0);
@@ -204,6 +214,14 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
     jobSummary.status === "needs_review" &&
     !invalidQuestion &&
     !missingMergeTarget;
+
+  function openConfirmDialog() {
+    if (!canConfirm || isConfirming) {
+      return;
+    }
+
+    setIsConfirmDialogOpen(true);
+  }
 
   async function handleRetry() {
     setIsRetrying(true);
@@ -275,12 +293,11 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
       const data = await readApiResponse<ConfirmParseJobResponseData>(response);
 
       setJobSummary(data.parse_job);
-      setFeedback({
-        tone: "success",
-        title: "已确认导入",
-        body: `创建 ${data.import_summary.created_questions} 条题目，合并 ${data.import_summary.merged_questions} 条，跳过 ${data.import_summary.skipped_questions} 条。`,
-      });
+      setIsConfirmDialogOpen(false);
+      window.location.reload();
+      return;
     } catch (error) {
+      setIsConfirmDialogOpen(false);
       setFeedback({
         tone: "error",
         title: "确认导入失败",
@@ -308,7 +325,7 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
             </Button>
             <Button
               disabled={!canConfirm || isConfirming}
-              onClick={handleConfirm}
+              onClick={openConfirmDialog}
               variant="primary"
             >
               {isConfirming ? "入库中..." : "确认入库"}
@@ -487,7 +504,9 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
                     activeCandidateIndex === index
                   ) ? (
                     <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-text-muted">
-                      <span>分类: {question.category || "未设置"}</span>
+                      <span>
+                        分类: {formatCategoryLabel(question.category) ?? "未设置"}
+                      </span>
                       <span>标签: {parseTags(question.tags).length}</span>
                     </div>
                   ) : (
@@ -602,7 +621,10 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
                           </Select>
                         </Field>
 
-                        <Field label="目标题目 ID">
+                        <Field
+                          description="填写已有 canonical 题目 ID。当前正式题库 ID 也使用 q_ 前缀，不是临时占位。"
+                          label="目标题目 ID"
+                        >
                           <Input
                             disabled={question.action !== "merge"}
                             onChange={(event) =>
@@ -618,7 +640,7 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
                               )
                             }
                             onFocus={() => setActiveCandidateIndex(index)}
-                            placeholder="q_xxx"
+                            placeholder="例如 q_existing123"
                             value={question.targetQuestionId}
                           />
                         </Field>
@@ -653,15 +675,18 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
                     <p className="font-mono text-xs text-text-muted">
                       {activeMergeTarget.id}
                     </p>
+                    <p className="text-xs leading-5 text-text-muted">
+                      这是现有 canonical 题目的正式 ID；当前正式主键前缀就是 q_。
+                    </p>
                   </div>
                   <div className="rounded-xl border border-border-muted bg-surface-muted p-4 text-sm text-text-muted">
-                    <p>分类: {activeMergeTarget.category ?? "未设置"}</p>
+                    <p>
+                      分类: {formatCategoryLabel(activeMergeTarget.category) ?? "未设置"}
+                    </p>
                     <p className="mt-2">来源数: {activeMergeTarget.sourceCount}</p>
                     <p className="mt-2">
                       标签:{" "}
-                      {activeMergeTarget.tags.length > 0
-                        ? activeMergeTarget.tags.join(", ")
-                        : "无"}
+                      {formatLocalizedTagSummary(activeMergeTarget.tags)}
                     </p>
                   </div>
                   <Field label="当前标准答案">
@@ -683,13 +708,11 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
                     {activeCandidate.questionText || "未填写题目"}
                   </p>
                   <p className="mt-3 text-sm leading-6 text-text-muted">
-                    分类: {activeCandidate.category || "未设置"}
+                    分类: {formatCategoryLabel(activeCandidate.category) ?? "未设置"}
                   </p>
                   <p className="mt-2 text-sm leading-6 text-text-muted">
                     标签:{" "}
-                    {parseTags(activeCandidate.tags).length > 0
-                      ? parseTags(activeCandidate.tags).join(", ")
-                      : "无"}
+                    {formatLocalizedTagSummary(parseTags(activeCandidate.tags))}
                   </p>
                 </div>
                 <Field label="标准答案预览">
@@ -764,7 +787,7 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
               </Button>
               <Button
                 disabled={!canConfirm || isConfirming}
-                onClick={handleConfirm}
+                onClick={openConfirmDialog}
                 variant="primary"
               >
                 {isConfirming ? "入库中..." : "确认入库"}
@@ -779,6 +802,49 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
           </SurfaceCard>
         </div>
       </div>
+
+      {isConfirmDialogOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4">
+          <div
+            aria-describedby="confirm-import-description"
+            aria-labelledby="confirm-import-title"
+            aria-modal="true"
+            className="w-full max-w-lg rounded-2xl border border-border-strong bg-white p-6 shadow-xl"
+            role="dialog"
+          >
+            <div className="space-y-3">
+              <p
+                className="text-base font-semibold text-text-strong"
+                id="confirm-import-title"
+              >
+                确认把当前审核结果写入 canonical 题库？
+              </p>
+              <p
+                className="text-sm leading-6 text-text-muted"
+                id="confirm-import-description"
+              >
+                确认后会提交当前候选题处理结果，并刷新页面到最新已确认状态。
+              </p>
+              <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3 text-sm text-text-muted">
+                <p>新建 {visibleSummary.create} 条</p>
+                <p className="mt-1">合并 {visibleSummary.merge} 条</p>
+                <p className="mt-1">跳过 {visibleSummary.skip} 条</p>
+              </div>
+            </div>
+            <div className="mt-6 flex flex-wrap justify-end gap-3">
+              <Button
+                disabled={isConfirming}
+                onClick={() => setIsConfirmDialogOpen(false)}
+              >
+                取消
+              </Button>
+              <Button disabled={isConfirming} onClick={handleConfirm} variant="primary">
+                {isConfirming ? "入库中..." : "确认并入库"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { DetailGrid } from "@/components/workbench/detail-grid";
 import { EmptyList } from "@/components/workbench/empty-list";
 import { PageHeader } from "@/components/workbench/page-header";
 import { SectionHeading } from "@/components/workbench/section-heading";
+import { formatCategoryLabelOrFallback } from "@/lib/taxonomy-display";
 
 import { QaAskForm } from "./qa-ask-form";
 
@@ -219,7 +220,7 @@ export function QaSessionWorkbench({ detail }: QaSessionWorkbenchProps) {
                       {question.question_text}
                     </p>
                     <p className="mt-2 text-sm text-text-muted">
-                      {question.category ?? "uncategorized"} • {question.source_count} source(s)
+                      {formatCategoryLabelOrFallback(question.category)} • {question.source_count} source(s)
                     </p>
                   </Link>
                 ))}

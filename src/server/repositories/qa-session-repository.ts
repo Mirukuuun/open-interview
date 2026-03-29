@@ -5,6 +5,15 @@ import { db } from "@/server/db/client";
 import { aiSessions, sessionTurns } from "@/server/db/schema";
 import { createOpaqueId, nowUtcIso } from "@/server/repositories/ids";
 
+/**
+ * [POS] 维护 QA / deep-dive 等 AI session 与 session turns 的 SQLite 持久化边界。
+ * [IN] session / turn 的创建、状态更新、列表查询等仓储级输入。
+ * [OUT] 返回稳定的 session / turn 记录，并负责维护 updatedAt 等持久化副作用。
+ *
+ * @feature open-interview-qa-feature.md
+ * @AI_INSTRUCTION 一旦本文件被更新，务必同步更新本注释，以及对应的 L2 文档。
+ */
+
 const createSessionInputSchema = z.object({
   id: z.string().min(1).optional(),
   sessionType: z
@@ -22,8 +31,15 @@ const createSessionTurnInputSchema = z.object({
   role: z.enum(["user", "assistant", "system"]),
   content: z.string().min(1),
   citationsJson: z.string().min(2).nullable().optional(),
+  answerMode: z
+    .enum(["grounded_answered", "weak_support", "no_grounded_support"])
+    .nullable()
+    .optional(),
+  supportSummary: z.string().min(1).nullable().optional(),
   retrievalLogId: z.string().min(1).nullable().optional(),
 });
+
+const sessionStatusSchema = z.enum(["active", "completed", "archived"]);
 
 function getSessionById(id: string) {
   return db
@@ -58,6 +74,24 @@ export const qaSessionRepository = {
     return getSessionById(id);
   },
 
+  updateStatus(sessionId: string, status: z.infer<typeof sessionStatusSchema>) {
+    const nextStatus = sessionStatusSchema.parse(status);
+
+    db.update(aiSessions)
+      .set({
+        status: nextStatus,
+        updatedAt: nowUtcIso(),
+      })
+      .where(eq(aiSessions.id, sessionId))
+      .run();
+
+    return getSessionById(sessionId);
+  },
+
+  archive(sessionId: string) {
+    return qaSessionRepository.updateStatus(sessionId, "archived");
+  },
+
   updateTitle(sessionId: string, title: string | null) {
     db.update(aiSessions)
       .set({
@@ -87,6 +121,8 @@ export const qaSessionRepository = {
       role: value.role,
       content: value.content,
       citationsJson: value.citationsJson ?? null,
+      answerMode: value.answerMode ?? null,
+      supportSummary: value.supportSummary ?? null,
       retrievalLogId: value.retrievalLogId ?? null,
       createdAt: nowUtcIso(),
     };

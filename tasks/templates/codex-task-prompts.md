@@ -3,8 +3,10 @@
 - doc_type: codex_prompts
 - audience: lead / execution / reviewer
 - status: active
-- updated_at: 2026-03-23
+- updated_at: 2026-03-27
 - canonical_for: Codex prompt framing, per-slice execution prompts, reporting expectations
+
+> 本文档位于 `tasks/templates/`，属于执行模板，不替代 `docs/technical-design.md` 及其技术子文档。
 
 ## 0. How to use this doc
 
@@ -27,11 +29,12 @@ Use this block at the top of implementation prompts.
 You are implementing a bounded slice for the Open Interview MVP.
 
 Read first:
+- docs/technical-design.md
 - docs/tech-stack.md
 - docs/data-model.md
 - docs/api-schema.md
 - docs/ui-flows.md
-- docs/team-execution-plan.md
+- tasks/plans/team-execution-plan.md
 - the specific task file I reference below
 
 Hard constraints:
@@ -84,9 +87,10 @@ Output format:
 You are implementing a bounded slice for the Open Interview MVP.
 
 Read first:
+- docs/technical-design.md
 - docs/tech-stack.md
 - docs/ui-flows.md
-- docs/team-execution-plan.md
+- tasks/plans/team-execution-plan.md
 - tasks/slices/slice-0-project-bootstrap.md
 
 Hard constraints:
@@ -115,7 +119,7 @@ When finished, report:
 ## 3.2 Slice 1 — data layer v1
 
 ```text
-Use the global instruction block from docs/codex-task-prompts.md.
+Use the global instruction block from tasks/templates/codex-task-prompts.md.
 
 Implement task: tasks/slices/slice-1-data-layer-v1.md
 
@@ -129,7 +133,7 @@ Extra constraints:
 ## 3.3 Slice 2 — import flow
 
 ```text
-Use the global instruction block from docs/codex-task-prompts.md.
+Use the global instruction block from tasks/templates/codex-task-prompts.md.
 
 Implement task: tasks/slices/slice-2-import-flow.md
 
@@ -142,7 +146,7 @@ Extra constraints:
 ## 3.4 Slice 3 — parse review flow
 
 ```text
-Use the global instruction block from docs/codex-task-prompts.md.
+Use the global instruction block from tasks/templates/codex-task-prompts.md.
 
 Implement task: tasks/slices/slice-3-parse-review-flow.md
 
@@ -155,7 +159,7 @@ Extra constraints:
 ## 3.5 Slice 4 — question bank / interviews / search
 
 ```text
-Use the global instruction block from docs/codex-task-prompts.md.
+Use the global instruction block from tasks/templates/codex-task-prompts.md.
 
 Implement task: tasks/slices/slice-4-browse-search.md
 
@@ -168,7 +172,7 @@ Extra constraints:
 ## 3.6 Slice 5 — lightweight RAG QA
 
 ```text
-Use the global instruction block from docs/codex-task-prompts.md.
+Use the global instruction block from tasks/templates/codex-task-prompts.md.
 
 Implement task: tasks/slices/slice-5-rag-qa.md
 
@@ -181,7 +185,7 @@ Extra constraints:
 ## 3.7 Slice 6 — resume / deep dive
 
 ```text
-Use the global instruction block from docs/codex-task-prompts.md.
+Use the global instruction block from tasks/templates/codex-task-prompts.md.
 
 Implement task: tasks/slices/slice-6-resume-deep-dive.md
 

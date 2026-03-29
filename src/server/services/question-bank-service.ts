@@ -7,7 +7,6 @@ export const questionBankService = {
     category?: string;
     tag?: string;
     difficulty?: ListQuestionsQuery["difficulty"];
-    hasPersonalAnswer?: boolean;
     sort?: ListQuestionsQuery["sort"];
     page?: number;
     pageSize?: number;
@@ -17,7 +16,6 @@ export const questionBankService = {
       category: input.category,
       tag: input.tag,
       difficulty: input.difficulty,
-      hasPersonalAnswer: input.hasPersonalAnswer,
       sort: input.sort ?? "updated_at",
       page: input.page ?? 1,
       pageSize: input.pageSize ?? 20,

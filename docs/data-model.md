@@ -3,8 +3,11 @@
 - doc_type: data_model
 - audience: agents / implementers
 - status: draft
-- updated_at: 2026-03-23
+- updated_at: 2026-03-28
+- parent_doc: `docs/technical-design.md`
 - canonical_for: core entities, field contracts, relationships, state transitions
+
+> 本文档是技术设计子文档，负责数据模型与状态流转；全局架构总览、最新框架图与 roadmap 见 `docs/technical-design.md`。
 
 ## 0. Agent-facing rules
 
@@ -57,7 +60,9 @@ ai_session
   └─ 1:n session_turn
 
 chunk
-  └─ 0..1 embedding
+  ├─ 0..1 chunk_embedding
+  ├─ 0..1 chunk_vector_sync_state
+  └─ 0..n vector_sync_job
 ```
 
 ---
@@ -194,7 +199,8 @@ interface QuestionItem {
 
 Rules:
 - `normalized_question_text` is used for dedupe and exact-ish matching.
-- `canonical_answer` is the best current default answer, not the only answer.
+- `canonical_answer` is the current primary answer stored in the question bank.
+- Human-reviewed parse confirm and manual Q&A import should prefer the uploaded/source answer when deciding `canonical_answer`.
 - `review_status='draft'` can be used if future flows allow unreviewed entries.
 
 ## 2.6 answer_variant
@@ -212,6 +218,9 @@ interface AnswerVariant {
   updated_at: string
 }
 ```
+
+Notes:
+- `personal` is retained as a legacy/internal variant type, but question-bank browse APIs should not expose it as a first-class filter or separate primary-answer concept.
 
 ## 2.7 tag
 Shared tag entity.
@@ -306,6 +315,8 @@ interface SessionTurn {
   role: 'user' | 'assistant' | 'system'
   content: string
   citations_json?: string | null
+  answer_mode?: 'grounded_answered' | 'weak_support' | 'no_grounded_support' | null
+  support_summary?: string | null
   retrieval_log_id?: string | null
   created_at: string
 }
@@ -335,24 +346,71 @@ Chunking rules for MVP:
 - `source_document` may be chunked into bounded excerpts only when needed.
 - Avoid one giant resume/source blob as a single retrieval unit.
 
-## 2.15 embedding
+## 2.15 chunk_embedding
 ```ts
-interface Embedding {
+interface ChunkEmbedding {
   id: string
   chunk_id: string
   provider: string
   model: string
-  vector_json: string
-  dims: number
+  content_hash: string
+  status: 'pending' | 'ready' | 'failed'
+  dims?: number | null
+  last_embedded_at?: string | null
+  last_error?: string | null
   created_at: string
+  updated_at: string
 }
 ```
 
-MVP note:
-- `vector_json` in SQLite is acceptable for low scale.
-- If later migration introduces pgvector or external vector DB, keep `chunk_id` stable.
+Rules:
+- SQLite 只保存 embedding 的 provider / model / hash / status 元数据，不再把 `vector_json` 当 canonical 路线。
+- 若 chunk 内容、embedding model 或 provider 变化，需要把 status 重置为 `pending`。
+- `chunk_id` 必须稳定，供 Milvus upsert / delete / citation / retrieval log 复用。
 
-## 2.16 retrieval_log
+## 2.16 chunk_vector_sync_state
+```ts
+interface ChunkVectorSyncState {
+  id: string
+  chunk_id: string
+  backend: 'milvus'
+  collection_name: string
+  document_id: string
+  content_hash: string
+  sync_status: 'pending' | 'synced' | 'failed'
+  last_synced_at?: string | null
+  last_error?: string | null
+  created_at: string
+  updated_at: string
+}
+```
+
+Rules:
+- `document_id` 默认与 `chunk_id` 保持一致，避免引入第二套向量文档主键。
+- 只复制 retrieval 所需的 metadata 到 Milvus，不把业务主数据迁入向量库。
+- collection rebuild / delete / resync 必须显式更新这里的状态。
+
+## 2.17 vector_sync_job
+```ts
+interface VectorSyncJob {
+  id: string
+  backend: 'milvus'
+  job_type: 'backfill' | 'delete_chunk' | 'rebuild'
+  status: 'pending' | 'running' | 'completed' | 'failed'
+  collection_name: string
+  target_chunk_id?: string | null
+  target_owner_type?: 'source_document' | 'question_item' | 'answer_variant' | 'resume_project' | null
+  target_owner_id?: string | null
+  attempt_count: number
+  last_error?: string | null
+  started_at?: string | null
+  finished_at?: string | null
+  created_at: string
+  updated_at: string
+}
+```
+
+## 2.18 retrieval_log
 Stores explainable retrieval traces.
 
 ```ts
@@ -386,7 +444,9 @@ Required in MVP-1:
 - `question_tags`
 - `source_question_refs`
 - `chunks`
-- `embeddings`
+- `chunk_embeddings`
+- `chunk_vector_sync_states`
+- `vector_sync_jobs`
 - `retrieval_logs`
 
 Deferred after MVP-1（当前不要求在 Slice 1 落表）:
@@ -396,7 +456,7 @@ Deferred after MVP-1（当前不要求在 Slice 1 落表）:
 - `session_turns`
 
 Recommendation:
-- 在 MVP-1 先把 `chunks`、`embeddings`、`retrieval_logs` 的 schema 位置占住，便于后续 Slice 4/5 接入 grounded QA。
+- 在 Milvus foundation 落地后，`chunks`、`chunk_embeddings`、`chunk_vector_sync_states`、`vector_sync_jobs` 共同承接 retrieval metadata / sync 状态。
 - `resume` / `session` 相关表延后到 Resume / deep dive 相关 slice 再补，不阻塞当前题库主链。
 
 ---
@@ -502,12 +562,12 @@ Recommended MVP stack mapping:
 - DB: SQLite
 - ORM: Prisma or Drizzle
 - Search: SQLite FTS5
-- Embedding storage: SQLite JSON for MVP
+- Embedding state: SQLite metadata + Milvus vector backend
 - AI provider/orchestrator: OpenClaw adapter
 
 If the project later needs stronger resume value, the clean upgrade path is:
 - SQLite -> Postgres
-- `vector_json` -> pgvector
+- Milvus standalone -> stronger managed vector infra when justified
 - simple merge -> hybrid retrieval + rerank
 
 ---

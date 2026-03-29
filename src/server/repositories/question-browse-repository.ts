@@ -15,7 +15,6 @@ type ListQuestionsInput = {
   category?: string;
   tag?: string;
   difficulty?: QuestionDifficulty;
-  hasPersonalAnswer?: boolean;
   sort: QuestionSort;
   page: number;
   pageSize: number;
@@ -35,19 +34,8 @@ type QuestionDetailRecord = {
   sourceCount: number;
   reviewStatus: "draft" | "active" | "archived";
   updatedAt: string;
-  hasPersonalAnswer: number;
   tagsJson: string;
 };
-
-const personalAnswerExistsClause = `
-  EXISTS (
-    SELECT 1
-    FROM answer_variants av
-    WHERE av.question_item_id = q.id
-      AND av.status = 'active'
-      AND av.variant_type = 'personal'
-  )
-`;
 
 function buildQuestionWhereClause(input: ListQuestionsInput) {
   const conditions = [`q.review_status = 'active'`];
@@ -114,14 +102,6 @@ function buildQuestionWhereClause(input: ListQuestionsInput) {
     params.push(input.difficulty);
   }
 
-  if (input.hasPersonalAnswer === true) {
-    conditions.push(personalAnswerExistsClause);
-  }
-
-  if (input.hasPersonalAnswer === false) {
-    conditions.push(`NOT ${personalAnswerExistsClause}`);
-  }
-
   return {
     sql: conditions.join(" AND "),
     params,
@@ -135,7 +115,6 @@ function parseQuestionListItem(row: {
   difficulty: QuestionDifficulty | null;
   sourceCount: number;
   updatedAt: string;
-  hasPersonalAnswer: number;
   tagsJson: string;
 }) {
   return {
@@ -145,7 +124,6 @@ function parseQuestionListItem(row: {
     difficulty: row.difficulty,
     sourceCount: row.sourceCount,
     updatedAt: row.updatedAt,
-    hasPersonalAnswer: Boolean(row.hasPersonalAnswer),
     tags: parseJsonStringArray(row.tagsJson),
   };
 }
@@ -168,7 +146,6 @@ export const questionBrowseRepository = {
             q.difficulty AS difficulty,
             q.source_count AS sourceCount,
             q.updated_at AS updatedAt,
-            ${personalAnswerExistsClause} AS hasPersonalAnswer,
             COALESCE((
               SELECT json_group_array(name)
               FROM (
@@ -197,7 +174,6 @@ export const questionBrowseRepository = {
       difficulty: QuestionDifficulty | null;
       sourceCount: number;
       updatedAt: string;
-      hasPersonalAnswer: number;
       tagsJson: string;
     }>;
 
@@ -288,7 +264,6 @@ export const questionBrowseRepository = {
             q.source_count AS sourceCount,
             q.review_status AS reviewStatus,
             q.updated_at AS updatedAt,
-            ${personalAnswerExistsClause} AS hasPersonalAnswer,
             COALESCE((
               SELECT json_group_array(name)
               FROM (
@@ -475,7 +450,6 @@ export const questionBrowseRepository = {
       sourceCount: question.sourceCount,
       reviewStatus: question.reviewStatus,
       updatedAt: question.updatedAt,
-      hasPersonalAnswer: Boolean(question.hasPersonalAnswer),
       tags: parseJsonStringArray(question.tagsJson),
       answerVariants: answerVariants.map((answerVariant) => ({
         id: answerVariant.id,

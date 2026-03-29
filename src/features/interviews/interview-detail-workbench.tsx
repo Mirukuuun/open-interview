@@ -6,6 +6,7 @@ import { SurfaceCard } from "@/components/ui/surface-card";
 import { DetailGrid } from "@/components/workbench/detail-grid";
 import { PageHeader } from "@/components/workbench/page-header";
 import { SectionHeading } from "@/components/workbench/section-heading";
+import { formatCategoryLabel, formatTagLabel } from "@/lib/taxonomy-display";
 import { interviewBrowseService } from "@/server/services/interview-browse-service";
 
 type InterviewDetailWorkbenchProps = {
@@ -26,7 +27,7 @@ function renderTagList(tags: string[]) {
   return (
     <div className="flex flex-wrap gap-2">
       {tags.map((tag) => (
-        <Badge key={tag}>{tag}</Badge>
+        <Badge key={tag}>{formatTagLabel(tag) ?? tag}</Badge>
       ))}
     </div>
   );
@@ -100,11 +101,15 @@ export function InterviewDetailWorkbench({
                       >
                         {question.questionText}
                       </Link>
-                      {question.category ? <Badge>{question.category}</Badge> : null}
+                      {question.category ? (
+                        <Badge>
+                          {formatCategoryLabel(question.category) ?? question.category}
+                        </Badge>
+                      ) : null}
                     </div>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {question.tags.map((tag) => (
-                        <Badge key={tag}>{tag}</Badge>
+                        <Badge key={tag}>{formatTagLabel(tag) ?? tag}</Badge>
                       ))}
                     </div>
                     {question.sourceSnippet ? (

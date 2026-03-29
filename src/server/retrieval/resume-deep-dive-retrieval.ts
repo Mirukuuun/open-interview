@@ -46,7 +46,7 @@ function buildProjectSummarySnippet(project: ResumeDeepDiveProjectContext) {
   return parts.join("\n");
 }
 
-export function retrieveResumeDeepDiveContext(input: {
+export async function retrieveResumeDeepDiveContext(input: {
   answer: string;
   project: ResumeDeepDiveProjectContext;
 }) {
@@ -70,8 +70,12 @@ export function retrieveResumeDeepDiveContext(input: {
     .trim();
   const qaRetrieval =
     relatedQuestionQuery.length > 0
-      ? retrieveHybridQaContext({
+      ? await retrieveHybridQaContext({
           query: relatedQuestionQuery,
+          effectiveQuery: relatedQuestionQuery,
+          normalizedQuery: relatedQuestionQuery,
+          rewrittenQuery: null,
+          rewriteApplied: false,
           topK: 4,
           strategy: "hybrid",
         })

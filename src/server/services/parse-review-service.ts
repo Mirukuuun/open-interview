@@ -16,6 +16,7 @@ import {
   parseJobRepository,
   questionRepository,
   sourceDocumentRepository,
+  tagRepository,
 } from "@/server/repositories";
 import type { SourceDocumentRecord } from "@/server/repositories/source-document-repository";
 
@@ -322,7 +323,7 @@ function hasInterviewExperienceValue(
 function createAnswerVariantIfMissing(
   questionItemId: string,
   content: string | null | undefined,
-  variantType: "canonical" | "personal",
+  variantType: "canonical",
 ) {
   const normalizedContent = trimNullable(content);
 
@@ -346,6 +347,15 @@ function createAnswerVariantIfMissing(
   });
 }
 
+function resolvePrimaryAnswer(question: {
+  source_answer?: string | null;
+  canonical_answer?: string | null;
+}) {
+  return (
+    trimNullable(question.source_answer) ?? trimNullable(question.canonical_answer)
+  );
+}
+
 function buildMergeTarget(questionId: string) {
   const question = questionRepository.findById(questionId);
 
@@ -362,6 +372,13 @@ function buildMergeTarget(questionId: string) {
     reviewStatus: question.reviewStatus,
     tags: questionRepository.listTags(question.id).map((tag) => tag.name),
   } satisfies ReviewMergeTarget;
+}
+
+function buildCanonicalInterviewVocabulary() {
+  return {
+    categories: questionRepository.listCategories(24),
+    tags: tagRepository.listNames(60),
+  };
 }
 
 async function executeParseJob(jobId: string) {
@@ -400,6 +417,10 @@ async function executeParseJob(jobId: string) {
         title: sourceDocument.title,
         rawText: sourceDocument.rawText,
         jobType: existingJob.jobType,
+        canonicalVocabulary:
+          existingJob.jobType === "extract_interview"
+            ? buildCanonicalInterviewVocabulary()
+            : undefined,
       }),
     );
     const updatedJob = parseJobRepository.update(jobId, {
@@ -669,8 +690,7 @@ export const parseReviewService = {
           return;
         }
 
-        const canonicalAnswer = trimNullable(question.canonical_answer);
-        const sourceAnswer = trimNullable(question.source_answer);
+        const primaryAnswer = resolvePrimaryAnswer(question);
         const category = trimNullable(question.category);
         const tags = normalizeTagList(question.tags);
 
@@ -689,7 +709,7 @@ export const parseReviewService = {
 
           const createdQuestion = questionRepository.create({
             questionText: question.question_text,
-            canonicalAnswer,
+            canonicalAnswer: primaryAnswer,
             category,
             reviewStatus: "active",
             createdFrom: "ai_parse",
@@ -698,10 +718,9 @@ export const parseReviewService = {
           questionRepository.replaceTags(createdQuestion.id, tags);
           createAnswerVariantIfMissing(
             createdQuestion.id,
-            canonicalAnswer,
+            primaryAnswer,
             "canonical",
           );
-          createAnswerVariantIfMissing(createdQuestion.id, sourceAnswer, "personal");
           questionRepository.createSourceQuestionRef({
             sourceDocumentId: sourceDocument.id,
             questionItemId: createdQuestion.id,
@@ -723,7 +742,7 @@ export const parseReviewService = {
         }
 
         questionRepository.update(targetQuestion.id, {
-          canonicalAnswer: targetQuestion.canonicalAnswer ?? canonicalAnswer,
+          canonicalAnswer: primaryAnswer ?? targetQuestion.canonicalAnswer,
           category: targetQuestion.category ?? category,
           reviewStatus:
             targetQuestion.reviewStatus === "draft" ? "active" : targetQuestion.reviewStatus,
@@ -735,8 +754,7 @@ export const parseReviewService = {
         ];
 
         questionRepository.replaceTags(targetQuestion.id, mergedTags);
-        createAnswerVariantIfMissing(targetQuestion.id, canonicalAnswer, "canonical");
-        createAnswerVariantIfMissing(targetQuestion.id, sourceAnswer, "personal");
+        createAnswerVariantIfMissing(targetQuestion.id, primaryAnswer, "canonical");
         questionRepository.createSourceQuestionRef({
           sourceDocumentId: sourceDocument.id,
           questionItemId: targetQuestion.id,

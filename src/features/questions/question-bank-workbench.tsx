@@ -10,6 +10,7 @@ import { DetailGrid } from "@/components/workbench/detail-grid";
 import { EmptyList } from "@/components/workbench/empty-list";
 import { PageHeader } from "@/components/workbench/page-header";
 import { SectionHeading } from "@/components/workbench/section-heading";
+import { formatCategoryLabel, formatTagLabel } from "@/lib/taxonomy-display";
 import { questionBankService } from "@/server/services/question-bank-service";
 
 type QuestionBankWorkbenchProps = {
@@ -38,13 +39,6 @@ function buildQuestionsHref(filters: Partial<ListQuestionsQuery>) {
     searchParams.set("difficulty", filters.difficulty);
   }
 
-  if (filters.has_personal_answer !== undefined) {
-    searchParams.set(
-      "has_personal_answer",
-      String(filters.has_personal_answer),
-    );
-  }
-
   if (filters.sort && filters.sort !== "updated_at") {
     searchParams.set("sort", filters.sort);
   }
@@ -68,7 +62,6 @@ function countActiveFilters(filters: ListQuestionsQuery) {
     filters.category,
     filters.tag,
     filters.difficulty,
-    filters.has_personal_answer,
     filters.sort !== "updated_at" ? filters.sort : undefined,
   ].filter((value) => value !== undefined).length;
 }
@@ -85,7 +78,7 @@ function renderTagList(tags: string[]) {
   return (
     <div className="flex flex-wrap gap-2">
       {tags.map((tag) => (
-        <Badge key={tag}>{tag}</Badge>
+        <Badge key={tag}>{formatTagLabel(tag) ?? tag}</Badge>
       ))}
     </div>
   );
@@ -179,7 +172,7 @@ export function QuestionBankWorkbench({
                 <option value="">全部分类</option>
                 {facets.categories.map((category) => (
                   <option key={category.name} value={category.name}>
-                    {category.name} ({category.count})
+                    {formatCategoryLabel(category.name) ?? category.name} ({category.count})
                   </option>
                 ))}
               </Select>
@@ -193,7 +186,7 @@ export function QuestionBankWorkbench({
                 <option value="">全部标签</option>
                 {facets.tags.map((tag) => (
                   <option key={tag.name} value={tag.name}>
-                    {tag.name} ({tag.count})
+                    {formatTagLabel(tag.name) ?? tag.name} ({tag.count})
                   </option>
                 ))}
               </Select>
@@ -217,28 +210,6 @@ export function QuestionBankWorkbench({
                     {difficulty.name} ({difficulty.count})
                   </option>
                 ))}
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label
-                className="text-sm font-medium text-text-strong"
-                htmlFor="has_personal_answer"
-              >
-                个人答案
-              </label>
-              <Select
-                defaultValue={
-                  filters.has_personal_answer === undefined
-                    ? ""
-                    : String(filters.has_personal_answer)
-                }
-                id="has_personal_answer"
-                name="has_personal_answer"
-              >
-                <option value="">全部题目</option>
-                <option value="true">有个人答案</option>
-                <option value="false">仅标准答案</option>
               </Select>
             </div>
 
@@ -309,20 +280,15 @@ export function QuestionBankWorkbench({
                           </Link>
                           <div className="flex flex-wrap gap-2">
                             <Badge tone="accent">题目</Badge>
-                            <Badge
-                              tone={
-                                item.hasPersonalAnswer ? "success" : "neutral"
-                              }
-                            >
-                              {item.hasPersonalAnswer
-                                ? "标准 + 个人"
-                                : "标准"}
-                            </Badge>
                           </div>
                         </div>
                       </td>
                       <td className="border-b border-border-muted px-3 py-4 text-sm text-text-strong">
-                        {item.category ?? <span className="text-text-muted">-</span>}
+                        {item.category ? (
+                          formatCategoryLabel(item.category) ?? item.category
+                        ) : (
+                          <span className="text-text-muted">-</span>
+                        )}
                       </td>
                       <td className="border-b border-border-muted px-3 py-4 text-sm">
                         {renderTagList(item.tags)}
@@ -350,7 +316,7 @@ export function QuestionBankWorkbench({
 
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border-muted pt-4">
             <p className="text-sm text-text-muted">
-              进入详情页可继续查看答案变体和关联来源。
+              进入详情页可继续查看答案、补充视角和关联来源。
             </p>
             <div className="flex flex-wrap gap-2">
               {previousHref ? (

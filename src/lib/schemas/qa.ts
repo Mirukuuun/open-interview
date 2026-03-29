@@ -54,6 +54,12 @@ function coerceQaStrategy(defaultValue: "fts" | "hybrid") {
   );
 }
 
+export const qaAnswerModeSchema = z.enum([
+  "grounded_answered",
+  "weak_support",
+  "no_grounded_support",
+]);
+
 export const qaSessionSchema = z.object({
   id: z.string().min(1),
   session_type: z.literal("qa"),
@@ -85,10 +91,21 @@ export const qaSessionTurnSchema = z.object({
   role: z.enum(["user", "assistant", "system"]),
   content: z.string().min(1),
   citations: z.array(qaCitationSchema).default([]),
+  answer_mode: qaAnswerModeSchema.optional(),
+  support_summary: z.string().min(1).nullable().optional(),
   related_questions: z.array(relatedQuestionSchema).default([]),
   retrieval_log_id: z.string().min(1).nullable().optional(),
   retrieval_log: retrievalLogSchema.nullable().optional(),
   created_at: z.string().datetime(),
+});
+
+export const qaRetrievalSummarySchema = z.object({
+  text: z.string().min(1),
+  rewrite_applied: z.boolean(),
+  support_level: qaAnswerModeSchema,
+  lexical_hits: z.number().int().min(0),
+  vector_hits: z.number().int().min(0),
+  merged_hits: z.number().int().min(0),
 });
 
 export const createQaSessionRequestSchema = z
@@ -101,6 +118,10 @@ export const createQaSessionResponseDataSchema = z.object({
   ai_session: qaSessionSchema,
 });
 
+export const deleteQaSessionResponseDataSchema = z.object({
+  ai_session: qaSessionSchema,
+});
+
 export const askQaSessionRequestSchema = z.object({
   query: z.string().trim().min(1).max(2000),
   top_k: coercePositiveInteger(8, 12),
@@ -109,9 +130,13 @@ export const askQaSessionRequestSchema = z.object({
 
 export const askQaSessionResponseDataSchema = z.object({
   answer: z.string().min(1),
+  answer_mode: qaAnswerModeSchema,
+  support_summary: z.string().min(1),
   citations: z.array(qaCitationSchema),
   related_questions: z.array(relatedQuestionSchema),
   retrieval_log_id: z.string().min(1),
+  retrieval_summary: qaRetrievalSummarySchema,
+  rewrite_applied: z.boolean(),
   strategy: z.enum(["fts", "hybrid"]),
 });
 
@@ -125,8 +150,12 @@ export type AskQaSessionResponseData = z.infer<typeof askQaSessionResponseDataSc
 export type CreateQaSessionResponseData = z.infer<
   typeof createQaSessionResponseDataSchema
 >;
+export type DeleteQaSessionResponseData = z.infer<
+  typeof deleteQaSessionResponseDataSchema
+>;
 export type GetQaSessionResponseData = z.infer<typeof getQaSessionResponseDataSchema>;
 export type QaCitation = z.infer<typeof qaCitationSchema>;
+export type QaAnswerMode = z.infer<typeof qaAnswerModeSchema>;
 export type QaSession = z.infer<typeof qaSessionSchema>;
 export type QaSessionTurn = z.infer<typeof qaSessionTurnSchema>;
 export type RetrievalFinalContext = z.infer<typeof retrievalFinalContextSchema>;

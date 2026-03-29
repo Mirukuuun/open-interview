@@ -41,7 +41,7 @@
 ## Refs
 - `docs/tech-stack.md`
 - `docs/ui-flows.md`
-- `docs/team-execution-plan.md`
+- `tasks/plans/team-execution-plan.md`
 
 ## Review checklist
 - Is the scaffold clean rather than over-engineered?

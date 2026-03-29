@@ -8,6 +8,7 @@ import { SectionHeading } from "@/components/workbench/section-heading";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SurfaceCard } from "@/components/ui/surface-card";
+import { formatCategoryLabelOrFallback } from "@/lib/taxonomy-display";
 
 import { DeepDiveAnswerForm } from "./deep-dive-answer-form";
 import { StartDeepDiveSessionButton } from "./start-deep-dive-session-button";
@@ -165,7 +166,7 @@ export function ProjectSessionWorkbench({
                                 {question.question_text}
                               </p>
                               <p className="mt-2 text-sm text-text-muted">
-                                {question.category ?? "uncategorized"} • {question.source_count} source(s)
+                                {formatCategoryLabelOrFallback(question.category)} • {question.source_count} source(s)
                               </p>
                             </Link>
                           ))}

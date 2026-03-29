@@ -10,6 +10,7 @@ type CreatableMultiSelectProps = {
   options: string[];
   value: string[];
   onChange: (nextValue: string[]) => void;
+  formatOptionLabel?: (value: string) => string;
   triggerPlaceholder: string;
   searchPlaceholder: string;
   createPlaceholder: string;
@@ -32,6 +33,7 @@ export function CreatableMultiSelect({
   options,
   value,
   onChange,
+  formatOptionLabel = (value) => value,
   triggerPlaceholder,
   searchPlaceholder,
   createPlaceholder,
@@ -65,14 +67,15 @@ export function CreatableMultiSelect({
       .filter((option) =>
         currentQuery.length === 0
           ? true
-          : option.toLowerCase().includes(currentQuery),
+          : option.toLowerCase().includes(currentQuery) ||
+            formatOptionLabel(option).toLowerCase().includes(currentQuery),
       )
       .sort((left, right) => {
         const leftSelected = selectedValues.has(left.toLowerCase());
         const rightSelected = selectedValues.has(right.toLowerCase());
 
         if (leftSelected === rightSelected) {
-          return left.localeCompare(right, "zh-CN", {
+          return formatOptionLabel(left).localeCompare(formatOptionLabel(right), "zh-CN", {
             sensitivity: "base",
           });
         }
@@ -80,7 +83,7 @@ export function CreatableMultiSelect({
         return leftSelected ? -1 : 1;
       })
       .slice(0, 12);
-  }, [allOptions, normalizedQuery, value]);
+  }, [allOptions, formatOptionLabel, normalizedQuery, value]);
   const canCreate =
     normalizedDraft.length > 0 && !includesValue(allOptions, normalizedDraft);
 
@@ -151,7 +154,7 @@ export function CreatableMultiSelect({
     }
 
     if (value.length <= 2) {
-      return value.join("、");
+      return value.map((item) => formatOptionLabel(item)).join("、");
     }
 
     return `已选 ${value.length} 项`;
@@ -202,7 +205,7 @@ export function CreatableMultiSelect({
               onClick={() => removeValue(item)}
               type="button"
             >
-              <span>{item}</span>
+              <span>{formatOptionLabel(item)}</span>
               <span className="text-xs">移除</span>
             </button>
           ))
@@ -244,7 +247,7 @@ export function CreatableMultiSelect({
                       onClick={() => toggleValue(option)}
                       type="button"
                     >
-                      <span>{option}</span>
+                      <span>{formatOptionLabel(option)}</span>
                       <span className="text-xs">
                         {selected ? "已选" : "选择"}
                       </span>

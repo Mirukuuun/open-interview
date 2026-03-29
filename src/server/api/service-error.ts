@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { apiError } from "@/server/api/envelope";
 import { ParseReviewServiceError } from "@/server/services/parse-review-service";
+import { ImportServiceError } from "@/server/services/import-service-error";
 import { QaSessionServiceError } from "@/server/services/qa-session-service";
 import { ResumeDeepDiveServiceError } from "@/server/services/resume-deep-dive-service";
 import { ResumeServiceError } from "@/server/services/resume-service";
@@ -11,6 +12,7 @@ export function toServiceErrorResponse(
   fallbackMessage: string,
 ) {
   if (
+    error instanceof ImportServiceError ||
     error instanceof ParseReviewServiceError ||
     error instanceof QaSessionServiceError ||
     error instanceof ResumeServiceError ||

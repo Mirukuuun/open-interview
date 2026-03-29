@@ -13,6 +13,11 @@ export const ingestableSourceDocumentKindSchema = z.enum([
   "resume",
 ]);
 
+export const uploadSourceSubmitModeSchema = z.enum([
+  "save_only",
+  "save_and_review",
+]);
+
 export const sourceDocumentParseStatusSchema = z.enum([
   "not_started",
   "pending",
@@ -87,6 +92,30 @@ export const createTextSourceRequestSchema = z.object({
   ),
 });
 
+export const createUploadSourceRequestSchema = z.object({
+  title: z.preprocess(
+    (value) => {
+      if (typeof value !== "string") {
+        return undefined;
+      }
+
+      const trimmedValue = value.trim();
+
+      return trimmedValue.length > 0 ? trimmedValue : undefined;
+    },
+    z.string().min(1).optional(),
+  ),
+  kind: ingestableSourceDocumentKindSchema,
+  source_url: z.preprocess(
+    coerceNullableString,
+    z.string().min(1).nullable().optional(),
+  ),
+  submit_mode: z.preprocess(
+    (value) => (typeof value === "string" ? value : undefined),
+    uploadSourceSubmitModeSchema.default("save_only"),
+  ),
+});
+
 export const createManualQaRequestSchema = z.object({
   question_text: z.string().trim().min(1),
   answer_text: z.string().trim().min(1),
@@ -130,6 +159,8 @@ export const sourceDocumentListItemSchema = z.object({
   kind: sourceDocumentKindSchema,
   title: z.string().min(1),
   file_name: z.string().min(1).nullable().optional(),
+  mime_type: z.string().min(1).nullable().optional(),
+  file_path: z.string().min(1).nullable().optional(),
   source_url: z.string().min(1).nullable().optional(),
   parse_status: sourceDocumentParseStatusSchema,
   created_at: z.string().datetime(),
@@ -150,6 +181,52 @@ export const createTextSourceResponseDataSchema = z.object({
   }),
 });
 
+const uploadSourceResponseDocumentSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1),
+  kind: ingestableSourceDocumentKindSchema,
+  file_name: z.string().min(1),
+  mime_type: z.string().min(1),
+  file_path: z.string().min(1),
+  parse_status: sourceDocumentParseStatusSchema,
+});
+
+const uploadSourceResponseParseJobStatusSchema = z.enum([
+  "pending",
+  "running",
+  "success",
+  "failed",
+  "needs_review",
+]);
+
+const uploadSourceResponseParseJobSchema = z.object({
+  id: z.string().min(1),
+  status: uploadSourceResponseParseJobStatusSchema,
+});
+
+export const createUploadSourceResponseDataSchema = z.discriminatedUnion(
+  "submit_mode",
+  [
+    z.object({
+      source_document: uploadSourceResponseDocumentSchema,
+      submit_mode: z.literal("save_only"),
+      next_step: z.object({
+        kind: z.literal("create_parse_job"),
+        href: z.string().min(1),
+      }),
+    }),
+    z.object({
+      source_document: uploadSourceResponseDocumentSchema,
+      submit_mode: z.literal("save_and_review"),
+      parse_job: uploadSourceResponseParseJobSchema,
+      next_step: z.object({
+        kind: z.enum(["open_review", "inspect_parse_failure"]),
+        href: z.string().min(1),
+      }),
+    }),
+  ],
+);
+
 export const createManualQaResponseDataSchema = z.object({
   question_item: z.object({
     id: z.string().min(1),
@@ -167,11 +244,18 @@ export const createManualQaResponseDataSchema = z.object({
 
 export type CreateManualQaRequest = z.infer<typeof createManualQaRequestSchema>;
 export type CreateTextSourceRequest = z.infer<typeof createTextSourceRequestSchema>;
+export type CreateUploadSourceRequest = z.infer<
+  typeof createUploadSourceRequestSchema
+>;
+export type UploadSourceSubmitMode = z.infer<typeof uploadSourceSubmitModeSchema>;
 export type ListSourcesQuery = z.infer<typeof listSourcesQuerySchema>;
 export type CreateManualQaResponseData = z.infer<
   typeof createManualQaResponseDataSchema
 >;
 export type CreateTextSourceResponseData = z.infer<
   typeof createTextSourceResponseDataSchema
+>;
+export type CreateUploadSourceResponseData = z.infer<
+  typeof createUploadSourceResponseDataSchema
 >;
 export type ListSourcesResponseData = z.infer<typeof listSourcesResponseDataSchema>;

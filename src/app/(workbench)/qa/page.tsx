@@ -1,4 +1,4 @@
-import { QaWorkbench } from "@/features/qa/qa-workbench";
+import { QaWorkbenchShell } from "@/features/qa/qa-workbench-shell";
 import { qaSessionService } from "@/server/services/qa-session-service";
 
 type QaPageProps = {
@@ -14,10 +14,9 @@ export default async function QaPage({ searchParams }: QaPageProps) {
   const initialQuery = getSearchParamValue(rawSearchParams.q) ?? "";
 
   return (
-    <QaWorkbench
+    <QaWorkbenchShell
       initialQuery={initialQuery}
-      overview={qaSessionService.getWorkspaceOverview()}
-      recentSessions={qaSessionService.listRecentSessions()}
+      recentSessions={qaSessionService.listRecentSessions(12)}
     />
   );
 }

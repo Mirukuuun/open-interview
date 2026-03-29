@@ -1,22 +1,38 @@
-import type {
-  QaCitation,
-  RetrievalFinalContext,
-  RetrievalHit,
-} from "@/lib/schemas/qa";
+import type { QaCitation } from "@/lib/schemas/qa";
+import type { RetrievalHit } from "@/lib/schemas/retrieval";
+import { openClawEmbeddingClient } from "@/server/adapters/openclaw/embedding-client";
+import { sqlite } from "@/server/db/client";
+import {
+  getAnswerVariantChunkId,
+  getQuestionAnswerChunkId,
+  getQuestionTextChunkId,
+  getSourceExcerptChunkId,
+} from "@/server/repositories/chunk-repository";
 import { normalizeTagName } from "@/server/repositories/normalization";
+import { questionBrowseRepository } from "@/server/repositories/question-browse-repository";
 import {
   buildFtsPhraseQuery,
   buildLikePattern,
   shouldUseFtsQuery,
 } from "@/server/repositories/search-helpers";
-import { sqlite } from "@/server/db/client";
 import {
-  chunkRepository,
-  getAnswerVariantChunkId,
-  getQuestionTextChunkId,
-  getSourceExcerptChunkId,
-} from "@/server/repositories/chunk-repository";
-import { questionBrowseRepository } from "@/server/repositories/question-browse-repository";
+  applyQuestionFilters,
+  buildQaFinalContext,
+  buildQaRetrievalSummary,
+  classifyQaSupportLevel,
+  detectQaMetadataFilters,
+} from "@/server/retrieval/qa-retrieval-support";
+import { milvusVectorBackend } from "@/server/vector/milvus-backend";
+import type { QaMilvusFoundationSnapshot } from "@/server/vector/qa-milvus-foundation";
+
+/**
+ * [POS] 负责 QA 的 hybrid retrieval 主链：lexical recall、Milvus vector recall、structured expansion、merge/rerank 与 final_context 组装。
+ * [IN] 原始 query、effective query、rewrite 信息、strategy，以及可选的 Milvus foundation snapshot。
+ * [OUT] grounded QA 所需的 hits / citations / related questions / retrieval final_context / support-level。
+ *
+ * @feature open-interview-qa-feature.md
+ * @AI_INSTRUCTION 一旦本文件被更新，务必同步更新本注释，以及对应的 L2 feature 文档。
+ */
 
 type QaStrategy = "fts" | "hybrid";
 
@@ -259,23 +275,19 @@ function buildDirectTagCandidates(query: string, topK: number) {
     matchedTagCount: number;
   }>;
 
-  return rows.map((row, index) => {
-    const score = Math.max(18, 56 - index * 3 + row.matchedTagCount * 6);
-
-    return {
-      questionId: row.questionId,
-      sourceCount: row.sourceCount,
-      score,
-      hit: {
-        owner_type: "question_item" as const,
-        owner_id: row.questionId,
-        chunk_id: getQuestionTextChunkId(row.questionId),
-        score,
-        reason: "merged" as const,
-        snippet: row.questionText,
-      },
-    };
-  });
+  return rows.map((row, index) => ({
+    questionId: row.questionId,
+    sourceCount: row.sourceCount,
+    score: Math.max(20, 56 - index * 3 + row.matchedTagCount * 6),
+    hit: {
+      owner_type: "question_item" as const,
+      owner_id: row.questionId,
+      chunk_id: getQuestionTextChunkId(row.questionId),
+      score: Math.max(20, 56 - index * 3 + row.matchedTagCount * 6),
+      reason: "merged" as const,
+      snippet: row.questionText,
+    },
+  }));
 }
 
 function buildSharedSourceCandidates(seedQuestionIds: string[], topK: number) {
@@ -310,23 +322,19 @@ function buildSharedSourceCandidates(seedQuestionIds: string[], topK: number) {
     sharedSourceCount: number;
   }>;
 
-  return rows.map((row, index) => {
-    const score = Math.max(14, 52 - index * 3 + row.sharedSourceCount * 8);
-
-    return {
-      questionId: row.questionId,
-      sourceCount: row.sourceCount,
-      score,
-      hit: {
-        owner_type: "question_item" as const,
-        owner_id: row.questionId,
-        chunk_id: getQuestionTextChunkId(row.questionId),
-        score,
-        reason: "merged" as const,
-        snippet: row.questionText,
-      },
-    };
-  });
+  return rows.map((row, index) => ({
+    questionId: row.questionId,
+    sourceCount: row.sourceCount,
+    score: Math.max(16, 48 - index * 3 + row.sharedSourceCount * 8),
+    hit: {
+      owner_type: "question_item" as const,
+      owner_id: row.questionId,
+      chunk_id: getQuestionTextChunkId(row.questionId),
+      score: Math.max(16, 48 - index * 3 + row.sharedSourceCount * 8),
+      reason: "merged" as const,
+      snippet: row.questionText,
+    },
+  }));
 }
 
 function buildSharedTagCandidates(seedQuestionIds: string[], topK: number) {
@@ -361,23 +369,19 @@ function buildSharedTagCandidates(seedQuestionIds: string[], topK: number) {
     sharedTagCount: number;
   }>;
 
-  return rows.map((row, index) => {
-    const score = Math.max(12, 48 - index * 3 + row.sharedTagCount * 7);
-
-    return {
-      questionId: row.questionId,
-      sourceCount: row.sourceCount,
-      score,
-      hit: {
-        owner_type: "question_item" as const,
-        owner_id: row.questionId,
-        chunk_id: getQuestionTextChunkId(row.questionId),
-        score,
-        reason: "merged" as const,
-        snippet: row.questionText,
-      },
-    };
-  });
+  return rows.map((row, index) => ({
+    questionId: row.questionId,
+    sourceCount: row.sourceCount,
+    score: Math.max(14, 44 - index * 3 + row.sharedTagCount * 7),
+    hit: {
+      owner_type: "question_item" as const,
+      owner_id: row.questionId,
+      chunk_id: getQuestionTextChunkId(row.questionId),
+      score: Math.max(14, 44 - index * 3 + row.sharedTagCount * 7),
+      reason: "merged" as const,
+      snippet: row.questionText,
+    },
+  }));
 }
 
 function buildCitation(question: NonNullable<ReturnType<typeof questionBrowseRepository.findById>>) {
@@ -408,27 +412,25 @@ function buildSourceSupportHits(
   questions: Array<NonNullable<ReturnType<typeof questionBrowseRepository.findById>>>,
   candidateMap: Map<string, QuestionCandidate>,
 ) {
-  const hits: RetrievalHit[] = [];
-
-  for (const question of questions) {
+  return questions.flatMap((question) => {
     const primarySource = question.sources[0];
     const candidate = candidateMap.get(question.id);
 
     if (!primarySource?.sourceSnippet || !candidate) {
-      continue;
+      return [];
     }
 
-    hits.push({
-      owner_type: "source_document",
-      owner_id: primarySource.sourceDocumentId,
-      chunk_id: getSourceExcerptChunkId(primarySource.sourceDocumentId, question.id),
-      score: Math.max(10, candidate.score - 8),
-      reason: "merged",
-      snippet: primarySource.sourceSnippet,
-    });
-  }
-
-  return hits;
+    return [
+      {
+        owner_type: "source_document" as const,
+        owner_id: primarySource.sourceDocumentId,
+        chunk_id: getSourceExcerptChunkId(primarySource.sourceDocumentId, question.id),
+        score: Math.max(10, candidate.score - 10),
+        reason: "merged" as const,
+        snippet: primarySource.sourceSnippet,
+      },
+    ];
+  });
 }
 
 function buildRelatedQuestions(
@@ -463,17 +465,124 @@ function buildRelatedQuestions(
     .slice(0, 6);
 }
 
-export function retrieveHybridQaContext(input: {
+function resolveAnswerVariantQuestionIds(answerVariantIds: string[]) {
+  if (answerVariantIds.length === 0) {
+    return new Map<string, string>();
+  }
+
+  const placeholders = answerVariantIds.map(() => "?").join(", ");
+  const rows = sqlite
+    .prepare(`
+      SELECT
+        av.id AS answerVariantId,
+        av.question_item_id AS questionId,
+        q.source_count AS sourceCount
+      FROM answer_variants av
+      INNER JOIN question_items q
+        ON q.id = av.question_item_id
+      WHERE av.id IN (${placeholders})
+        AND av.status = 'active'
+        AND q.review_status = 'active'
+    `)
+    .all(...answerVariantIds) as Array<{
+    answerVariantId: string;
+    questionId: string;
+    sourceCount: number;
+  }>;
+
+  return new Map(rows.map((row) => [row.answerVariantId, row.questionId]));
+}
+
+async function buildVectorCandidates(query: string, topK: number) {
+  const embeddingResponse = await openClawEmbeddingClient.createEmbeddings({
+    texts: [query],
+  });
+  const vector = embeddingResponse.vectors[0];
+
+  if (!vector || vector.length === 0) {
+    return [];
+  }
+
+  const hits = await milvusVectorBackend.searchQaDocuments({
+    vector,
+    topK: Math.max(topK * 3, 12),
+  });
+  const answerVariantQuestionIds = resolveAnswerVariantQuestionIds(
+    hits
+      .filter((hit) => hit.ownerType === "answer_variant" && hit.ownerId)
+      .map((hit) => hit.ownerId as string),
+  );
+
+  return hits.flatMap((hit, index) => {
+    const questionId =
+      hit.ownerType === "question_item"
+        ? hit.ownerId
+        : hit.ownerType === "answer_variant" && hit.ownerId
+          ? answerVariantQuestionIds.get(hit.ownerId)
+          : null;
+
+    if (!questionId) {
+      return [];
+    }
+
+    const score = Math.max(20, 96 - index * 4 + Math.round(Math.max(hit.score, 0) * 10));
+
+    return [
+      {
+        questionId,
+        score,
+        sourceCount: 0,
+        hit: {
+          owner_type:
+            hit.ownerType === "question_item"
+              ? ("question_item" as const)
+              : ("answer_variant" as const),
+          owner_id: hit.ownerId ?? questionId,
+          chunk_id:
+            hit.chunkType === "question"
+              ? getQuestionTextChunkId(questionId)
+              : hit.ownerType === "question_item"
+                ? getQuestionAnswerChunkId(questionId)
+                : hit.ownerId
+                  ? getAnswerVariantChunkId(hit.ownerId)
+                  : null,
+          score,
+          reason: "vector" as const,
+          snippet: `Vector similarity recall for ${questionId}.`,
+        },
+      },
+    ];
+  });
+}
+
+function collectCandidateMapHits(candidateMap: Map<string, QuestionCandidate>) {
+  return Array.from(candidateMap.values()).flatMap((candidate) => candidate.hits);
+}
+
+export async function retrieveHybridQaContext(input: {
   query: string;
+  effectiveQuery: string;
+  normalizedQuery: string;
+  rewrittenQuery: string | null;
+  rewriteApplied: boolean;
   topK: number;
   strategy: QaStrategy;
+  foundationSnapshot?: QaMilvusFoundationSnapshot | null;
 }) {
-  const syncQuestionChunks = chunkRepository.syncQuestionChunks();
-  const syncAnswerVariantChunks = chunkRepository.syncAnswerVariantChunks();
-  const syncSourceExcerptChunks = chunkRepository.syncSourceExcerptChunks();
+  const metadataFilters = detectQaMetadataFilters(input.effectiveQuery);
   const candidateMap = new Map<string, QuestionCandidate>();
+  const lexicalCandidates = [
+    ...buildQuestionLexicalCandidates(input.effectiveQuery, input.topK),
+    ...buildAnswerVariantCandidates(input.effectiveQuery, input.topK),
+  ];
+  const warnings = [...(input.foundationSnapshot?.warnings ?? [])];
+  const strategyNotes = [
+    input.rewriteApplied
+      ? "History-aware rewrite was applied before retrieval."
+      : "Original query was already treated as standalone.",
+  ];
 
-  for (const candidate of buildQuestionLexicalCandidates(input.query, input.topK)) {
+  for (const candidate of lexicalCandidates) {
     mergeCandidate(candidateMap, {
       questionId: candidate.questionId,
       score: candidate.score,
@@ -482,7 +591,30 @@ export function retrieveHybridQaContext(input: {
     });
   }
 
-  for (const candidate of buildAnswerVariantCandidates(input.query, input.topK)) {
+  let vectorCandidates: Array<{
+    questionId: string;
+    score: number;
+    sourceCount: number;
+    hit: RetrievalHit;
+  }> = [];
+
+  if (input.strategy === "hybrid" && input.foundationSnapshot?.enabled) {
+    try {
+      vectorCandidates = await buildVectorCandidates(input.effectiveQuery, input.topK);
+      strategyNotes.push("Milvus vector recall was executed in the main retrieval path.");
+    } catch (error) {
+      warnings.push(
+        `Milvus vector recall degraded: ${error instanceof Error ? error.message : "unexpected error"}.`,
+      );
+      strategyNotes.push("Milvus vector recall failed, so retrieval fell back to lexical-heavy ranking.");
+    }
+  } else if (input.strategy === "hybrid") {
+    strategyNotes.push("Milvus vector recall was skipped because the backend is disabled.");
+  } else {
+    strategyNotes.push("FTS strategy skips Milvus vector recall.");
+  }
+
+  for (const candidate of vectorCandidates) {
     mergeCandidate(candidateMap, {
       questionId: candidate.questionId,
       score: candidate.score,
@@ -492,7 +624,7 @@ export function retrieveHybridQaContext(input: {
   }
 
   if (input.strategy === "hybrid") {
-    for (const candidate of buildDirectTagCandidates(input.query, input.topK)) {
+    for (const candidate of buildDirectTagCandidates(input.effectiveQuery, input.topK)) {
       mergeCandidate(candidateMap, {
         questionId: candidate.questionId,
         score: candidate.score,
@@ -533,32 +665,56 @@ export function retrieveHybridQaContext(input: {
 
       return right.sourceCount - left.sourceCount;
     })
-    .slice(0, input.topK)
+    .slice(0, Math.max(input.topK * 2, 10))
     .map((candidate) => candidate.id);
-  const questions = topQuestionIds
-    .map((questionId) => questionBrowseRepository.findById(questionId))
-    .filter(
-      (
-        question,
-      ): question is NonNullable<ReturnType<typeof questionBrowseRepository.findById>> =>
-        question !== undefined,
-    );
+  const questions = applyQuestionFilters(
+    topQuestionIds
+      .map((questionId) => questionBrowseRepository.findById(questionId))
+      .filter(
+        (
+          question,
+        ): question is NonNullable<ReturnType<typeof questionBrowseRepository.findById>> =>
+          question !== undefined,
+      ),
+    metadataFilters,
+  ).slice(0, input.topK);
   const citations = questions.slice(0, 4).map(buildCitation);
   const relatedQuestions = buildRelatedQuestions(questions);
   const sourceSupportHits = buildSourceSupportHits(questions, candidateMap);
-  const rawHits = Array.from(candidateMap.values()).flatMap((candidate) => candidate.hits);
-  const hits = limitUniqueHits([...rawHits, ...sourceSupportHits], Math.max(input.topK * 3, 12));
-  const finalContext = {
-    question_ids: questions.map((question) => question.id),
-    chunk_ids: Array.from(
+  const rawHits = collectCandidateMapHits(candidateMap);
+  const hits = limitUniqueHits([...rawHits, ...sourceSupportHits], Math.max(input.topK * 4, 16));
+  const lexicalHitCount = rawHits.filter((hit) => hit.reason === "fts").length;
+  const vectorHitCount = rawHits.filter((hit) => hit.reason === "vector").length;
+  const answerMode = classifyQaSupportLevel({
+    citationCount: citations.length,
+    questionCount: questions.length,
+    lexicalHitCount,
+    vectorHitCount,
+  });
+  const retrievalSummary = buildQaRetrievalSummary({
+    questionCount: questions.length,
+    citationCount: citations.length,
+    lexicalHitCount,
+    vectorHitCount,
+    rewriteApplied: input.rewriteApplied,
+    answerMode,
+  });
+
+  if (citations.length === 0) {
+    warnings.push("No grounded citations were found for this query in the local bank.");
+  }
+
+  const finalContext = buildQaFinalContext({
+    questionIds: questions.map((question) => question.id),
+    chunkIds: Array.from(
       new Set(
         hits
           .map((hit) => hit.chunk_id)
           .filter((chunkId): chunkId is string => Boolean(chunkId)),
       ),
     ),
-    related_question_ids: relatedQuestions.map((question) => question.id),
-    source_document_ids: Array.from(
+    relatedQuestionIds: relatedQuestions.map((question) => question.id),
+    sourceDocumentIds: Array.from(
       new Set(
         citations
           .map((citation) => citation.source_document?.id)
@@ -567,25 +723,19 @@ export function retrieveHybridQaContext(input: {
           ),
       ),
     ),
-    resume_project_ids: [],
-    strategy_notes:
-      input.strategy === "hybrid"
-        ? [
-            "Slice 5 hybrid retrieval uses question FTS plus structured tag/source expansion over persisted local chunks.",
-            "Embeddings are intentionally deferred in this slice; no external vector store is used.",
-          ]
-        : ["Slice 5 FTS retrieval uses lexical recall only."],
-    warnings:
-      citations.length === 0
-        ? ["No grounded citations were found for this query in the local bank."]
-        : [],
-    corpus_sync: {
-      question_chunks: syncQuestionChunks.questionChunkCount,
-      answer_chunks:
-        syncQuestionChunks.answerChunkCount + syncAnswerVariantChunks.chunkCount,
-      source_excerpt_chunks: syncSourceExcerptChunks.chunkCount,
-    },
-  } satisfies RetrievalFinalContext;
+    normalizedQuery: input.normalizedQuery,
+    rewrittenQuery: input.rewrittenQuery,
+    rewriteApplied: input.rewriteApplied,
+    metadataFilters,
+    supportLevel: answerMode,
+    retrievalSummary,
+    lexicalHitCount,
+    vectorHitCount,
+    hits,
+    foundationSnapshot: input.foundationSnapshot,
+    warnings,
+    strategyNotes,
+  });
 
   return {
     strategy: input.strategy,
@@ -594,5 +744,7 @@ export function retrieveHybridQaContext(input: {
     relatedQuestions,
     finalContext,
     questions,
+    answerMode,
+    retrievalSummary,
   };
 }

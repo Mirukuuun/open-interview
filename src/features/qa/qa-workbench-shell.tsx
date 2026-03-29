@@ -1,0 +1,515 @@
+import Link from "next/link";
+
+import type {
+  QaSessionDetail,
+  RecentQaSession,
+} from "@/server/services/qa-session-service";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { formatCategoryLabelOrFallback } from "@/lib/taxonomy-display";
+import { cn } from "@/lib/utils";
+
+import { QaAskForm } from "./qa-ask-form";
+import { QaSessionDeleteButton } from "./qa-session-delete-button";
+
+type QaWorkbenchShellProps = {
+  initialQuery?: string;
+  recentSessions: RecentQaSession[];
+  activeSession?: QaSessionDetail;
+};
+
+function formatDateTime(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value.replace("T", " ").replace(/\.\d{3}Z$/, "Z");
+  }
+
+  return new Intl.DateTimeFormat("zh-CN", {
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function toneForAnswerMode(answerMode: string | undefined) {
+  if (answerMode === "grounded_answered") {
+    return "success" as const;
+  }
+
+  if (answerMode === "weak_support") {
+    return "warning" as const;
+  }
+
+  return "neutral" as const;
+}
+
+function labelForAnswerMode(answerMode: string | undefined) {
+  if (answerMode === "grounded_answered") {
+    return "本地依据充分";
+  }
+
+  if (answerMode === "weak_support") {
+    return "部分结合本地材料";
+  }
+
+  return "通用回答";
+}
+
+function renderCitations(
+  citations: NonNullable<QaWorkbenchShellProps["activeSession"]>["turns"][number]["citations"],
+) {
+  if (citations.length === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-border-strong bg-white px-4 py-4 text-sm text-text-muted">
+        当前这轮回答没有命中可展示的本地引用。
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {citations.map((citation) => (
+        <div
+          className="rounded-2xl border border-border-muted bg-white px-4 py-4"
+          key={`${citation.owner_id}-${citation.label}`}
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge tone="accent">{citation.owner_type}</Badge>
+            <Link
+              className="text-sm font-semibold text-text-strong hover:text-accent"
+              href={citation.href}
+            >
+              {citation.label}
+            </Link>
+          </div>
+
+          {citation.snippet ? (
+            <p className="mt-3 whitespace-pre-wrap rounded-xl border border-border-muted bg-surface-muted px-3 py-3 text-sm leading-6 text-text-strong">
+              {citation.snippet}
+            </p>
+          ) : null}
+
+          {citation.source_document ? (
+            <p className="mt-3 text-sm text-text-muted">
+              来源：
+              {citation.source_document.href ? (
+                <Link
+                  className="font-medium text-accent hover:underline"
+                  href={citation.source_document.href}
+                >
+                  {citation.source_document.title}
+                </Link>
+              ) : (
+                <span className="font-medium text-text-strong">
+                  {citation.source_document.title}
+                </span>
+              )}
+            </p>
+          ) : null}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function renderRelatedQuestions(
+  relatedQuestions: NonNullable<QaWorkbenchShellProps["activeSession"]>["turns"][number]["related_questions"],
+) {
+  if (relatedQuestions.length === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-border-strong bg-white px-4 py-4 text-sm text-text-muted">
+        当前没有额外推荐的相关题目。
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {relatedQuestions.map((question) => (
+        <Link
+          className="block rounded-2xl border border-border-muted bg-white px-4 py-4 transition-colors hover:border-accent hover:bg-accent-soft/25"
+          href={`/questions/${question.id}`}
+          key={question.id}
+        >
+          <p className="text-sm font-semibold text-text-strong">
+            {question.question_text}
+          </p>
+          <p className="mt-2 text-sm text-text-muted">
+            {formatCategoryLabelOrFallback(question.category)} · {question.source_count} 条来源
+          </p>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+function renderRetrievalTrace(
+  retrievalLog: NonNullable<QaWorkbenchShellProps["activeSession"]>["turns"][number]["retrieval_log"],
+) {
+  if (!retrievalLog) {
+    return (
+      <div className="rounded-2xl border border-dashed border-border-strong bg-white px-4 py-4 text-sm text-text-muted">
+        这轮回答没有保存检索日志。
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-3 md:grid-cols-2">
+        <div className="rounded-2xl border border-border-muted bg-white px-4 py-3 text-sm text-text-strong">
+          normalized_query: {retrievalLog.final_context.normalized_query ?? retrievalLog.query_text}
+        </div>
+        <div className="rounded-2xl border border-border-muted bg-white px-4 py-3 text-sm text-text-strong">
+          rewritten_query: {retrievalLog.final_context.rewritten_query ?? "none"}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <Badge>{retrievalLog.strategy}</Badge>
+        <Badge tone="accent">
+          lexical {retrievalLog.final_context.channel_counts?.lexical_hits ?? 0}
+        </Badge>
+        <Badge tone="success">
+          vector {retrievalLog.final_context.channel_counts?.vector_hits ?? 0}
+        </Badge>
+        <Badge>
+          merged {retrievalLog.final_context.channel_counts?.merged_hits ?? 0}
+        </Badge>
+      </div>
+
+      {retrievalLog.final_context.retrieval_summary ? (
+        <div className="rounded-2xl border border-border-muted bg-white px-4 py-4 text-sm leading-6 text-text-strong">
+          {retrievalLog.final_context.retrieval_summary}
+        </div>
+      ) : null}
+
+      {(retrievalLog.final_context.strategy_notes.length > 0 ||
+        retrievalLog.final_context.warnings.length > 0) ? (
+        <div className="flex flex-wrap gap-2">
+          {retrievalLog.final_context.strategy_notes.map((note) => (
+            <Badge key={note}>{note}</Badge>
+          ))}
+          {retrievalLog.final_context.warnings.map((warning) => (
+            <Badge key={warning} tone="warning">
+              {warning}
+            </Badge>
+          ))}
+        </div>
+      ) : null}
+
+      <div className="space-y-3">
+        {retrievalLog.hits.slice(0, 8).map((hit) => (
+          <div
+            className="rounded-2xl border border-border-muted bg-white px-4 py-4"
+            key={`${hit.owner_type}-${hit.owner_id}-${hit.chunk_id ?? "none"}`}
+          >
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge>{hit.owner_type}</Badge>
+              <Badge tone={hit.reason === "vector" ? "success" : "accent"}>
+                {hit.reason}
+              </Badge>
+              <span className="font-mono text-xs text-text-muted">
+                score {hit.score.toFixed(1)}
+              </span>
+            </div>
+            <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-text-strong">
+              {hit.snippet}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function renderAssistantExtras(
+  turn: NonNullable<QaWorkbenchShellProps["activeSession"]>["turns"][number],
+) {
+  if (turn.role !== "assistant") {
+    return null;
+  }
+
+  return (
+    <div className="mt-4 space-y-3">
+      {turn.support_summary ? (
+        <p className="rounded-2xl border border-border-muted bg-white px-4 py-3 text-sm leading-6 text-text-muted">
+          {turn.support_summary}
+        </p>
+      ) : null}
+
+      <details className="rounded-2xl border border-border-muted bg-white px-4 py-3">
+        <summary className="cursor-pointer text-sm font-semibold text-text-strong">
+          查看依据与相关问题
+        </summary>
+        <div className="mt-4 space-y-5">
+          <div className="space-y-3">
+            <p className="text-xs font-semibold tracking-[0.12em] text-text-muted uppercase">
+              引用
+            </p>
+            {renderCitations(turn.citations)}
+          </div>
+
+          <div className="space-y-3">
+            <p className="text-xs font-semibold tracking-[0.12em] text-text-muted uppercase">
+              相关题目
+            </p>
+            {renderRelatedQuestions(turn.related_questions)}
+          </div>
+        </div>
+      </details>
+
+      <details className="rounded-2xl border border-border-muted bg-white px-4 py-3">
+        <summary className="cursor-pointer text-sm font-semibold text-text-strong">
+          查看检索摘要与调试信息
+        </summary>
+        <div className="mt-4">{renderRetrievalTrace(turn.retrieval_log)}</div>
+      </details>
+    </div>
+  );
+}
+
+export function QaWorkbenchShell({
+  initialQuery = "",
+  recentSessions,
+  activeSession,
+}: QaWorkbenchShellProps) {
+  const turns = activeSession?.turns ?? [];
+  const latestAssistantTurn = [...turns].reverse().find((turn) => turn.role === "assistant");
+  const promptSuggestions = [
+    "请你做个自我介绍",
+    "Redis 分布式锁这题应该怎么回答比较完整？",
+    "如果面试官追问项目亮点，我该怎么组织表达？",
+    "帮我把答案改得更像口语表达",
+  ];
+
+  return (
+    <div className="grid gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
+      <aside className="space-y-4 xl:sticky xl:top-6 xl:self-start">
+        <div className="overflow-hidden rounded-[30px] border border-border-strong bg-[linear-gradient(180deg,rgba(219,234,254,0.55)_0%,rgba(255,255,255,1)_60%)] shadow-sm">
+          <div className="border-b border-border-muted px-5 py-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge tone="accent">QA</Badge>
+              <span className="font-mono text-xs text-text-muted">/qa</span>
+            </div>
+          </div>
+
+          <div className="space-y-4 px-5 py-5">
+            <div className="space-y-2">
+              <h1 className="text-2xl font-semibold tracking-[-0.04em] text-text-strong">
+                AI 问答
+              </h1>
+              <p className="text-sm leading-6 text-text-muted">
+                和你的本地题库对话。默认只看问答，需要时再展开引用和检索细节。
+              </p>
+            </div>
+
+            <Button
+              className="h-10 w-full justify-center"
+              href="/qa"
+              variant={activeSession ? "secondary" : "primary"}
+            >
+              新建会话
+            </Button>
+          </div>
+        </div>
+
+        <div className="rounded-[30px] border border-border-strong bg-white p-3 shadow-sm">
+          <div className="flex items-center justify-between px-2 pb-3 pt-2">
+            <div>
+              <p className="text-sm font-semibold text-text-strong">会话列表</p>
+              <p className="text-xs text-text-muted">切换或删除已有对话</p>
+            </div>
+            <Badge>{recentSessions.length}</Badge>
+          </div>
+
+          {recentSessions.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border-strong bg-surface-muted px-4 py-5 text-sm leading-6 text-text-muted">
+              还没有会话。直接在右侧输入你的第一条问题即可。
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {recentSessions.map((session) => {
+                const active = activeSession?.aiSession.id === session.id;
+
+                return (
+                  <div
+                    className={cn(
+                      "rounded-2xl border px-3 py-3 transition-colors",
+                      active
+                        ? "border-accent bg-accent-soft/35"
+                        : "border-border-muted bg-white hover:border-accent hover:bg-accent-soft/20",
+                    )}
+                    key={session.id}
+                  >
+                    <div className="flex items-start gap-2">
+                      <Link className="min-w-0 flex-1" href={`/qa/${session.id}`}>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-sm font-semibold text-text-strong">
+                            {session.title ?? "未命名会话"}
+                          </p>
+                          {active ? <Badge tone="accent">当前</Badge> : null}
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-text-muted">
+                          {session.latestUserQuery ?? "会话已创建，等待第一条问题。"}
+                        </p>
+                        <p className="mt-3 text-xs text-text-muted">
+                          {session.turnCount} 轮 · {formatDateTime(session.updatedAt)}
+                        </p>
+                      </Link>
+
+                      <QaSessionDeleteButton
+                        active={active}
+                        sessionId={session.id}
+                        title={session.title}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </aside>
+
+      <section className="flex min-h-[78vh] flex-col overflow-hidden rounded-[32px] border border-border-strong bg-white shadow-sm">
+        <div className="border-b border-border-muted bg-[linear-gradient(180deg,rgba(247,249,251,0.9)_0%,rgba(255,255,255,1)_100%)] px-5 py-5 sm:px-6">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge tone="accent">Chat</Badge>
+                {latestAssistantTurn?.answer_mode ? (
+                  <Badge tone={toneForAnswerMode(latestAssistantTurn.answer_mode)}>
+                    {labelForAnswerMode(latestAssistantTurn.answer_mode)}
+                  </Badge>
+                ) : null}
+              </div>
+
+              <div>
+                <h2 className="text-2xl font-semibold tracking-[-0.04em] text-text-strong">
+                  {activeSession?.aiSession.title ?? "开始一轮新的对话"}
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-text-muted">
+                  {activeSession
+                    ? "连续追问会自动继承上下文；需要诊断时，再展开依据和检索摘要。"
+                    : "像使用 chat bot 一样提问；如果本地材料命中不足，也会先给你一版可用回答。"}
+                </p>
+              </div>
+            </div>
+
+            {activeSession ? (
+              <div className="rounded-2xl border border-border-muted bg-white px-4 py-3 text-sm text-text-muted">
+                <span className="font-medium text-text-strong">
+                  {turns.length}
+                </span>
+                {" "}
+                轮对话 · 最近更新 {formatDateTime(activeSession.aiSession.updated_at)}
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-hidden">
+          <div className="h-full overflow-y-auto bg-[radial-gradient(circle_at_top,rgba(219,234,254,0.22),transparent_42%),linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] px-4 py-5 sm:px-6 sm:py-6">
+            {turns.length === 0 ? (
+              <div className="mx-auto flex h-full max-w-3xl flex-col justify-center">
+                <div className="rounded-[32px] border border-border-strong bg-white/90 px-6 py-8 shadow-sm backdrop-blur">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge tone="accent">对话模式</Badge>
+                    <Badge>引用按需展开</Badge>
+                  </div>
+                  <h3 className="mt-4 text-3xl font-semibold tracking-[-0.05em] text-text-strong">
+                    问一个问题，直接开始。
+                  </h3>
+                  <p className="mt-3 max-w-2xl text-sm leading-7 text-text-muted">
+                    这个页面现在会优先展示一问一答的主对话。命中到本地题库时，回答会自然吸收本地材料；命中不足时，也会先给你一版通用但可继续迭代的回答。
+                  </p>
+
+                  <div className="mt-6 grid gap-3 md:grid-cols-2">
+                    {promptSuggestions.map((suggestion) => (
+                      <div
+                        className="rounded-2xl border border-border-muted bg-surface-muted px-4 py-4 text-sm leading-6 text-text-strong"
+                        key={suggestion}
+                      >
+                        {suggestion}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="mx-auto flex max-w-3xl flex-col gap-4">
+                {turns.map((turn) => (
+                  <article
+                    className={cn(
+                      "flex",
+                      turn.role === "user" ? "justify-end" : "justify-start",
+                    )}
+                    key={turn.id}
+                  >
+                    <div
+                      className={cn(
+                        "max-w-[88%] rounded-[28px] px-4 py-4 shadow-sm sm:px-5",
+                        turn.role === "user"
+                          ? "bg-accent text-white"
+                          : "border border-border-muted bg-surface-muted text-text-strong",
+                      )}
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge
+                          className={
+                            turn.role === "user"
+                              ? "border border-white/25 bg-white/15 text-white"
+                              : undefined
+                          }
+                          tone={turn.role === "assistant" ? "accent" : "neutral"}
+                        >
+                          {turn.role === "assistant" ? "AI" : "你"}
+                        </Badge>
+                        {turn.role === "assistant" && turn.answer_mode ? (
+                          <Badge tone={toneForAnswerMode(turn.answer_mode)}>
+                            {labelForAnswerMode(turn.answer_mode)}
+                          </Badge>
+                        ) : null}
+                        <span
+                          className={cn(
+                            "text-xs",
+                            turn.role === "user" ? "text-white/75" : "text-text-muted",
+                          )}
+                        >
+                          {formatDateTime(turn.created_at)}
+                        </span>
+                      </div>
+
+                      <div
+                        className={cn(
+                          "mt-3 whitespace-pre-wrap text-[15px] leading-7",
+                          turn.role === "user" ? "text-white" : "text-text-strong",
+                        )}
+                      >
+                        {turn.content}
+                      </div>
+
+                      {renderAssistantExtras(turn)}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="border-t border-border-muted bg-white/95 px-4 py-4 backdrop-blur sm:px-6">
+          <QaAskForm
+            hasTurns={turns.length > 0}
+            initialQuery={activeSession ? "" : initialQuery}
+            promptSuggestions={turns.length === 0 ? promptSuggestions : []}
+            sessionId={activeSession?.aiSession.id}
+          />
+        </div>
+      </section>
+    </div>
+  );
+}

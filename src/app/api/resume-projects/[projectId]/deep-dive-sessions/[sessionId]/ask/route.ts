@@ -52,7 +52,7 @@ export async function POST(
       );
     }
 
-    const result = resumeDeepDiveService.askQuestion(sessionId, {
+    const result = await resumeDeepDiveService.askQuestion(sessionId, {
       answer: parseResult.data.answer,
     });
     const responseData = askResumeProjectSessionResponseDataSchema.parse({

@@ -69,6 +69,23 @@ export const chunkTypes = [
 
 export const chunkEmbeddingStatuses = ["pending", "ready", "failed"] as const;
 
+export const vectorBackends = ["milvus"] as const;
+
+export const vectorSyncStatuses = ["pending", "synced", "failed"] as const;
+
+export const vectorSyncJobTypes = [
+  "backfill",
+  "delete_chunk",
+  "rebuild",
+] as const;
+
+export const vectorSyncJobStatuses = [
+  "pending",
+  "running",
+  "completed",
+  "failed",
+] as const;
+
 export const retrievalQueryTypes = [
   "qa",
   "resume_deep_dive",
@@ -86,6 +103,12 @@ export const aiSessionTypes = [
 export const aiSessionStatuses = ["active", "completed", "archived"] as const;
 
 export const sessionTurnRoles = ["user", "assistant", "system"] as const;
+
+export const qaAnswerModes = [
+  "grounded_answered",
+  "weak_support",
+  "no_grounded_support",
+] as const;
 
 export function idColumn() {
   return text("id").notNull().primaryKey();

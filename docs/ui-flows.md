@@ -4,7 +4,10 @@
 - audience: agents / implementers
 - status: draft
 - updated_at: 2026-03-23
+- parent_doc: `docs/technical-design.md`
 - canonical_for: route map, page states, component boundaries, UI data dependencies, interaction flows
+
+> 本文档是技术设计子文档，负责 UI 路由与交互流程；全局架构总览、最新框架图与 roadmap 见 `docs/technical-design.md`。
 
 ## 0. Agent-facing rules
 
@@ -344,7 +347,7 @@ Recommended: filter sidebar + main list + optional detail drawer.
 │ Filters      │ Question list                │ Detail drawer (opt)    │
 │              │                              │                        │
 │ category     │ search bar                   │ selected question      │
-│ tag          │ sort                         │ answer variants        │
+│ tag          │ sort                         │ primary answer         │
 │ difficulty   │ rows/cards                   │ sources / related      │
 │ source count │                              │                        │
 └──────────────┴──────────────────────────────┴────────────────────────┘
@@ -357,7 +360,6 @@ Each row shows:
 - tags
 - source_count
 - updated_at
-- answer presence badge
 
 ### List actions
 - open detail
@@ -369,7 +371,6 @@ Each row shows:
 - category
 - tag
 - difficulty
-- has_personal_answer
 - sort by `updated_at | source_count`
 
 ### Data dependencies
@@ -387,7 +388,7 @@ Each row shows:
 ### Critical UX rules
 - Optimize for scan speed, not decorative cards.
 - Search must stay visible while browsing.
-- Detail should expose canonical answer + variants + sources + related questions.
+- Detail should expose one primary answer，必要时再展示补充视角、sources 和 related questions。
 
 ### Done when
 - User can find a known question in seconds.
@@ -403,8 +404,8 @@ Purpose:
 
 ### Sections
 - header: question text, category, tags
-- canonical answer
-- answer variants
+- primary answer
+- supplemental answer views
 - related questions
 - sources / linked interviews
 - optional edit panel
@@ -474,59 +475,63 @@ Purpose:
 - retrieval-aware answer generation
 
 ### Layout
-Recommended 3-region layout.
+Recommended 2-region chat layout.
 
 ```text
-┌────────────────────────────────────────────────────────────┐
-│ Query input + session selector                            │
-├───────────────────────┬────────────────────────────────────┤
-│ Main answer area      │ Right panel                       │
-│                       │ related questions                 │
-│ answer                │ session history                   │
-│ citations             │ quick jump links                  │
-├───────────────────────┴────────────────────────────────────┤
-│ Bottom / dev panel: retrieval trace / hits / strategy     │
-└────────────────────────────────────────────────────────────┘
+┌───────────────────────┬────────────────────────────────────┐
+│ Left session rail     │ Main chat stage                    │
+│                       │                                    │
+│ create / switch /     │ transcript                         │
+│ delete sessions       │ answer bubbles                     │
+│                       │ input composer                     │
+└───────────────────────┴────────────────────────────────────┘
 ```
 
-Alternative layout:
-- answer center
-- citations below answer
-- right panel for related questions
+Secondary information pattern:
+- citations
+- related questions
+- retrieval summary / trace
+
+These should live behind assistant-turn expanders instead of occupying a permanent right-side column.
 
 ### Required interactions
 - ask question
-- show loading/streaming state if supported
-- show citations
+- create session
+- switch session
+- delete session
+- show loading state while waiting for answer
+- show citations on demand
 - open cited question/source
 - continue within session
 
 ### Data dependencies
 - `POST /api/qa/sessions`
 - `POST /api/qa/sessions/:sessionId/ask`
+- `DELETE /api/qa/sessions/:sessionId`
 - `GET /api/qa/sessions/:sessionId`
 - optional direct retrieval inspect via `POST /api/retrieval/query`
 
 ### Response rendering contract
 Must show:
 - answer
-- citations
-- related questions
-- retrieval status (at least in dev mode)
+- visible transcript history
+- session management affordances
 
 Should show if available:
-- top hits
-- strategy used (`fts | hybrid`)
-- uncertainty message when grounding is weak
+- uncertainty / support message when grounding is weak
+- citations and related questions behind an expander
+- retrieval status / trace in debug or secondary UI
 
 ### Critical UX rules
-- Do not present answers without local grounding metadata.
-- Avoid a generic chatbot look.
-- Make references clickable and useful.
+- `/qa` 可以是完整 chat bot 模式，但 grounding 元信息必须可追溯。
+- 当本地 grounding 缺失时，也要先给一版可用回答，而不是直接拒答。
+- 默认首屏只暴露问答主干，不要把 debug 信息堆成固定布局。
+- 引用链接必须可点击、可定位。
 
 ### Done when
-- User can ask a question and clearly see what local knowledge supports the answer.
-- The page feels like a study tool, not a raw LLM shell.
+- User can像 chat bot 一样连续提问、切换会话和删除会话。
+- User can在需要时展开本地依据，而不是被迫先看工作台面板。
+- 页面既像对话工具，又保留 grounded QA 的可追溯性。
 
 ---
 
@@ -535,11 +540,10 @@ Purpose:
 - session detail / reloadable continuation
 
 ### Sections
-- session header
-- turn history
-- newest answer block
-- citations per turn
-- optional retrieval trace expander
+- same chat layout as `/qa`
+- active session transcript
+- assistant-turn grounding expanders
+- reloadable route for share / debug / refresh
 
 ---
 
@@ -611,7 +615,7 @@ Conversation-like main area, but with project context panel.
 - review transcript history
 
 ### Critical UX rules
-- This page can look more conversational than `/qa`, but still needs context anchoring.
+- This page can和 `/qa` 一样 conversational，但仍需要项目上下文锚点。
 - Avoid pure chat UI with zero project metadata.
 
 ---
@@ -781,19 +785,21 @@ interface ReviewDecision {
 ## 6.3 QA page local state shape
 ```ts
 interface QaPageState {
+  sessions: Array<{
+    id: string
+    title: string | null
+    status: string
+  }>
   sessionId?: string | null
   submitting: boolean
   query: string
+  deletingSessionId?: string | null
   turns: Array<{
     role: 'user' | 'assistant'
     content: string
     retrievalLogId?: string | null
   }>
-  latestCitations: Array<{
-    ownerType: string
-    ownerId: string
-    label: string
-  }>
+  expandedTurnIds?: string[]
 }
 ```
 

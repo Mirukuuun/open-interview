@@ -1,31 +1,5 @@
 import { z } from "zod";
 
-function coerceOptionalBoolean() {
-  return z.preprocess((value) => {
-    if (value === undefined || value === null || value === "") {
-      return undefined;
-    }
-
-    if (typeof value === "boolean") {
-      return value;
-    }
-
-    if (typeof value !== "string") {
-      return undefined;
-    }
-
-    if (value === "true") {
-      return true;
-    }
-
-    if (value === "false") {
-      return false;
-    }
-
-    return undefined;
-  }, z.boolean().optional());
-}
-
 function coerceOptionalEnum<const TValues extends readonly [string, ...string[]]>(
   values: TValues,
 ): z.ZodType<TValues[number] | undefined> {
@@ -85,7 +59,6 @@ export const listQuestionsQuerySchema = z.object({
   category: coerceOptionalString(),
   tag: coerceOptionalString(),
   difficulty: coerceOptionalEnum(["easy", "medium", "hard"]),
-  has_personal_answer: coerceOptionalBoolean(),
   sort: coerceOptionalEnum(["updated_at", "source_count"]).default("updated_at"),
   page: coercePositiveInteger(1, 999),
   page_size: coercePositiveInteger(20, 100),
@@ -99,7 +72,6 @@ export const questionListItemSchema = z.object({
   source_count: z.number().int().min(0),
   updated_at: z.string().datetime(),
   tags: z.array(z.string()),
-  has_personal_answer: z.boolean(),
 });
 
 export const listQuestionsResponseDataSchema = z.object({
@@ -161,7 +133,6 @@ export const questionDetailSchema = z.object({
   review_status: z.enum(["draft", "active", "archived"]),
   updated_at: z.string().datetime(),
   tags: z.array(z.string()),
-  has_personal_answer: z.boolean(),
   sources: z.array(questionSourceSchema),
   answer_variants: z.array(questionAnswerVariantSchema),
   related_questions: z.array(relatedQuestionSchema),

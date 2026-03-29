@@ -185,7 +185,7 @@ export const resumeDeepDiveService = {
     };
   },
 
-  askQuestion(sessionId: string, input: { answer: string }) {
+  async askQuestion(sessionId: string, input: { answer: string }) {
     const payload = askResumeProjectSessionRequestSchema.parse(input);
     const session = qaSessionRepository.findById(sessionId);
 
@@ -224,7 +224,7 @@ export const resumeDeepDiveService = {
     const askedQuestions = existingTurns
       .filter((turn) => turn.role === "assistant")
       .map((turn) => turn.content);
-    const retrieval = retrieveResumeDeepDiveContext({
+    const retrieval = await retrieveResumeDeepDiveContext({
       answer: payload.answer,
       project: projectContext,
     });

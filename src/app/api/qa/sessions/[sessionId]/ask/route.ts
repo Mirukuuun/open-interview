@@ -45,6 +45,8 @@ export async function POST(
     const result = await qaSessionService.askQuestion(sessionId, parseResult.data);
     const responseData = askQaSessionResponseDataSchema.parse({
       answer: result.answer,
+      answer_mode: result.answerMode,
+      support_summary: result.supportSummary,
       citations: result.citations,
       related_questions: result.relatedQuestions.map((question) => ({
         id: question.id,
@@ -55,6 +57,8 @@ export async function POST(
         shared_source_count: question.sharedSourceCount,
       })),
       retrieval_log_id: result.retrievalLogId,
+      retrieval_summary: result.retrievalSummary,
+      rewrite_applied: result.rewriteApplied,
       strategy: result.strategy,
     });
 

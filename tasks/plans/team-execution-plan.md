@@ -2,9 +2,11 @@
 
 - doc_type: execution_plan
 - audience: agents / implementers
-- status: in_progress
-- updated_at: 2026-03-24
+- status: active
+- updated_at: 2026-03-27
 - canonical_for: team operating mode, role boundaries, backlog slices, execution constraints
+
+> 本文档位于 `tasks/plans/`，属于执行规划留痕，不替代 `docs/technical-design.md` 及其技术子文档。
 
 ## 0. Hard constraints
 
@@ -69,11 +71,21 @@ Responsibilities:
 
 ## 2. Current canonical docs
 
-- `docs/mvp-implementation-plan.md`
+### Project / technical docs
+- `README.md`
+- `docs/technical-design.md`
+- `docs/tech-stack.md`
 - `docs/data-model.md`
 - `docs/api-schema.md`
 - `docs/ui-flows.md`
-- `docs/team-execution-plan.md`
+- `docs/qa-dialog-rag-plan.md`
+
+### Execution docs
+- `tasks/plans/team-execution-plan.md`
+- `tasks/templates/codex-task-prompts.md`
+
+### Historical / stage plan refs
+- `tasks/plans/mvp-implementation-plan.md`
 
 ## 3. Build strategy
 
@@ -195,7 +207,7 @@ Escalation rule:
 - 2026-03-23: Team mode started for Open Interview.
 - 2026-03-23: Confirmed Codex CLI must be the only code-writing path.
 - 2026-03-23: GitHub SSH push path fixed; branch `dev/mvp-delivery` pushed.
-- 2026-03-23: Added canonical execution bridge docs: `docs/tech-stack.md`, `docs/codex-task-prompts.md`.
+- 2026-03-23: Added canonical execution bridge docs: `docs/tech-stack.md`, `tasks/templates/codex-task-prompts.md`.
 - 2026-03-23: Added bounded Codex slice docs under `tasks/slices/`.
 - 2026-03-24: Slice 1（Data Layer v1）reviewer 通过，完成清理、提交并推送到 `dev/mvp-delivery`。
 - 2026-03-24: Slice 2（Import flow）已切到 in_progress，进入 execution。

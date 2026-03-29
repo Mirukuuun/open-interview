@@ -34,7 +34,6 @@ export async function GET(_: Request, { params }: QuestionRouteProps) {
         review_status: question.reviewStatus,
         updated_at: question.updatedAt,
         tags: question.tags,
-        has_personal_answer: question.hasPersonalAnswer,
         sources: question.sources.map((source) => ({
           source_document_id: source.sourceDocumentId,
           title: source.title,

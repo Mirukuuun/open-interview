@@ -1,16 +1,32 @@
+import type { ParseJobSummary } from "@/lib/schemas/parse-jobs";
+import type { UploadSourceSubmitMode } from "@/lib/schemas/import";
 import { sqlite } from "@/server/db/client";
 import {
   questionRepository,
   sourceDocumentRepository,
   tagRepository,
 } from "@/server/repositories";
+import { createOpaqueId } from "@/server/repositories/ids";
 import type { SourceDocumentRecord } from "@/server/repositories/source-document-repository";
+import { fileStorageService } from "@/server/services/file-storage-service";
+import { fileTextExtractionService } from "@/server/services/file-text-extraction-service";
+import { ImportServiceError } from "@/server/services/import-service-error";
+import { parseReviewService } from "@/server/services/parse-review-service";
 
 type CreateTextSourceInput = {
   title: string;
   kind: "interview_experience" | "knowledge_note" | "resume";
   rawText: string;
   sourceUrl?: string | null;
+};
+
+type CreateUploadedSourceInput = {
+  title?: string | null;
+  kind: "interview_experience" | "knowledge_note" | "resume";
+  sourceUrl?: string | null;
+  fileName: string;
+  mimeType?: string | null;
+  fileBuffer: Buffer;
 };
 
 type CreateManualQaInput = {
@@ -26,6 +42,10 @@ type ListSourcesInput = {
   query?: string;
   page?: number;
   pageSize?: number;
+};
+
+type SubmitUploadedSourceInput = CreateUploadedSourceInput & {
+  submitMode: UploadSourceSubmitMode;
 };
 
 export type ManualQaOptions = {
@@ -64,6 +84,16 @@ function mergeSeededValues(defaultValues: string[], persistedValues: string[]) {
         .map((value) => [value.toLowerCase(), value]),
     ).values(),
   );
+}
+
+function trimNullable(value: string | null | undefined) {
+  if (value === undefined || value === null) {
+    return null;
+  }
+
+  const trimmedValue = value.trim();
+
+  return trimmedValue.length > 0 ? trimmedValue : null;
 }
 
 function buildManualSourceTitle(questionText: string) {
@@ -129,15 +159,10 @@ function mergeQuestionCategories(questionItemId: string, categories: string[]) {
   ]);
 }
 
-function pickManualAnswerVariantType(
-  canonicalAnswer: string | null,
-  answerText: string,
+function deriveParseJobTypeForUploadedSource(
+  kind: SubmitUploadedSourceInput["kind"],
 ) {
-  if (!canonicalAnswer || canonicalAnswer === answerText) {
-    return "canonical" as const;
-  }
-
-  return "personal" as const;
+  return kind === "resume" ? "extract_resume" : "extract_interview";
 }
 
 export const importService = {
@@ -148,6 +173,94 @@ export const importService = {
       rawText: input.rawText,
       sourceUrl: input.sourceUrl ?? null,
     });
+  },
+
+  async createUploadedSource(input: CreateUploadedSourceInput) {
+    const sourceId = createOpaqueId("src");
+    const trimmedFileName = input.fileName.trim();
+
+    if (trimmedFileName.length === 0) {
+      throw new ImportServiceError(
+        "invalid_request",
+        "Uploaded file must include a file name.",
+        400,
+      );
+    }
+
+    let storedFile: Awaited<ReturnType<typeof fileStorageService.saveUploadedFile>> | null =
+      null;
+
+    try {
+      storedFile = await fileStorageService.saveUploadedFile({
+        sourceDocumentId: sourceId,
+        fileName: trimmedFileName,
+        mimeType: input.mimeType ?? null,
+        fileBuffer: input.fileBuffer,
+      });
+
+      const rawText = await fileTextExtractionService.extractTextFromFile({
+        absoluteFilePath: storedFile.absoluteFilePath,
+        extension: storedFile.extension,
+      });
+
+      return sourceDocumentRepository.create({
+        id: sourceId,
+        kind: input.kind,
+        title: trimNullable(input.title) ?? trimmedFileName,
+        rawText,
+        fileName: trimmedFileName,
+        mimeType: storedFile.mimeType,
+        filePath: storedFile.filePath,
+        sourceUrl: trimNullable(input.sourceUrl),
+      });
+    } catch (error) {
+      if (storedFile) {
+        await fileStorageService.deleteStoredFile(storedFile.filePath).catch(() => undefined);
+      }
+
+      if (error instanceof ImportServiceError) {
+        throw error;
+      }
+
+      throw new ImportServiceError(
+        "internal_error",
+        "Failed to create an uploaded source document.",
+        500,
+      );
+    }
+  },
+
+  async submitUploadedSource(input: SubmitUploadedSourceInput): Promise<{
+    sourceDocument: SourceDocumentRecord;
+    parseJob: ParseJobSummary | null;
+  }> {
+    const sourceDocument = await this.createUploadedSource(input);
+
+    if (input.submitMode === "save_only") {
+      return {
+        sourceDocument,
+        parseJob: null,
+      };
+    }
+
+    const parseJob = await parseReviewService.createParseJob({
+      sourceDocumentId: sourceDocument.id,
+      jobType: deriveParseJobTypeForUploadedSource(input.kind),
+    });
+    const refreshedSourceDocument = sourceDocumentRepository.findById(sourceDocument.id);
+
+    if (!refreshedSourceDocument) {
+      throw new ImportServiceError(
+        "internal_error",
+        "Uploaded source document disappeared after parse job creation.",
+        500,
+      );
+    }
+
+    return {
+      sourceDocument: refreshedSourceDocument,
+      parseJob,
+    };
   },
 
   createManualQa(input: CreateManualQaInput) {
@@ -173,9 +286,7 @@ export const importService = {
       } else {
         questionItem =
           questionRepository.update(questionItem.id, {
-            ...(questionItem.canonicalAnswer
-              ? {}
-              : { canonicalAnswer: input.answerText }),
+            canonicalAnswer: input.answerText,
             ...(questionItem.category || !primaryCategory
               ? {}
               : { category: primaryCategory }),
@@ -193,10 +304,7 @@ export const importService = {
         existingAnswerVariant ??
         questionRepository.createAnswerVariant({
           questionItemId: questionItem.id,
-          variantType: pickManualAnswerVariantType(
-            questionItem.canonicalAnswer,
-            input.answerText,
-          ),
+          variantType: "canonical",
           content: input.answerText,
           authorType: "user",
         });

@@ -1,9 +1,19 @@
-import { count, eq } from "drizzle-orm";
+import { count, eq, inArray } from "drizzle-orm";
 
 import { db, sqlite } from "@/server/db/client";
 import { chunks } from "@/server/db/schema";
 import { createStableOpaqueId, nowUtcIso } from "@/server/repositories/ids";
 import { parseJsonStringArray } from "@/server/repositories/search-helpers";
+import { vectorSyncRepository } from "@/server/repositories/vector-sync-repository";
+
+/**
+ * [POS] 维护 retrieval chunk 的稳定 ID、SQLite chunk 真相表，以及和 Milvus foundation 对齐的增删边界。
+ * [IN] canonical question / answer / source / resume_project 数据。
+ * [OUT] 持久化 chunks 表，必要时为 Milvus 删除同步排队。
+ *
+ * @feature open-interview-server-core-feature.md
+ * @AI_INSTRUCTION 一旦本文件被更新，务必同步更新本注释，以及对应的 L2 feature 文档。
+ */
 
 function estimateTokenCount(content: string) {
   const trimmedContent = content.trim();
@@ -59,35 +69,100 @@ function upsertChunk(input: {
     return null;
   }
 
-  db.insert(chunks)
-    .values({
-      id: input.id,
+  const tokenCount = estimateTokenCount(trimmedContent);
+  const sourceOrder = input.sourceOrder ?? null;
+  const existingChunk = db
+    .select()
+    .from(chunks)
+    .where(eq(chunks.id, input.id))
+    .limit(1)
+    .all()[0];
+
+  if (!existingChunk) {
+    db.insert(chunks)
+      .values({
+        id: input.id,
+        ownerType: input.ownerType,
+        ownerId: input.ownerId,
+        chunkType: input.chunkType,
+        content: trimmedContent,
+        tokenCount,
+        sourceOrder,
+        embeddingStatus: "pending",
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      })
+      .run();
+
+    return input.id;
+  }
+
+  const contentChanged =
+    existingChunk.content !== trimmedContent ||
+    existingChunk.tokenCount !== tokenCount ||
+    existingChunk.sourceOrder !== sourceOrder ||
+    existingChunk.ownerType !== input.ownerType ||
+    existingChunk.ownerId !== input.ownerId ||
+    existingChunk.chunkType !== input.chunkType;
+
+  if (!contentChanged) {
+    return input.id;
+  }
+
+  db.update(chunks)
+    .set({
       ownerType: input.ownerType,
       ownerId: input.ownerId,
       chunkType: input.chunkType,
       content: trimmedContent,
-      tokenCount: estimateTokenCount(trimmedContent),
-      sourceOrder: input.sourceOrder ?? null,
+      tokenCount,
+      sourceOrder,
       embeddingStatus: "pending",
-      createdAt: timestamp,
       updatedAt: timestamp,
     })
-    .onConflictDoUpdate({
-      target: chunks.id,
-      set: {
-        content: trimmedContent,
-        tokenCount: estimateTokenCount(trimmedContent),
-        sourceOrder: input.sourceOrder ?? null,
-        updatedAt: timestamp,
-      },
-    })
+    .where(eq(chunks.id, input.id))
     .run();
 
   return input.id;
 }
 
 function deleteChunk(chunkId: string) {
+  vectorSyncRepository.enqueueChunkDelete({
+    chunkId,
+  });
   db.delete(chunks).where(eq(chunks.id, chunkId)).run();
+}
+
+function pruneChunks(existingChunkIds: string[], expectedChunkIds: Set<string>) {
+  for (const chunkId of existingChunkIds) {
+    if (!expectedChunkIds.has(chunkId)) {
+      deleteChunk(chunkId);
+    }
+  }
+}
+
+function listChunkIdsByOwnerType(
+  ownerType: "question_item" | "answer_variant" | "resume_project",
+) {
+  return db
+    .select({
+      id: chunks.id,
+    })
+    .from(chunks)
+    .where(eq(chunks.ownerType, ownerType))
+    .all()
+    .map((row) => row.id);
+}
+
+function listChunkIdsByChunkType(chunkType: "source_excerpt") {
+  return db
+    .select({
+      id: chunks.id,
+    })
+    .from(chunks)
+    .where(eq(chunks.chunkType, chunkType))
+    .all()
+    .map((row) => row.id);
 }
 
 export const chunkRepository = {
@@ -104,13 +179,17 @@ export const chunkRepository = {
       questionText: string;
       canonicalAnswer: string | null;
     }>;
+    const expectedChunkIds = new Set<string>();
     let questionChunkCount = 0;
     let answerChunkCount = 0;
 
     for (const row of rows) {
+      const questionChunkId = getQuestionTextChunkId(row.questionId);
+
+      expectedChunkIds.add(questionChunkId);
       if (
         upsertChunk({
-          id: getQuestionTextChunkId(row.questionId),
+          id: questionChunkId,
           ownerType: "question_item",
           ownerId: row.questionId,
           chunkType: "question",
@@ -123,6 +202,7 @@ export const chunkRepository = {
       const answerChunkId = getQuestionAnswerChunkId(row.questionId);
 
       if (row.canonicalAnswer) {
+        expectedChunkIds.add(answerChunkId);
         if (
           upsertChunk({
             id: answerChunkId,
@@ -134,10 +214,10 @@ export const chunkRepository = {
         ) {
           answerChunkCount += 1;
         }
-      } else {
-        deleteChunk(answerChunkId);
       }
     }
+
+    pruneChunks(listChunkIdsByOwnerType("question_item"), expectedChunkIds);
 
     return {
       questionChunkCount,
@@ -161,12 +241,16 @@ export const chunkRepository = {
       questionItemId: string;
       content: string;
     }>;
+    const expectedChunkIds = new Set<string>();
     let chunkCount = 0;
 
     for (const row of rows) {
+      const chunkId = getAnswerVariantChunkId(row.answerVariantId);
+
+      expectedChunkIds.add(chunkId);
       if (
         upsertChunk({
-          id: getAnswerVariantChunkId(row.answerVariantId),
+          id: chunkId,
           ownerType: "answer_variant",
           ownerId: row.answerVariantId,
           chunkType: "answer",
@@ -176,6 +260,8 @@ export const chunkRepository = {
         chunkCount += 1;
       }
     }
+
+    pruneChunks(listChunkIdsByOwnerType("answer_variant"), expectedChunkIds);
 
     return {
       chunkCount,
@@ -204,6 +290,7 @@ export const chunkRepository = {
       sourceOrder: number | null;
       sourceStatus: "active" | "archived";
     }>;
+    const expectedChunkIds = new Set<string>();
     let chunkCount = 0;
 
     for (const row of rows) {
@@ -213,6 +300,7 @@ export const chunkRepository = {
       );
 
       if (row.sourceSnippet) {
+        expectedChunkIds.add(chunkId);
         if (
           upsertChunk({
             id: chunkId,
@@ -225,10 +313,10 @@ export const chunkRepository = {
         ) {
           chunkCount += 1;
         }
-      } else {
-        deleteChunk(chunkId);
       }
     }
+
+    pruneChunks(listChunkIdsByChunkType("source_excerpt"), expectedChunkIds);
 
     return {
       chunkCount,
@@ -258,6 +346,7 @@ export const chunkRepository = {
       techStackJson: string | null;
       deepDiveQuestionsJson: string | null;
     }>;
+    const expectedChunkIds = new Set<string>();
     let chunkCount = 0;
 
     for (const row of rows) {
@@ -272,10 +361,12 @@ export const chunkRepository = {
           (question) => `Deep dive: ${question}`,
         ),
       ].filter((value): value is string => Boolean(value && value.trim()));
+      const chunkId = getResumeProjectSummaryChunkId(row.projectId);
 
+      expectedChunkIds.add(chunkId);
       if (
         upsertChunk({
-          id: getResumeProjectSummaryChunkId(row.projectId),
+          id: chunkId,
           ownerType: "resume_project",
           ownerId: row.projectId,
           chunkType: "project_summary",
@@ -286,9 +377,29 @@ export const chunkRepository = {
       }
     }
 
+    pruneChunks(listChunkIdsByOwnerType("resume_project"), expectedChunkIds);
+
     return {
       chunkCount,
     };
+  },
+
+  listQaChunks() {
+    return db
+      .select({
+        id: chunks.id,
+        ownerType: chunks.ownerType,
+        ownerId: chunks.ownerId,
+        chunkType: chunks.chunkType,
+        content: chunks.content,
+        tokenCount: chunks.tokenCount,
+        sourceOrder: chunks.sourceOrder,
+        embeddingStatus: chunks.embeddingStatus,
+        updatedAt: chunks.updatedAt,
+      })
+      .from(chunks)
+      .where(inArray(chunks.chunkType, ["question", "answer", "source_excerpt"]))
+      .all();
   },
 
   countByChunkType() {
