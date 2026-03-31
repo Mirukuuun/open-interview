@@ -115,94 +115,89 @@ export function ImportWorkbench({
         ]}
       />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.88fr)]">
-        <SurfaceCard className="space-y-5">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.88fr)] xl:[--import-panel-height:min(720px,calc(100vh-15rem))] xl:items-stretch">
+        <SurfaceCard className="space-y-5 xl:flex xl:h-[var(--import-panel-height)] xl:flex-col">
           <SectionHeading title="导入方式" />
-          <ImportActionsPanel manualQaOptions={manualQaOptions} />
+          <div className="xl:min-h-0 xl:flex-1 xl:overflow-y-auto xl:pr-1">
+            <ImportActionsPanel manualQaOptions={manualQaOptions} />
+          </div>
         </SurfaceCard>
 
-        <div className="space-y-6">
-          <SurfaceCard className="space-y-5">
-            <SectionHeading
-              title={`最近来源（${totalSources}）`}
-            />
+        <SurfaceCard className="space-y-5 xl:flex xl:h-[var(--import-panel-height)] xl:flex-col">
+          <SectionHeading title={`最近来源（${totalSources}）`} />
 
-            {recentSources.length === 0 ? (
+          {recentSources.length === 0 ? (
+            <div className="xl:min-h-0 xl:flex-1">
               <EmptyList
                 title="还没有导入内容"
               />
-            ) : (
-              <div className="space-y-3">
-                {recentSources.map((source) => {
-                  const statusBadge = parseStatusBadge(source.parseStatus);
+            </div>
+          ) : (
+            <div className="space-y-3 xl:min-h-0 xl:flex-1 xl:overflow-y-auto xl:pr-1">
+              {recentSources.map((source) => {
+                const statusBadge = parseStatusBadge(source.parseStatus);
 
-                  return (
-                    <div
-                      className="rounded-xl border border-border-muted bg-surface-muted p-4"
-                      key={source.id}
-                    >
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div className="space-y-2">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Badge>{kindLabel(source.kind)}</Badge>
-                            <Badge tone={statusBadge.tone}>{statusBadge.label}</Badge>
-                          </div>
-                          <div className="space-y-1">
-                            <p className="text-sm font-semibold text-text-strong">
-                              {source.title}
-                            </p>
-                            <p className="font-mono text-xs text-text-muted">
-                              {source.id}
-                            </p>
-                          </div>
+                return (
+                  <div
+                    className="rounded-xl border border-border-muted bg-surface-muted p-4"
+                    key={source.id}
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge>{kindLabel(source.kind)}</Badge>
+                          <Badge tone={statusBadge.tone}>{statusBadge.label}</Badge>
                         </div>
-                        <p className="text-xs text-text-muted">
-                          {formatTimestamp(source.createdAt)}
-                        </p>
+                        <div className="space-y-1">
+                          <p className="text-sm font-semibold text-text-strong">
+                            {source.title}
+                          </p>
+                          <p className="font-mono text-xs text-text-muted">
+                            {source.id}
+                          </p>
+                        </div>
                       </div>
-
-                      <p className="mt-3 text-sm leading-6 text-text-muted">
-                        {summarizeText(source.rawText)}
+                      <p className="text-xs text-text-muted">
+                        {formatTimestamp(source.createdAt)}
                       </p>
-
-                      <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-text-muted">
-                        {source.fileName ? (
-                          <span className="rounded-full bg-white px-3 py-1">
-                            文件: {source.fileName}
-                          </span>
-                        ) : null}
-                        {source.mimeType ? (
-                          <span className="rounded-full bg-white px-3 py-1">
-                            MIME: {source.mimeType}
-                          </span>
-                        ) : null}
-                        {source.filePath ? (
-                          <span className="rounded-full bg-white px-3 py-1 font-mono text-xs">
-                            路径: {source.filePath}
-                          </span>
-                        ) : null}
-                        {source.sourceUrl ? (
-                          <span className="rounded-full bg-white px-3 py-1">
-                            来源链接: {source.sourceUrl}
-                          </span>
-                        ) : null}
-                        {source.kind === "manual_input" ? (
-                          <Button href="/questions" variant="ghost">
-                            打开题库
-                          </Button>
-                        ) : (
-                          <Button href="/review" variant="ghost">
-                            {reviewActionLabel(source.parseStatus)}
-                          </Button>
-                        )}
-                      </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </SurfaceCard>
-        </div>
+
+                    <p className="mt-3 text-sm leading-6 text-text-muted">
+                      {summarizeText(source.rawText)}
+                    </p>
+
+                    <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-text-muted">
+                      {source.fileName ? (
+                        <span className="rounded-full bg-white px-3 py-1">
+                          文件: {source.fileName}
+                        </span>
+                      ) : null}
+                      {source.mimeType ? (
+                        <span className="rounded-full bg-white px-3 py-1">
+                          MIME: {source.mimeType}
+                        </span>
+                      ) : null}
+                      {source.sourceUrl ? (
+                        <span className="rounded-full bg-white px-3 py-1">
+                          来源链接: {source.sourceUrl}
+                        </span>
+                      ) : null}
+                      {source.kind === "manual_input" ? (
+                        <Button href="/questions" variant="ghost">
+                          打开题库
+                        </Button>
+                      ) : (
+                        <Button href="/review" variant="ghost">
+                          {reviewActionLabel(source.parseStatus)}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </SurfaceCard>
       </div>
     </div>
   );

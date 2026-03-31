@@ -6,3 +6,5 @@ export * from "@/server/db/schema/interviews";
 export * from "@/server/db/schema/resumes";
 export * from "@/server/db/schema/retrieval";
 export * from "@/server/db/schema/sessions";
+export * from "@/server/db/schema/assessments";
+export * from "@/server/db/schema/practice-profiles";

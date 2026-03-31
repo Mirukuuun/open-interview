@@ -150,8 +150,8 @@ export function QaAskForm({
           onKeyDown={handleTextareaKeyDown}
           placeholder={
             hasTurns
-              ? "继续追问，或者让 AI 帮你把回答改成更像面试时会说出口的版本。"
-              : "直接输入问题，比如“请你做个自我介绍”或“Redis 分布式锁这题怎么答”。"
+              ? "继续追问，或让 AI 改写这轮回答。"
+              : "输入你的问题。"
           }
           ref={textareaRef}
           rows={4}
@@ -159,14 +159,9 @@ export function QaAskForm({
         />
 
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-border-muted px-2 pt-3">
-          <div className="space-y-1">
-            <p className="text-xs font-medium text-text-strong">
-              {isSubmitting ? "AI 正在整理回答…" : "Enter 发送，Shift + Enter 换行"}
-            </p>
-            <p className="text-xs text-text-muted">
-              默认优先结合本地材料回答，依据不足时也会先给出一版可用思路。
-            </p>
-          </div>
+          <p className="text-xs font-medium text-text-strong">
+            {isSubmitting ? "AI 正在整理回答…" : "Enter 发送，Shift + Enter 换行"}
+          </p>
 
           <div className="flex flex-wrap items-center gap-2">
             {sessionId ? (

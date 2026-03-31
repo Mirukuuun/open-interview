@@ -1,7 +1,7 @@
 # 仓库指南
 
 ## 项目概要
-- Open Interview 是一个 local-first 的面试工作台，覆盖导入、解析审核、题库沉淀、grounded QA 和简历项目深挖。
+- Open Interview 是一个 local-first 的面试工作台，覆盖导入、解析审核、题库沉淀、随机练习 / 模拟考试、grounded QA 和简历项目深挖。
 - 当前实现以 Next.js App Router + SQLite/Drizzle 为主干，路由层保持轻量，核心业务能力沉在 `src/server/*`。
 - 后续协作默认先走 `.codex` 规范目录中的 `workflows`、`context`、`rules`、`plans`。
 
@@ -18,6 +18,7 @@
 - L2：`.codex/context/open-interview-import-feature.md`，导入、上传与 parse job 触发。
 - L2：`.codex/context/open-interview-review-feature.md`，review queue 与人工确认流程。
 - L2：`.codex/context/open-interview-questions-feature.md`，题库浏览与 canonical 问题契约。
+- L2：`.codex/context/open-interview-practice-feature.md`，随机练习、模拟考试与评分结果。
 - L2：`.codex/context/open-interview-interviews-feature.md`，面经来源浏览与上下文展示。
 - L2：`.codex/context/open-interview-qa-feature.md`，grounded QA 会话与引用约束。
 - L2：`.codex/context/open-interview-resume-feature.md`，简历、项目与深挖会话。
@@ -34,7 +35,7 @@
 
 ## 项目结构与模块组织
 - `src/app/` 放置 Next.js App Router 页面和 API 路由处理器 `route.ts`。路由层保持精简，业务逻辑下沉到服务层。
-- `src/features/` 按业务流组织工作台界面，包括 `import`、`review`、`questions`、`interviews`、`qa`、`resume`。
+- `src/features/` 按业务流组织工作台界面，包括 `import`、`review`、`questions`、`practice`、`interviews`、`qa`、`resume`。
 - `src/components/` 放可复用 UI 组件，`src/lib/` 放共享 schema 和工具，`src/server/` 放适配器、数据库 schema/migrations、repositories、retrieval 和 services。
 - `docs/` 存放产品与契约文档，`tasks/slices/` 存放分片实现任务；本地生成物位于已忽略的 `storage/` 和 `tmp/`。
 

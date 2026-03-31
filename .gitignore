@@ -28,3 +28,9 @@ tmp/
 storage/*.sqlite*
 storage/raw/
 src/server/db/migrations/meta/
+
+# local infrastructure runtime artifacts
+etcd/
+milvus/
+minio/
+volumes/

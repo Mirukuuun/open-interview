@@ -1,3 +1,11 @@
+/**
+ * [POS] 编排 parse job 的创建、异步执行、审核队列读取与人工确认导入。
+ * [IN] sourceDocumentId / jobId、review filters、确认导入 payload。
+ * [OUT] 推进 parse_job/source_document 状态，并在确认后写入 canonical 实体。
+ *
+ * @feature open-interview-review-feature.md
+ * @AI_INSTRUCTION 一旦本文件被更新，务必同步更新本注释，以及对应的 L2 feature 文档。
+ */
 import type {
   ConfirmParseJobRequest,
   ParseJobListItem,
@@ -381,6 +389,8 @@ function buildCanonicalInterviewVocabulary() {
   };
 }
 
+const scheduledParseJobIds = new Set<string>();
+
 async function executeParseJob(jobId: string) {
   const existingJob = parseJobRepository.findById(jobId);
 
@@ -467,6 +477,58 @@ async function executeParseJob(jobId: string) {
   }
 }
 
+function scheduleParseJobExecution(jobId: string) {
+  if (scheduledParseJobIds.has(jobId)) {
+    return;
+  }
+
+  scheduledParseJobIds.add(jobId);
+
+  const timer = setTimeout(() => {
+    void executeParseJob(jobId)
+      .catch((error) => {
+        console.error("Failed to execute parse job in background.", {
+          jobId,
+          error,
+        });
+      })
+      .finally(() => {
+        scheduledParseJobIds.delete(jobId);
+      });
+  }, 0);
+
+  timer.unref?.();
+}
+
+function queueParseJob(jobId: string) {
+  const parseJob = parseJobRepository.findById(jobId);
+
+  if (!parseJob) {
+    throw new ParseReviewServiceError("not_found", "Parse job was not found.", 404);
+  }
+
+  const queuedJob = parseJobRepository.update(jobId, {
+    status: "pending",
+    errorMessage: null,
+    resultJson: null,
+    startedAt: null,
+    finishedAt: null,
+  });
+
+  if (!queuedJob) {
+    throw new ParseReviewServiceError(
+      "internal_error",
+      "Failed to queue parse job.",
+      500,
+    );
+  }
+
+  sourceDocumentRepository.updateParseStatus(parseJob.sourceDocumentId, "pending");
+  scheduleParseJobExecution(jobId);
+
+  return queuedJob;
+}
+
 export const parseReviewService = {
   async createParseJob(input: {
     sourceDocumentId: string;
@@ -486,11 +548,15 @@ export const parseReviewService = {
         latestJob.status === "running" ||
         latestJob.status === "needs_review"
       ) {
+        if (latestJob.status === "pending") {
+          scheduleParseJobExecution(latestJob.id);
+        }
+
         return toParseJobSummary(latestJob);
       }
 
       if (latestJob.status === "failed") {
-        return toParseJobSummary(await executeParseJob(latestJob.id));
+        return toParseJobSummary(queueParseJob(latestJob.id));
       }
 
       if (latestJob.status === "confirmed") {
@@ -518,11 +584,44 @@ export const parseReviewService = {
 
     sourceDocumentRepository.updateParseStatus(input.sourceDocumentId, "pending");
 
-    return toParseJobSummary(await executeParseJob(parseJob.id));
+    scheduleParseJobExecution(parseJob.id);
+
+    return toParseJobSummary(parseJob);
   },
 
   async retryParseJob(jobId: string) {
-    return toParseJobSummary(await executeParseJob(jobId));
+    const parseJob = parseJobRepository.findById(jobId);
+
+    if (!parseJob) {
+      throw new ParseReviewServiceError("not_found", "Parse job was not found.", 404);
+    }
+
+    if (parseJob.status === "confirmed") {
+      throw new ParseReviewServiceError(
+        "invalid_state",
+        "Confirmed parse jobs cannot be retried in the current slice.",
+        409,
+      );
+    }
+
+    if (parseJob.status === "running") {
+      return toParseJobSummary(parseJob);
+    }
+
+    if (parseJob.status === "pending") {
+      scheduleParseJobExecution(parseJob.id);
+      return toParseJobSummary(parseJob);
+    }
+
+    if (parseJob.status === "needs_review") {
+      throw new ParseReviewServiceError(
+        "invalid_state",
+        "Only failed parse jobs can be retried.",
+        409,
+      );
+    }
+
+    return toParseJobSummary(queueParseJob(jobId));
   },
 
   listReviewQueue(filters: ReviewQueueFilters = {}): ReviewQueueData {

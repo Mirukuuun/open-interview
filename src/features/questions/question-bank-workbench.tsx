@@ -10,6 +10,10 @@ import { DetailGrid } from "@/components/workbench/detail-grid";
 import { EmptyList } from "@/components/workbench/empty-list";
 import { PageHeader } from "@/components/workbench/page-header";
 import { SectionHeading } from "@/components/workbench/section-heading";
+import {
+  buildQuestionDetailHref,
+  buildQuestionsHref,
+} from "@/features/questions/question-query-state";
 import { formatCategoryLabel, formatTagLabel } from "@/lib/taxonomy-display";
 import { questionBankService } from "@/server/services/question-bank-service";
 
@@ -19,42 +23,6 @@ type QuestionBankWorkbenchProps = {
   facets: ReturnType<typeof questionBankService.getQuestionFacets>;
   invalidQuery?: boolean;
 };
-
-function buildQuestionsHref(filters: Partial<ListQuestionsQuery>) {
-  const searchParams = new URLSearchParams();
-
-  if (filters.q) {
-    searchParams.set("q", filters.q);
-  }
-
-  if (filters.category) {
-    searchParams.set("category", filters.category);
-  }
-
-  if (filters.tag) {
-    searchParams.set("tag", filters.tag);
-  }
-
-  if (filters.difficulty) {
-    searchParams.set("difficulty", filters.difficulty);
-  }
-
-  if (filters.sort && filters.sort !== "updated_at") {
-    searchParams.set("sort", filters.sort);
-  }
-
-  if (filters.page && filters.page > 1) {
-    searchParams.set("page", String(filters.page));
-  }
-
-  if (filters.page_size && filters.page_size !== 20) {
-    searchParams.set("page_size", String(filters.page_size));
-  }
-
-  const queryString = searchParams.toString();
-
-  return queryString.length > 0 ? `/questions?${queryString}` : "/questions";
-}
 
 function countActiveFilters(filters: ListQuestionsQuery) {
   return [
@@ -109,7 +77,7 @@ export function QuestionBankWorkbench({
         })
       : undefined;
   const sampleQuestionHref = result.items[0]
-    ? `/questions/${result.items[0].id}`
+    ? buildQuestionDetailHref(result.items[0].id, filters)
     : "/questions";
 
   return (
@@ -274,7 +242,7 @@ export function QuestionBankWorkbench({
                         <div className="space-y-2">
                           <Link
                             className="text-sm font-semibold text-text-strong hover:text-accent"
-                            href={`/questions/${item.id}`}
+                            href={buildQuestionDetailHref(item.id, filters)}
                           >
                             {item.questionText}
                           </Link>
@@ -302,7 +270,7 @@ export function QuestionBankWorkbench({
                       <td className="border-b border-border-muted px-3 py-4 text-sm">
                         <Link
                           className="font-medium text-accent hover:underline"
-                          href={`/questions/${item.id}`}
+                          href={buildQuestionDetailHref(item.id, filters)}
                         >
                           打开详情
                         </Link>

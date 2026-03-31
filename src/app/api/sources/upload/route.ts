@@ -37,6 +37,16 @@ function buildUploadNextStep(result: {
     };
   }
 
+  if (
+    result.parseJob.status === "pending" ||
+    result.parseJob.status === "running"
+  ) {
+    return {
+      kind: "open_review" as const,
+      href: "/review",
+    };
+  }
+
   return {
     kind: "open_review" as const,
     href: `/review/${result.parseJob.id}`,

@@ -375,6 +375,186 @@ Update canonical fields.
 }
 ```
 
+## 4.4 POST `/api/practice/exams`
+Create a 10-question exam session from active questions that already have canonical answers.
+
+### Request
+```json
+{
+  "question_count": 10
+}
+```
+
+### Response
+```json
+{
+  "ok": true,
+  "data": {
+    "assessment_session": {
+      "id": "exam_001",
+      "mode": "exam",
+      "status": "active",
+      "question_count": 10,
+      "total_score": null,
+      "max_score": 100
+    },
+    "items": [
+      {
+        "id": "exam_item_001",
+        "sequence_no": 1,
+        "question_item_id": "q_redis_lock_001",
+        "question_text": "Redis 分布式锁会遇到哪些问题？",
+        "canonical_answer": "需要考虑误删、续约、主从切换一致性等。",
+        "category": "distributed_system",
+        "tags": ["redis", "lock"],
+        "dimension_weights": [
+          {
+            "key": "distributed_systems",
+            "weight": 1
+          }
+        ],
+        "user_answer": null,
+        "score": null,
+        "max_score": 10
+      }
+    ]
+  }
+}
+```
+
+### Rules
+- Only active questions with `canonical_answer` can be selected.
+- The response must already contain stable item ids for later answer submission.
+- MVP-2 should resolve fixed-dimension `dimension_weights` from question taxonomy at exam creation time and snapshot them with the item.
+
+## 4.5 GET `/api/practice/exams/:sessionId`
+Return exam snapshot, current answers, and scoring result if available.
+
+### Response highlights
+- `assessment_session.status`: `active | scoring | completed | failed`
+- `items[*].user_answer` is the latest stored answer
+- `items[*].dimension_weights[]` is the creation-time fixed-dimension snapshot
+- `result_summary` is only present after scoring is completed or failed with fallback summary
+- historical MVP-1 sessions may still return legacy `radar_dimensions[]`; newly created V2 sessions return the split radar/profile shape below
+
+## 4.6 POST `/api/practice/exams/:sessionId/submit`
+Submit all answers and trigger grading.
+
+### Request
+```json
+{
+  "answers": [
+    {
+      "assessment_item_id": "exam_item_001",
+      "user_answer": "我会先说明误删、续约和主从切换一致性问题。"
+    }
+  ]
+}
+```
+
+### Response highlights
+- Returns the same `assessment_session` + `items` shape as `GET`.
+- `result_summary` 已统一为 V2 结构：
+  - `overall_feedback`
+  - `weak_areas[]`
+  - `exam_radar_dimensions[]`
+  - `profile_radar_dimensions[]`
+  - `profile_updates[]`
+- Each item includes `feedback` and `skill_scores` for result rendering.
+
+### MVP-2 fixed dimension catalog
+- `java_fundamentals`
+- `database_storage`
+- `distributed_systems`
+- `computer_fundamentals`
+- `system_design_engineering`
+- `agent_capability`
+
+### MVP-2 result summary shape
+```ts
+type PracticeDimensionKey =
+  | 'java_fundamentals'
+  | 'database_storage'
+  | 'distributed_systems'
+  | 'computer_fundamentals'
+  | 'system_design_engineering'
+  | 'agent_capability'
+
+interface PracticeResultSummaryV2 {
+  overall_feedback: string
+  weak_areas: Array<{
+    key: PracticeDimensionKey
+    label: string
+    question_count: number
+    coverage_weight: number
+    average_score: number
+  }>
+  exam_radar_dimensions: Array<{
+    key: PracticeDimensionKey
+    label: string
+    question_count: number
+    coverage_weight: number
+    average_score: number
+  }>
+  profile_radar_dimensions: Array<{
+    key: PracticeDimensionKey
+    label: string
+    score: number
+    evidence_count: number
+    last_assessed_at?: string | null
+    covered_in_exam: boolean
+  }>
+  profile_updates: Array<{
+    key: PracticeDimensionKey
+    label: string
+    previous_score?: number | null
+    new_score: number
+    exam_score: number
+    coverage_weight: number
+    update_weight: number
+  }>
+}
+```
+
+Rules:
+- `exam_radar_dimensions` only includes dimensions actually covered by the current paper.
+- `profile_radar_dimensions` always returns the full fixed catalog.
+- `profile_updates` only includes dimensions covered by the current paper and actually updated.
+
+## 4.7 GET `/api/practice/profile`
+Return the persisted long-term practice profile.
+
+### Response
+```json
+{
+  "ok": true,
+  "data": {
+    "profile": {
+      "id": "practice_profile_local",
+      "scope": "local_default",
+      "dimension_catalog_version": "practice-v2",
+      "last_exam_session_id": "exam_001",
+      "last_assessed_at": "2026-03-31T07:00:00Z"
+    },
+    "dimensions": [
+      {
+        "key": "java_fundamentals",
+        "label": "Java基础",
+        "score": 6.8,
+        "evidence_count": 18.5,
+        "last_exam_score": 7.2,
+        "last_assessed_at": "2026-03-31T07:00:00Z"
+      }
+    ]
+  }
+}
+```
+
+### Rules
+- Service should return the full fixed dimension catalog even before the user has enough evidence.
+- Initial profile should default to `score = 0` and `evidence_count = 0`, not `404`.
+- 历史考试不会被自动回填到 profile；画像从 V2 上线后的新考试开始累积。
+
 ---
 
 ## 5. Interview note APIs
@@ -799,13 +979,17 @@ If implementing API-first:
 6. `/api/parse-jobs/:jobId/confirm`
 7. `/api/questions`
 8. `/api/questions/:questionId`
-9. `/api/interviews`
-10. `/api/interviews/:interviewId`
-11. `/api/search`
-12. `/api/retrieval/query`
-13. `/api/qa/sessions`
-14. `/api/qa/sessions/:sessionId/ask`
-15. resume / deep-dive endpoints
+9. `/api/practice/exams`
+10. `/api/practice/exams/:sessionId`
+11. `/api/practice/exams/:sessionId/submit`
+12. `/api/practice/profile`
+13. `/api/interviews`
+14. `/api/interviews/:interviewId`
+15. `/api/search`
+16. `/api/retrieval/query`
+17. `/api/qa/sessions`
+18. `/api/qa/sessions/:sessionId/ask`
+19. resume / deep-dive endpoints
 
 ---
 
@@ -820,6 +1004,8 @@ If implementing API-first:
 
 ### MVP-2 required
 - `/api/retrieval/query`
+- `/api/practice/exams/*`
+- `/api/practice/profile`
 - chunk + embedding rebuild endpoints
 - `/api/qa/sessions/*`
 - `/api/search?strategy=hybrid`

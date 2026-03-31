@@ -7,6 +7,15 @@ import {
 } from "@/server/repositories/search-helpers";
 import { sqlite } from "@/server/db/client";
 
+/**
+ * [POS] 负责题库浏览、详情、相邻跳转与练习题池读取的 SQLite 查询边界。
+ * [IN] 题库筛选条件、question id、练习模式读取请求。
+ * [OUT] 返回题库列表、详情、facets、相邻题与练习所需的最小题目快照。
+ *
+ * @feature open-interview-questions-feature.md
+ * @AI_INSTRUCTION 一旦本文件被更新，务必同步更新本注释，以及对应的 L2 文档。
+ */
+
 type QuestionDifficulty = "easy" | "medium" | "hard";
 type QuestionSort = "updated_at" | "source_count";
 
@@ -25,6 +34,12 @@ type QuestionFacet = {
   count: number;
 };
 
+type AdjacentQuestion = {
+  id: string;
+  questionText: string;
+  page: number;
+};
+
 type QuestionDetailRecord = {
   id: string;
   questionText: string;
@@ -34,6 +49,15 @@ type QuestionDetailRecord = {
   sourceCount: number;
   reviewStatus: "draft" | "active" | "archived";
   updatedAt: string;
+  tagsJson: string;
+};
+
+type PracticePoolRecord = {
+  id: string;
+  questionText: string;
+  canonicalAnswer: string | null;
+  category: string | null;
+  difficulty: QuestionDifficulty | null;
   tagsJson: string;
 };
 
@@ -129,6 +153,44 @@ function parseQuestionListItem(row: {
 }
 
 export const questionBrowseRepository = {
+  listPracticePool() {
+    const rows = sqlite
+      .prepare(
+        `
+          SELECT
+            q.id AS id,
+            q.question_text AS questionText,
+            q.canonical_answer AS canonicalAnswer,
+            q.category AS category,
+            q.difficulty AS difficulty,
+            COALESCE((
+              SELECT json_group_array(name)
+              FROM (
+                SELECT t.name AS name
+                FROM question_tags qt
+                INNER JOIN tags t
+                  ON t.id = qt.tag_id
+                WHERE qt.question_item_id = q.id
+                ORDER BY t.name COLLATE NOCASE
+              )
+            ), '[]') AS tagsJson
+          FROM question_items q
+          WHERE q.review_status = 'active'
+          ORDER BY q.updated_at DESC, q.source_count DESC, q.question_text COLLATE NOCASE ASC
+        `,
+      )
+      .all() as PracticePoolRecord[];
+
+    return rows.map((row) => ({
+      id: row.id,
+      questionText: row.questionText,
+      canonicalAnswer: row.canonicalAnswer,
+      category: row.category,
+      difficulty: row.difficulty,
+      tags: parseJsonStringArray(row.tagsJson),
+    }));
+  },
+
   list(input: ListQuestionsInput) {
     const whereClause = buildQuestionWhereClause(input);
     const orderByClause =
@@ -248,6 +310,98 @@ export const questionBrowseRepository = {
           item.name === "easy" || item.name === "medium" || item.name === "hard",
       ),
       tags,
+    };
+  },
+
+  findAdjacent(input: ListQuestionsInput & { questionId: string }) {
+    const whereClause = buildQuestionWhereClause(input);
+    const orderByClause =
+      input.sort === "source_count"
+        ? "q.source_count DESC, q.updated_at DESC, q.question_text COLLATE NOCASE ASC"
+        : "q.updated_at DESC, q.source_count DESC, q.question_text COLLATE NOCASE ASC";
+
+    const row = sqlite
+      .prepare(
+        `
+          WITH ordered AS (
+            SELECT
+              q.id AS id,
+              q.question_text AS questionText,
+              ROW_NUMBER() OVER (ORDER BY ${orderByClause}) AS rowNum
+            FROM question_items q
+            WHERE ${whereClause.sql}
+          ),
+          current_row AS (
+            SELECT rowNum
+            FROM ordered
+            WHERE id = ?
+          )
+          SELECT
+            prev.id AS previousId,
+            prev.questionText AS previousQuestionText,
+            CASE
+              WHEN prev.rowNum IS NULL THEN NULL
+              ELSE CAST(((prev.rowNum - 1) / ?) AS INT) + 1
+            END AS previousPage,
+            next.id AS nextId,
+            next.questionText AS nextQuestionText,
+            CASE
+              WHEN next.rowNum IS NULL THEN NULL
+              ELSE CAST(((next.rowNum - 1) / ?) AS INT) + 1
+            END AS nextPage
+          FROM current_row
+          LEFT JOIN ordered prev
+            ON prev.rowNum = current_row.rowNum - 1
+          LEFT JOIN ordered next
+            ON next.rowNum = current_row.rowNum + 1
+        `,
+      )
+      .get(
+        ...whereClause.params,
+        input.questionId,
+        input.pageSize,
+        input.pageSize,
+      ) as
+      | {
+          previousId: string | null;
+          previousQuestionText: string | null;
+          previousPage: number | null;
+          nextId: string | null;
+          nextQuestionText: string | null;
+          nextPage: number | null;
+        }
+      | undefined;
+
+    function parseAdjacentQuestion(
+      id: string | null,
+      questionText: string | null,
+      page: number | null,
+    ): AdjacentQuestion | undefined {
+      if (!id || !questionText || !page) {
+        return undefined;
+      }
+
+      return {
+        id,
+        questionText,
+        page,
+      };
+    }
+
+    if (!row) {
+      return {
+        previous: undefined,
+        next: undefined,
+      };
+    }
+
+    return {
+      previous: parseAdjacentQuestion(
+        row.previousId,
+        row.previousQuestionText,
+        row.previousPage,
+      ),
+      next: parseAdjacentQuestion(row.nextId, row.nextQuestionText, row.nextPage),
     };
   },
 

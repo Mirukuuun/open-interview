@@ -322,6 +322,141 @@ interface SessionTurn {
 }
 ```
 
+## 2.13A assessment_session
+10 题模拟考试的整套快照与评分结果。
+
+```ts
+interface AssessmentSession {
+  id: string
+  mode: 'exam'
+  status: 'active' | 'scoring' | 'completed' | 'failed'
+  question_count: number
+  total_score?: number | null
+  max_score: number
+  summary_json?: AssessmentResultSummary | null
+  scoring_provider: 'openclaw'
+  started_at: string
+  submitted_at?: string | null
+  completed_at?: string | null
+  created_at: string
+  updated_at: string
+}
+```
+
+Rules:
+- 题面、标准答案和分类标签必须快照到 item 层，不能依赖考试后再次回读题库。
+- `failed` 允许保留 fallback summary，避免整套考试完全失去结果。
+- `summary_json` 默认写入 Practice V2 结构：本次考试维度摘要 + 长期画像更新摘要；历史 MVP-1 记录允许继续保留动态 `radar_dimensions` 以兼容回看。
+
+## 2.13B assessment_item
+```ts
+interface AssessmentItem {
+  id: string
+  assessment_session_id: string
+  question_item_id: string
+  sequence_no: number
+  question_text_snapshot: string
+  canonical_answer_snapshot?: string | null
+  category_snapshot?: string | null
+  difficulty_snapshot?: 'easy' | 'medium' | 'hard' | null
+  tags_json: string
+  dimension_weights_json?: Array<{
+    key: PracticeDimensionKey
+    weight: number
+  }> | null
+  user_answer?: string | null
+  score?: number | null
+  max_score: number
+  feedback_json?: {
+    strengths: string[]
+    missed_points: string[]
+    improvement_advice: string
+  } | null
+  skill_scores_json?: {
+    accuracy: number
+    coverage: number
+    clarity: number
+  } | null
+  created_at: string
+  updated_at: string
+}
+```
+
+Rules:
+- 模拟考试只从带 `canonical_answer` 的 active `question_item` 抽题。
+- `sequence_no` 在单个 session 内必须稳定且唯一。
+- 创建考试时需要把固定维度映射结果快照到 `dimension_weights_json`，避免后续 taxonomy 或映射规则变化导致历史画像漂移。
+- 若旧考试缺少 `dimension_weights_json`，该场考试允许继续展示历史结果，但不参与长期画像回填。
+
+## 2.13C practice dimension catalog
+```ts
+type PracticeDimensionKey =
+  | 'java_fundamentals'
+  | 'database_storage'
+  | 'distributed_systems'
+  | 'computer_fundamentals'
+  | 'system_design_engineering'
+  | 'agent_capability'
+```
+
+Suggested labels:
+- `java_fundamentals`: Java基础
+- `database_storage`: 数据库与存储
+- `distributed_systems`: 分布式
+- `computer_fundamentals`: 计算机基础
+- `system_design_engineering`: 系统设计与工程实践
+- `agent_capability`: Agent能力
+
+Rules:
+- 固定维度 catalog 是长期能力画像的唯一雷达轴；`category` / `tag` 只是映射信号，不再直接作为最终雷达维度。
+- `exam_radar` 与 `profile_radar` 共享同一套 catalog，前者只显示本场覆盖维度，后者始终显示全量维度。
+- 题目允许命中多个固定维度，权重总和应为 `1.0`。
+- 当前映射由配置驱动，主要使用 `question_item.category` 和 tags；无命中时回退到 `system_design_engineering`。
+
+## 2.13D practice_profile
+```ts
+interface PracticeProfile {
+  id: string
+  scope: 'local_default'
+  dimension_catalog_version: string
+  last_exam_session_id?: string | null
+  last_assessed_at?: string | null
+  created_at: string
+  updated_at: string
+}
+```
+
+Rules:
+- 当前仓库未建多用户 ownership；MVP-2 先使用 local-first singleton profile。
+- profile 不直接存题库 taxonomy，只存固定维度画像状态与最近一次更新元数据。
+- 历史考试不做自动回填；profile 只从带维度快照的新考试结果增量更新。
+
+## 2.13E practice_profile_dimension
+```ts
+interface PracticeProfileDimension {
+  id: string
+  practice_profile_id: string
+  dimension_key: PracticeDimensionKey
+  score: number
+  evidence_count: number
+  last_exam_score?: number | null
+  last_coverage_weight?: number | null
+  last_assessed_at?: string | null
+  created_at: string
+  updated_at: string
+}
+```
+
+Rules:
+- `score` 范围固定为 `0-10`，与单题考试分数保持一致。
+- `evidence_count` 表示该维度累计覆盖证据，不要求是整数。
+- 只更新本场考试覆盖到的维度；未覆盖维度保持原值，不因缺考自动下降。
+- 建议使用 coverage-weighted smoothing：
+  - `coverage_weight = Σ(item.dimension_weight)`
+  - `alpha = clamp(0.08 + 0.06 * coverage_weight, 0.08, 0.35)`
+  - `new_score = old_score * (1 - alpha) + exam_dimension_score * alpha`
+- `exam_dimension_score` 应由本场考试内该维度加权平均得到，而不是直接复用原始 taxonomy bucket。
+
 ## 2.14 chunk
 RAG retrieval unit.
 
@@ -448,8 +583,12 @@ Required in MVP-1:
 - `chunk_vector_sync_states`
 - `vector_sync_jobs`
 - `retrieval_logs`
+- `assessment_sessions`
+- `assessment_items`
 
 Deferred after MVP-1（当前不要求在 Slice 1 落表）:
+- `practice_profiles`
+- `practice_profile_dimensions`
 - `resume_documents`
 - `resume_projects`
 - `ai_sessions`
@@ -551,7 +690,7 @@ Not modeling yet:
 - multi-user auth / ownership
 - company application pipeline
 - spaced repetition / memory scheduler
-- score rubric / interviewer rubric engine
+- interviewer-style persona engine / voice interview runtime
 - workflow DAG orchestration
 
 ---

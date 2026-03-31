@@ -26,6 +26,12 @@ export const primaryNavItems: NavItem[] = [
     description: "浏览确认后的题目。",
   },
   {
+    label: "随机练习",
+    href: "/practice",
+    match: "/practice",
+    description: "随机刷题或完成 10 题模拟考试。",
+  },
+  {
     label: "面经",
     href: "/interviews",
     match: "/interviews",

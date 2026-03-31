@@ -301,9 +301,7 @@ export function QaWorkbenchShell({
               <h1 className="text-2xl font-semibold tracking-[-0.04em] text-text-strong">
                 AI 问答
               </h1>
-              <p className="text-sm leading-6 text-text-muted">
-                和你的本地题库对话。默认只看问答，需要时再展开引用和检索细节。
-              </p>
+              <p className="text-sm leading-6 text-text-muted">本地题库问答。</p>
             </div>
 
             <Button
@@ -318,10 +316,7 @@ export function QaWorkbenchShell({
 
         <div className="rounded-[30px] border border-border-strong bg-white p-3 shadow-sm">
           <div className="flex items-center justify-between px-2 pb-3 pt-2">
-            <div>
-              <p className="text-sm font-semibold text-text-strong">会话列表</p>
-              <p className="text-xs text-text-muted">切换或删除已有对话</p>
-            </div>
+            <p className="text-sm font-semibold text-text-strong">会话列表</p>
             <Badge>{recentSessions.length}</Badge>
           </div>
 
@@ -391,11 +386,6 @@ export function QaWorkbenchShell({
                 <h2 className="text-2xl font-semibold tracking-[-0.04em] text-text-strong">
                   {activeSession?.aiSession.title ?? "开始一轮新的对话"}
                 </h2>
-                <p className="mt-1 text-sm leading-6 text-text-muted">
-                  {activeSession
-                    ? "连续追问会自动继承上下文；需要诊断时，再展开依据和检索摘要。"
-                    : "像使用 chat bot 一样提问；如果本地材料命中不足，也会先给你一版可用回答。"}
-                </p>
               </div>
             </div>
 
@@ -423,9 +413,6 @@ export function QaWorkbenchShell({
                   <h3 className="mt-4 text-3xl font-semibold tracking-[-0.05em] text-text-strong">
                     问一个问题，直接开始。
                   </h3>
-                  <p className="mt-3 max-w-2xl text-sm leading-7 text-text-muted">
-                    这个页面现在会优先展示一问一答的主对话。命中到本地题库时，回答会自然吸收本地材料；命中不足时，也会先给你一版通用但可继续迭代的回答。
-                  </p>
 
                   <div className="mt-6 grid gap-3 md:grid-cols-2">
                     {promptSuggestions.map((suggestion) => (

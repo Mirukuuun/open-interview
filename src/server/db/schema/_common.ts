@@ -110,6 +110,15 @@ export const qaAnswerModes = [
   "no_grounded_support",
 ] as const;
 
+export const assessmentModes = ["exam"] as const;
+
+export const assessmentStatuses = [
+  "active",
+  "scoring",
+  "completed",
+  "failed",
+] as const;
+
 export function idColumn() {
   return text("id").notNull().primaryKey();
 }

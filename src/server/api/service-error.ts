@@ -6,6 +6,7 @@ import { ImportServiceError } from "@/server/services/import-service-error";
 import { QaSessionServiceError } from "@/server/services/qa-session-service";
 import { ResumeDeepDiveServiceError } from "@/server/services/resume-deep-dive-service";
 import { ResumeServiceError } from "@/server/services/resume-service";
+import { PracticeServiceError } from "@/server/services/practice-service";
 
 export function toServiceErrorResponse(
   error: unknown,
@@ -15,6 +16,7 @@ export function toServiceErrorResponse(
     error instanceof ImportServiceError ||
     error instanceof ParseReviewServiceError ||
     error instanceof QaSessionServiceError ||
+    error instanceof PracticeServiceError ||
     error instanceof ResumeServiceError ||
     error instanceof ResumeDeepDiveServiceError
   ) {

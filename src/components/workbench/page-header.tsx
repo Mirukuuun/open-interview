@@ -5,7 +5,7 @@ type PageHeaderProps = {
   eyebrow?: string;
   title: string;
   description?: string;
-  routeLabel: string;
+  routeLabel?: string;
   actions?: React.ReactNode;
   className?: string;
 };
@@ -14,7 +14,6 @@ export function PageHeader({
   eyebrow = "工作台",
   title,
   description,
-  routeLabel,
   actions,
   className,
 }: PageHeaderProps) {
@@ -28,7 +27,6 @@ export function PageHeader({
       <div className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           <Badge tone="accent">{eyebrow}</Badge>
-          <span className="font-mono text-xs text-text-muted">{routeLabel}</span>
         </div>
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-[-0.03em] text-text-strong">

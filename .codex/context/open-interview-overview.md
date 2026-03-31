@@ -2,7 +2,7 @@
 
 - doc_type: context_l1
 - layer: L1
-- updated_at: 2026-03-26
+- updated_at: 2026-03-31
 - canonical_for: 项目总览、模块导航、L2 索引
 
 ## 项目定位
@@ -31,6 +31,7 @@ Open Interview 是一个 local-first 的面试工作台，围绕 `导入 -> 解�
 - `/import`：导入与最近任务。
 - `/review`、`/review/:jobId`：解析任务队列与人工审核。
 - `/questions`、`/questions/:questionId`：题库列表与详情。
+- `/practice`：随机练习与 10 题模拟考试。
 - `/interviews`、`/interviews/:interviewId`：面经与来源上下文。
 - `/qa`、`/qa/:sessionId`：带引用的 AI 问答。
 - `/resume` 及其 project/session 路由：简历与项目深挖。
@@ -41,6 +42,7 @@ Open Interview 是一个 local-first 的面试工作台，围绕 `导入 -> 解�
 - `open-interview-import-feature.md`
 - `open-interview-review-feature.md`
 - `open-interview-questions-feature.md`
+- `open-interview-practice-feature.md`
 - `open-interview-interviews-feature.md`
 - `open-interview-qa-feature.md`
 - `open-interview-resume-feature.md`
@@ -51,5 +53,5 @@ Open Interview 是一个 local-first 的面试工作台，围绕 `导入 -> 解�
 - 改工作台壳层和导航，先读 `open-interview-workbench-feature.md`。
 - 改导入、上传、解析触发，先读 `open-interview-import-feature.md`。
 - 改审核确认流程，先读 `open-interview-review-feature.md`。
-- 改题库、面经、QA、简历，各自进入对应 feature 文档。
+- 改题库、练习、面经、QA、简历，各自进入对应 feature 文档。
 - 改服务、仓储、数据库或检索逻辑，先读 `open-interview-server-core-feature.md`。

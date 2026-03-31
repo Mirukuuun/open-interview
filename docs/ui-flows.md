@@ -47,6 +47,7 @@
 │ Import        │ Route-dependent page                       │
 │ Review Queue  │                                            │
 │ Question Bank │                                            │
+│ Random Practice│                                           │
 │ Interviews    │                                            │
 │ AI Review     │                                            │
 │ Resume        │                                            │
@@ -59,6 +60,7 @@ Primary nav items:
 - `Import`
 - `Review Queue`
 - `Question Bank`
+- `Random Practice`
 - `Interview Notes`
 - `AI Review`
 - `Resume / Projects`
@@ -95,6 +97,7 @@ Suggested routes:
 /review/:jobId
 /questions
 /questions/:questionId
+/practice
 /interviews
 /interviews/:interviewId
 /qa
@@ -418,6 +421,88 @@ Purpose:
 
 ### Done when
 - This route can stand alone without the list page.
+
+---
+
+## 3.5A `/practice`
+Purpose:
+- fast drill surface after the bank has data
+- 10-question mock exam with feedback, exam radar, and long-term practice profile
+
+### Layout
+Recommended 2-column layout:
+
+```text
+┌──────────────────────────┬──────────────────────────────────┐
+│ Left: mode + recent      │ Right: active workspace         │
+│                          │                                  │
+│ Random Practice intro    │ drill question or exam form     │
+│ Practice profile card    │ result summary / dual radar     │
+│ recent exam snapshots    │ weak areas / per-question review│
+└──────────────────────────┴──────────────────────────────────┘
+```
+
+### Modes
+- `Random Practice`
+- `Mock Exam`
+
+### Random Practice interactions
+- `Start`
+- reveal one question at a time
+- `View Answer`
+- `Next Question`
+- `Restart`
+
+Rules:
+- One round shuffles the full active bank.
+- Questions must not repeat within the round.
+- Only the question is visible before reveal.
+
+### Mock Exam interactions
+- `Start 10-Question Exam`
+- answer all 10 questions in textareas
+- `Submit and Grade`
+- view total score, weak areas, exam radar, profile radar, and per-question feedback
+
+### Result information architecture
+- top summary: total score + overall feedback + next-study direction
+- `本次考试雷达`: only show dimensions covered by the current paper
+- `长期能力画像`: always show the full fixed dimension catalog and highlight dimensions updated in this exam
+- weak areas and per-question feedback remain below the radar area
+
+### Data dependencies
+- `POST /api/practice/exams`
+- `GET /api/practice/exams/:sessionId`
+- `POST /api/practice/exams/:sessionId/submit`
+- `GET /api/practice/profile`
+
+### Page states
+- empty bank
+- insufficient answer-ready questions
+- drill ready / in progress / completed
+- exam creating
+- exam answering
+- grading
+- result ready
+
+### Critical UX rules
+- Do not reveal the reference answer before the user explicitly asks.
+- Mock exam must preserve a stable question snapshot for the whole session.
+- Result page should make weak areas and next-study direction obvious within one screen.
+- Result page must explicitly distinguish `本次考试雷达` and `长期能力画像`; they are not the same widget with different titles.
+- MVP-2 fixed profile dimensions are:
+  - `Java基础`
+  - `数据库与存储`
+  - `分布式`
+  - `计算机基础`
+  - `系统设计与工程实践`
+  - `Agent能力`
+- A dimension not covered by the current paper must not be reset or penalized in the long-term profile.
+
+### Done when
+- User can keep刷题 without repeat in a single round.
+- User can finish a 10-question exam and immediately see score + weak areas + exam radar.
+- User can see a persistent personal profile radar that updates incrementally after each exam.
 
 ---
 
@@ -812,6 +897,7 @@ Each major page should have a purposeful empty state.
 
 Examples:
 - `/questions`: “No questions yet. Import an interview note or create one manually.”
+- `/practice`: “You need at least 10 questions with canonical answers before starting a mock exam.”
 - `/review`: “No items need review right now.”
 - `/qa`: “Ask a grounded question based on your interview bank.”
 - `/resume`: “Upload your resume to extract projects for deep dive.”
@@ -840,12 +926,13 @@ Examples:
 4. `/review/:jobId`
 5. `/questions`
 6. `/questions/:questionId`
-7. `/interviews`
-8. `/interviews/:interviewId`
-9. `/qa`
-10. `/qa/:sessionId`
-11. `/resume`
-12. project deep dive routes
+7. `/practice`
+8. `/interviews`
+9. `/interviews/:interviewId`
+10. `/qa`
+11. `/qa/:sessionId`
+12. `/resume`
+13. project deep dive routes
 
 Reason:
 - This mirrors the business-critical data flow.
@@ -884,10 +971,16 @@ Recommended coding tasks for agent delegation:
 - filters + list + detail drawer
 
 ### Slice F
+- build `/practice`
+- random drill
+- mock exam result view
+- MVP-2 follow-up: fixed-dimension exam radar + persistent practice profile
+
+### Slice G
 - build `/qa`
 - answer panel + citations + retrieval trace panel
 
-### Slice G
+### Slice H
 - build `/resume` and project deep-dive routes
 
 These slices are intentionally bounded so Codex can implement them with lower drift.
@@ -900,6 +993,8 @@ These slices are intentionally bounded so Codex can implement them with lower dr
 - [ ] Review Queue clearly exposes `needs_review`
 - [ ] Review detail page supports batch create/merge/skip
 - [ ] Question Bank is dense, searchable, and source-aware
+- [ ] Random Practice supports no-repeat drill and 10-question exam scoring
+- [ ] Practice V2 keeps a stable personal profile that only updates covered dimensions after each exam
 - [ ] Interview Notes view supports source-centric browsing
 - [ ] AI Review page shows citations and avoids plain-chat feel
 - [ ] Resume/Project pages anchor deep-dive flows in structured project data

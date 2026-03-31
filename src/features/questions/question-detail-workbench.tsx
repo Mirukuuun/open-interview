@@ -6,10 +6,17 @@ import { SurfaceCard } from "@/components/ui/surface-card";
 import { DetailGrid } from "@/components/workbench/detail-grid";
 import { PageHeader } from "@/components/workbench/page-header";
 import { SectionHeading } from "@/components/workbench/section-heading";
+import type { ListQuestionsQuery } from "@/lib/schemas/questions";
+import {
+  buildQuestionDetailHref,
+  buildQuestionsHref,
+} from "@/features/questions/question-query-state";
 import { formatCategoryLabel, formatTagLabel } from "@/lib/taxonomy-display";
 import { questionBankService } from "@/server/services/question-bank-service";
 
 type QuestionDetailWorkbenchProps = {
+  filters: ListQuestionsQuery;
+  navigation: ReturnType<typeof questionBankService.getQuestionNavigation>;
   question: NonNullable<ReturnType<typeof questionBankService.getQuestionDetail>>;
 };
 
@@ -32,6 +39,8 @@ function renderTagList(tags: string[]) {
 }
 
 export function QuestionDetailWorkbench({
+  filters,
+  navigation,
   question,
 }: QuestionDetailWorkbenchProps) {
   const primaryInterview = question.sources.find((source) => source.interviewExperience);
@@ -40,13 +49,28 @@ export function QuestionDetailWorkbench({
       answerVariant.variantType !== "canonical" &&
       answerVariant.variantType !== "personal",
   );
+  const listHref = buildQuestionsHref(filters);
+  const previousHref = navigation.previous
+    ? buildQuestionDetailHref(navigation.previous.id, {
+        ...filters,
+        page: navigation.previous.page,
+      })
+    : undefined;
+  const nextHref = navigation.next
+    ? buildQuestionDetailHref(navigation.next.id, {
+        ...filters,
+        page: navigation.next.page,
+      })
+    : undefined;
 
   return (
     <div className="space-y-6">
       <PageHeader
         actions={
           <>
-            <Button href="/questions">返回题库</Button>
+            <Button href={listHref}>返回题库</Button>
+            {previousHref ? <Button href={previousHref}>上一条</Button> : null}
+            {nextHref ? <Button href={nextHref}>下一条</Button> : null}
             {primaryInterview?.interviewExperience ? (
               <Button
                 href={`/interviews/${primaryInterview.interviewExperience.id}`}

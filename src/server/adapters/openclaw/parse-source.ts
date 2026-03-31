@@ -9,9 +9,23 @@ import {
   normalizeQuestionText,
   normalizeTagName,
 } from "@/server/repositories/normalization";
+import {
+  buildInterviewParsePrompt,
+  interviewParseInstructions,
+  type InterviewParsePromptOptions,
+} from "@/server/prompts/interview-parse-prompt";
 import { z } from "zod";
 
 import { openClawLlmClient } from "./llm-client";
+
+/**
+ * [POS] 负责 interview / knowledge note / manual input 原始文本的解析适配：优先调用 LLM，再结合本地启发式结果做归一化和兜底。
+ * [IN] source kind、title、raw text、job type 与 canonical vocabulary。
+ * [OUT] 产出供 review queue 使用的 parse result；provider 不可用或结果异常时回退到启发式解析。
+ *
+ * @feature open-interview-server-core-feature.md
+ * @AI_INSTRUCTION 一旦本文件被更新，务必同步更新本注释，以及对应的 L2 文档。
+ */
 
 type CanonicalInterviewVocabulary = {
   categories?: string[];
@@ -39,11 +53,6 @@ type CandidateBuffer = {
   questionText: string;
   answerLines: string[];
   confidence: number;
-};
-
-type InterviewPromptOptions = {
-  chunkIndex?: number;
-  chunkCount?: number;
 };
 
 type InterviewChunk = {
@@ -150,7 +159,6 @@ const techKeywordMap: Array<{
   { tech: "OpenAI", keywords: ["openai"] },
 ];
 
-const interviewParsePromptVersion = "extract_interview_v2";
 const interviewPromptMaxChars = 24_000;
 const interviewChunkingThresholdChars = interviewPromptMaxChars;
 const interviewChunkTargetChars = 18_000;
@@ -251,7 +259,7 @@ function isQuestionLike(value: string) {
     return true;
   }
 
-  return /(什么|怎么|如何|为什么|哪些|区别|原理|场景|问题|实现|设计|优缺点|流程|机制)/u.test(
+  return /(什么|怎么|如何|为什么|哪些|区别|原理|场景|问题|实现|设计|优缺点|流程|机制|介绍|说明)/u.test(
     text,
   );
 }
@@ -391,6 +399,203 @@ function clampConfidence(value: number | null | undefined, fallback: number) {
   }
 
   return Math.max(0, Math.min(1, value));
+}
+
+function buildQuestionCharacterBigrams(value: string) {
+  const normalizedValue = normalizeQuestionText(value).replace(/\s+/gu, "");
+
+  if (normalizedValue.length === 0) {
+    return [];
+  }
+
+  if (normalizedValue.length === 1) {
+    return [normalizedValue];
+  }
+
+  const bigrams: string[] = [];
+
+  for (let index = 0; index < normalizedValue.length - 1; index += 1) {
+    bigrams.push(normalizedValue.slice(index, index + 2));
+  }
+
+  return bigrams;
+}
+
+function buildQuestionLatinTokens(value: string) {
+  return Array.from(
+    new Set(normalizeQuestionText(value).match(/[a-z0-9+/._#-]+/gu) ?? []),
+  );
+}
+
+function countSharedValues(left: string[], right: string[]) {
+  const rightSet = new Set(right);
+
+  return left.filter((value) => rightSet.has(value)).length;
+}
+
+function computeDiceCoefficient(left: string[], right: string[]) {
+  if (left.length === 0 || right.length === 0) {
+    return 0;
+  }
+
+  const leftCounts = new Map<string, number>();
+
+  for (const value of left) {
+    leftCounts.set(value, (leftCounts.get(value) ?? 0) + 1);
+  }
+
+  let overlapCount = 0;
+
+  for (const value of right) {
+    const remainingCount = leftCounts.get(value) ?? 0;
+
+    if (remainingCount <= 0) {
+      continue;
+    }
+
+    overlapCount += 1;
+    leftCounts.set(value, remainingCount - 1);
+  }
+
+  return (2 * overlapCount) / (left.length + right.length);
+}
+
+function computeQuestionMatchScore(
+  leftQuestionText: string,
+  rightQuestionText: string,
+  leftIndex: number,
+  rightIndex: number,
+) {
+  const normalizedLeft = normalizeQuestionText(leftQuestionText);
+  const normalizedRight = normalizeQuestionText(rightQuestionText);
+
+  if (!normalizedLeft || !normalizedRight) {
+    return 0;
+  }
+
+  if (normalizedLeft === normalizedRight) {
+    return 1;
+  }
+
+  if (
+    (normalizedLeft.length >= 4 && normalizedRight.includes(normalizedLeft)) ||
+    (normalizedRight.length >= 4 && normalizedLeft.includes(normalizedRight))
+  ) {
+    return 0.94;
+  }
+
+  const bigramScore = computeDiceCoefficient(
+    buildQuestionCharacterBigrams(normalizedLeft),
+    buildQuestionCharacterBigrams(normalizedRight),
+  );
+  const sharedLatinTokenCount = countSharedValues(
+    buildQuestionLatinTokens(normalizedLeft),
+    buildQuestionLatinTokens(normalizedRight),
+  );
+  const orderBonus = Math.max(0, 0.08 - Math.abs(leftIndex - rightIndex) * 0.02);
+  const latinTokenBonus = Math.min(0.18, sharedLatinTokenCount * 0.08);
+
+  return Math.min(0.98, bigramScore + latinTokenBonus + orderBonus);
+}
+
+function compactComparableText(value: string | null | undefined) {
+  return trimNullableString(value)?.replace(/\s+/gu, "") ?? "";
+}
+
+function shouldPreferHeuristicSourceAnswer(
+  currentValue: string | null | undefined,
+  heuristicValue: string | null | undefined,
+) {
+  const normalizedCurrentValue = trimNullableString(currentValue);
+  const normalizedHeuristicValue = trimNullableString(heuristicValue);
+
+  if (!normalizedHeuristicValue) {
+    return false;
+  }
+
+  if (!normalizedCurrentValue) {
+    return true;
+  }
+
+  if (normalizedCurrentValue === normalizedHeuristicValue) {
+    return false;
+  }
+
+  const compactCurrentValue = compactComparableText(normalizedCurrentValue);
+  const compactHeuristicValue = compactComparableText(normalizedHeuristicValue);
+
+  if (
+    compactHeuristicValue.includes(compactCurrentValue) &&
+    normalizedHeuristicValue.length >= normalizedCurrentValue.length + 24
+  ) {
+    return true;
+  }
+
+  return (
+    normalizedCurrentValue.length < 64 &&
+    normalizedHeuristicValue.length >= normalizedCurrentValue.length + 32
+  );
+}
+
+function findBestHeuristicQuestionMatch(
+  questionText: string,
+  questionIndex: number,
+  heuristicQuestions: ParseQuestionCandidate[],
+  usedHeuristicIndexes: Set<number>,
+) {
+  let bestMatch:
+    | {
+        index: number;
+        candidate: ParseQuestionCandidate;
+        score: number;
+      }
+    | undefined;
+  let secondBestScore = 0;
+
+  heuristicQuestions.forEach((candidate, candidateIndex) => {
+    if (usedHeuristicIndexes.has(candidateIndex)) {
+      return;
+    }
+
+    const score = computeQuestionMatchScore(
+      questionText,
+      candidate.question_text,
+      questionIndex,
+      candidateIndex,
+    );
+
+    if (!bestMatch || score > bestMatch.score) {
+      secondBestScore = bestMatch?.score ?? secondBestScore;
+      bestMatch = {
+        index: candidateIndex,
+        candidate,
+        score,
+      };
+      return;
+    }
+
+    if (score > secondBestScore) {
+      secondBestScore = score;
+    }
+  });
+
+  if (!bestMatch) {
+    return null;
+  }
+
+  if (bestMatch.score >= 0.34) {
+    return bestMatch;
+  }
+
+  if (bestMatch.score >= 0.28 && bestMatch.index === questionIndex) {
+    return bestMatch;
+  }
+
+  if (bestMatch.score >= 0.28 && bestMatch.score >= secondBestScore + 0.06) {
+    return bestMatch;
+  }
+
+  return null;
 }
 
 function normalizeCanonicalVocabulary(
@@ -621,7 +826,7 @@ function buildInterviewChunks(rawText: string): InterviewChunk[] {
 
 function buildInterviewPrompt(
   input: ParseSourceInput,
-  options: InterviewPromptOptions = {},
+  options: InterviewParsePromptOptions = {},
 ) {
   const canonicalVocabulary = normalizeCanonicalVocabulary(input.canonicalVocabulary);
   const truncatedRawText =
@@ -629,49 +834,15 @@ function buildInterviewPrompt(
       ? `${input.rawText.slice(0, interviewPromptMaxChars).trimEnd()}\n\n[TRUNCATED AFTER ${interviewPromptMaxChars} CHARACTERS FOR THIS SLICE]`
       : input.rawText;
 
-  return [
-    `Prompt version: ${interviewParsePromptVersion}`,
-    `Source kind: ${input.kind}`,
-    `Title: ${input.title}`,
-    ...(options.chunkCount && options.chunkCount > 1
-      ? [
-          `Chunk: ${options.chunkIndex ?? 1} of ${options.chunkCount}`,
-          "This source text is one chunk from a longer document. Extract only what is supported by this chunk.",
-        ]
-      : []),
-    "Task: Extract interview-review candidates from the source text.",
-    "Return JSON only. Do not wrap in markdown.",
-    "Rules:",
-    "- Extract questions only when they are actually present or strongly implied by the source.",
-    "- Keep question_text concise and interviewer-facing.",
-    "- Use Simplified Chinese for all natural-language JSON fields such as source_summary, question_text, canonical_answer, warnings, and interview metadata narratives.",
-    "- Preserve enum values, canonical category/tag identifiers, and fixed technical identifiers as-is.",
-    "- Use source_answer for raw candidate answers from the source when available.",
-    "- Keep source_answer in the source language when it is a raw excerpt from the document; do not translate direct source evidence.",
-    "- Use canonical_answer only when the source clearly supports a normalized answer.",
-    "- canonical_answer should be written in concise Simplified Chinese even when source_answer quotes the raw source verbatim.",
-    "- Reuse the provided canonical categories and tags exactly when they fit the evidence.",
-    "- If no provided category fits a question, return null for category instead of inventing a near-match.",
-    "- Tags should be a subset of the provided canonical tags when those tags fit the source.",
-    "- Keep confidence between 0 and 1.",
-    "- interview_experience should be null when company / role / round / summary metadata is not present.",
-    "- warnings should explain missing structure, truncation, ambiguity, or weak evidence.",
-    "- Never invent canonical database IDs.",
-    ...(canonicalVocabulary.categories.length > 0 || canonicalVocabulary.tags.length > 0
-      ? [
-          "",
-          "Canonical vocabulary to reuse exactly when relevant:",
-          `- Categories: ${canonicalVocabulary.categories.length > 0 ? canonicalVocabulary.categories.join(", ") : "(none provided)"}`,
-          `- Tags: ${canonicalVocabulary.tags.length > 0 ? canonicalVocabulary.tags.join(", ") : "(none provided)"}`,
-        ]
-      : []),
-    "",
-    "Return exactly this JSON shape:",
-    `{"source_summary":"string","source_kind_guess":"interview_experience|knowledge_note","interview_experience":{"company":null,"role":null,"round_info":null,"summary":null,"tags":[]} | null,"questions":[{"question_text":"string","canonical_answer":null,"source_answer":null,"category":null,"tags":[],"confidence":0.0}],"warnings":[]}`,
-    "",
-    "Source text:",
-    truncatedRawText,
-  ].join("\n");
+  return buildInterviewParsePrompt(
+    {
+      kind: input.kind,
+      title: input.title,
+      sourceText: truncatedRawText,
+      canonicalVocabulary,
+    },
+    options,
+  );
 }
 
 function hasInterviewExperienceData(value: ParseInterviewExperience | null) {
@@ -721,22 +892,70 @@ function mergeQuestionCandidate(
 function normalizeLlmQuestionCandidates(
   rawQuestions: LlmInterviewQuestion[],
   canonicalVocabulary: ParseSourceInput["canonicalVocabulary"],
+  heuristicQuestions: ParseQuestionCandidate[] = [],
 ) {
   const normalizedVocabulary = normalizeCanonicalVocabulary(canonicalVocabulary);
   const dedupeMap = new Map<string, ParseQuestionCandidate>();
+  const usedHeuristicIndexes = new Set<number>();
+  let heuristicSourceAnswerReplaceCount = 0;
 
-  for (const rawQuestion of rawQuestions) {
+  rawQuestions.forEach((rawQuestion, questionIndex) => {
     const questionText = cleanQuestionText(rawQuestion.question_text);
 
     if (questionText.length < 4) {
-      continue;
+      return;
     }
 
     const sourceAnswer = trimNullableString(rawQuestion.source_answer);
-    const canonicalAnswer = trimNullableString(rawQuestion.canonical_answer) ?? sourceAnswer;
+    const orderAlignedHeuristicCandidate = heuristicQuestions[questionIndex];
+    const orderAlignedScore = orderAlignedHeuristicCandidate
+      ? computeQuestionMatchScore(
+          questionText,
+          orderAlignedHeuristicCandidate.question_text,
+          questionIndex,
+          questionIndex,
+        )
+      : 0;
+    const heuristicMatch =
+      findBestHeuristicQuestionMatch(
+        questionText,
+        questionIndex,
+        heuristicQuestions,
+        usedHeuristicIndexes,
+      ) ??
+      (orderAlignedHeuristicCandidate &&
+      !usedHeuristicIndexes.has(questionIndex) &&
+      shouldPreferHeuristicSourceAnswer(
+        sourceAnswer,
+        orderAlignedHeuristicCandidate.source_answer,
+      ) &&
+      (orderAlignedScore >= 0.18 ||
+        compactComparableText(orderAlignedHeuristicCandidate.source_answer).includes(
+          compactComparableText(sourceAnswer),
+        ))
+        ? {
+            index: questionIndex,
+            candidate: orderAlignedHeuristicCandidate,
+            score: orderAlignedScore,
+          }
+        : null);
+    const resolvedSourceAnswer = shouldPreferHeuristicSourceAnswer(
+      sourceAnswer,
+      heuristicMatch?.candidate.source_answer,
+    )
+      ? trimNullableString(heuristicMatch?.candidate.source_answer)
+      : sourceAnswer;
+
+    if (resolvedSourceAnswer && resolvedSourceAnswer !== sourceAnswer && heuristicMatch) {
+      usedHeuristicIndexes.add(heuristicMatch.index);
+      heuristicSourceAnswerReplaceCount += 1;
+    }
+
+    const canonicalAnswer =
+      trimNullableString(rawQuestion.canonical_answer) ?? resolvedSourceAnswer;
     const category = trimNullableString(rawQuestion.category);
     const combinedText = collapseWhitespace(
-      [questionText, sourceAnswer, canonicalAnswer, category]
+      [questionText, resolvedSourceAnswer, canonicalAnswer, category]
         .filter((value): value is string => Boolean(value))
         .join(" "),
     );
@@ -749,19 +968,25 @@ function normalizeLlmQuestionCandidates(
     mergeQuestionCandidate(dedupeMap, {
       question_text: questionText,
       canonical_answer: canonicalAnswer ?? null,
-      source_answer: sourceAnswer ?? null,
+      source_answer: resolvedSourceAnswer ?? null,
       category: resolveQuestionCategory(
         category,
         combinedText,
         normalizedVocabulary.categories,
       ),
       tags,
-      confidence: clampConfidence(rawQuestion.confidence, sourceAnswer ? 0.78 : 0.68),
+      confidence: clampConfidence(
+        rawQuestion.confidence,
+        resolvedSourceAnswer ? 0.78 : 0.68,
+      ),
       merge_hint_question_id: null,
     });
-  }
+  });
 
-  return Array.from(dedupeMap.values());
+  return {
+    questions: Array.from(dedupeMap.values()),
+    heuristicSourceAnswerReplaceCount,
+  };
 }
 
 function buildInterviewExperienceFromLlm(
@@ -826,11 +1051,10 @@ function isHeuristicInterviewFallbackEnabled() {
 async function buildInterviewResultFromLlm(
   input: ParseSourceInput,
   lines: string[],
-  options: InterviewPromptOptions = {},
+  options: InterviewParsePromptOptions = {},
 ): Promise<ParseResult> {
   const rawModelResult = await openClawLlmClient.createJsonObject({
-    instructions:
-      "You are a server-side parser for interview and knowledge-note sources. Return a single JSON object only, with no markdown, no commentary, and no tool calls. All natural-language fields in the JSON must use Simplified Chinese unless the field is source_answer quoting raw source evidence.",
+    instructions: interviewParseInstructions,
     input: buildInterviewPrompt(input, options),
     maxOutputTokens: 2_000,
   });
@@ -856,12 +1080,19 @@ async function buildInterviewResultFromLlm(
     lines,
     parsedModelResult.interview_experience,
   );
-  const questions = normalizeLlmQuestionCandidates(
+  const heuristicQuestions = extractQuestionCandidates(lines, input.canonicalVocabulary);
+  const { questions, heuristicSourceAnswerReplaceCount } = normalizeLlmQuestionCandidates(
     parsedModelResult.questions,
     input.canonicalVocabulary,
+    heuristicQuestions,
   );
   const warnings = normalizeStringList([
     ...(parsedModelResult.warnings ?? []),
+    ...(heuristicSourceAnswerReplaceCount > 0
+      ? [
+          `Expanded ${heuristicSourceAnswerReplaceCount} source_answer value(s) from raw source structure because the model response looked abbreviated.`,
+        ]
+      : []),
     ...(input.rawText.length > interviewPromptMaxChars
       ? [
           `Only the first ${interviewPromptMaxChars} characters were sent to the model in this slice; review the full source before confirming.`,

@@ -8,3 +8,5 @@ export * from "@/server/repositories/vector-sync-repository";
 export * from "@/server/repositories/retrieval-log-repository";
 export * from "@/server/repositories/qa-session-repository";
 export * from "@/server/repositories/resume-repository";
+export * from "@/server/repositories/assessment-repository";
+export * from "@/server/repositories/practice-profile-repository";

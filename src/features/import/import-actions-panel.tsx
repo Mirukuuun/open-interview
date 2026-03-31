@@ -9,6 +9,7 @@ import type {
   CreateUploadSourceResponseData,
   UploadSourceSubmitMode,
 } from "@/lib/schemas/import";
+import { FormField } from "@/components/workbench/form-field";
 import type { CreateParseJobResponseData } from "@/lib/schemas/parse-jobs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -76,28 +77,6 @@ const importModes: Array<{
   },
 ];
 
-function Field({
-  label,
-  description,
-  children,
-}: Readonly<{
-  label: string;
-  description?: string;
-  children: React.ReactNode;
-}>) {
-  return (
-    <label className="block space-y-2">
-      <div className="space-y-1">
-        <div className="text-sm font-medium text-text-strong">{label}</div>
-        {description ? (
-          <p className="text-xs leading-5 text-text-muted">{description}</p>
-        ) : null}
-      </div>
-      {children}
-    </label>
-  );
-}
-
 function sourceKindLabel(value: string) {
   switch (value) {
     case "interview_experience":
@@ -123,6 +102,27 @@ function uploadNextStepLabel(
     default:
       return "打开审核结果";
   }
+}
+
+function buildQueuedParseFeedback(sourceId: string, parseJob: {
+  id: string;
+  status: CreateParseJobResponseData["parse_job"]["status"];
+}) {
+  if (parseJob.status === "needs_review") {
+    return {
+      title: "解析结果已就绪",
+      body: `来源 ${sourceId} 的任务 ${parseJob.id} 已完成解析，请到审核队列处理候选结果。`,
+      actionHref: "/review",
+      actionLabel: "打开审核队列",
+    };
+  }
+
+  return {
+    title: "解析任务已触发",
+    body: `来源 ${sourceId} 的任务 ${parseJob.id} 已加入解析队列，请到审核队列查看进度。`,
+    actionHref: "/review",
+    actionLabel: "打开审核队列",
+  };
 }
 
 async function readApiResponse<T>(response: Response) {
@@ -228,20 +228,15 @@ export function ImportActionsPanel({
             ? "extract_resume"
             : "extract_interview",
         );
+        const parseFeedback = buildQueuedParseFeedback(
+          sourceId,
+          parseJob.parse_job,
+        );
 
-        if (parseJob.parse_job.status === "needs_review") {
-          setFeedback({
-            tone: "success",
-            title: "解析任务已创建",
-            body: `来源 ${sourceId} 已创建任务 ${parseJob.parse_job.id}，可进入审核页处理候选结果。`,
-          });
-        } else {
-          setFeedback({
-            tone: "success",
-            title: "已保存来源",
-            body: `来源 ${sourceId} 已创建任务 ${parseJob.parse_job.id}，当前状态为 ${parseJob.parse_job.status}。`,
-          });
-        }
+        setFeedback({
+          tone: "success",
+          ...parseFeedback,
+        });
       }
 
       setTextSourceForm((current) => ({
@@ -311,17 +306,21 @@ export function ImportActionsPanel({
         });
       } else {
         const isParseFailed = data.parse_job.status === "failed";
+        const parseFeedback = buildQueuedParseFeedback(
+          data.source_document.id,
+          data.parse_job,
+        );
 
         setFeedback({
           tone: isParseFailed ? "error" : "success",
-          title: isParseFailed ? "来源已保存，解析失败" : "解析任务已创建",
+          title: isParseFailed ? "来源已保存，解析失败" : parseFeedback.title,
           body: isParseFailed
             ? `来源 ${data.source_document.id} 已保存，但任务 ${data.parse_job.id} 解析失败。请在审核页查看错误并重试。`
-            : data.parse_job.status === "needs_review"
-              ? `来源 ${data.source_document.id} 已创建任务 ${data.parse_job.id}，候选结果已进入待审核状态。`
-              : `来源 ${data.source_document.id} 已创建任务 ${data.parse_job.id}，当前状态为 ${data.parse_job.status}。`,
-          actionHref: data.next_step.href,
-          actionLabel: uploadNextStepLabel(data.next_step.kind),
+            : parseFeedback.body,
+          actionHref: isParseFailed ? data.next_step.href : parseFeedback.actionHref,
+          actionLabel: isParseFailed
+            ? uploadNextStepLabel(data.next_step.kind)
+            : parseFeedback.actionLabel,
         });
       }
 
@@ -448,16 +447,13 @@ export function ImportActionsPanel({
             <div className="flex flex-wrap items-center gap-2">
               <Badge tone="accent">上传</Badge>
               <p className="text-sm font-semibold text-text-strong">
-                单文件上传会保存原始文件并抽取文本，当前支持 .txt / .md / .pdf / .docx；可仅保存来源，也可直接创建解析任务进入审核。
+                上传单个文件
               </p>
             </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <Field
-              description="可留空，默认使用上传文件名。"
-              label="标题"
-            >
+            <FormField description="留空时默认使用上传文件名。" label="标题">
               <Input
                 onChange={(event) =>
                   setUploadForm((current) => ({
@@ -468,9 +464,9 @@ export function ImportActionsPanel({
                 placeholder="可选"
                 value={uploadForm.title}
               />
-            </Field>
+            </FormField>
 
-            <Field label="类型">
+            <FormField label="类型">
               <Select
                 onChange={(event) =>
                   setUploadForm((current) => ({
@@ -488,10 +484,10 @@ export function ImportActionsPanel({
                 </option>
                 <option value="resume">{sourceKindLabel("resume")}</option>
               </Select>
-            </Field>
+            </FormField>
           </div>
 
-          <Field label="来源链接">
+          <FormField label="来源链接">
             <Input
               onChange={(event) =>
                 setUploadForm((current) => ({
@@ -502,12 +498,9 @@ export function ImportActionsPanel({
               placeholder="https://example.com/post/interview-note"
               value={uploadForm.sourceUrl}
             />
-          </Field>
+          </FormField>
 
-          <Field
-            description="服务端会把文件保存到本地 storage/raw/<source_id>/original.ext。"
-            label="选择文件"
-          >
+          <FormField label="选择文件">
             <input
               accept=".txt,.md,.pdf,.docx,text/plain,text/markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
               className={cn(
@@ -523,7 +516,7 @@ export function ImportActionsPanel({
               required
               type="file"
             />
-          </Field>
+          </FormField>
 
           {uploadForm.file ? (
             <p className="text-sm text-text-muted">
@@ -538,30 +531,26 @@ export function ImportActionsPanel({
               type="submit"
               variant="primary"
             >
-              {isSubmitting ? "处理中..." : "上传并进入审核"}
+              {isSubmitting ? "提交中..." : "上传并触发解析"}
             </Button>
             <Button
               disabled={isSubmitting}
               onClick={() => setUploadSubmitMode("save_only")}
               type="submit"
             >
-              仅上传保存
+              {isSubmitting ? "提交中..." : "仅上传保存"}
             </Button>
             <Button href="/review" variant="ghost">
               打开审核队列
             </Button>
           </div>
-
-          <p className="text-xs leading-5 text-text-muted">
-            “上传并进入审核” 会在保存 `source_document` 后立即创建解析任务，结果仍停在人工审核阶段，不会写入题库。
-          </p>
         </form>
       ) : null}
 
       {activeMode === "paste" ? (
         <form className="space-y-5" onSubmit={handleTextSourceSubmit}>
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="标题">
+            <FormField label="标题">
               <Input
                 onChange={(event) =>
                   setTextSourceForm((current) => ({
@@ -573,9 +562,9 @@ export function ImportActionsPanel({
                 required
                 value={textSourceForm.title}
               />
-            </Field>
+            </FormField>
 
-            <Field label="类型">
+            <FormField label="类型">
               <Select
                 onChange={(event) =>
                   setTextSourceForm((current) => ({
@@ -593,10 +582,10 @@ export function ImportActionsPanel({
                 </option>
                 <option value="resume">{sourceKindLabel("resume")}</option>
               </Select>
-            </Field>
+            </FormField>
           </div>
 
-          <Field label="来源链接">
+          <FormField label="来源链接">
             <Input
               onChange={(event) =>
                 setTextSourceForm((current) => ({
@@ -607,9 +596,9 @@ export function ImportActionsPanel({
               placeholder="https://example.com/post/interview-note"
               value={textSourceForm.sourceUrl}
             />
-          </Field>
+          </FormField>
 
-          <Field label="原文">
+          <FormField label="原文">
             <Textarea
               onChange={(event) =>
                 setTextSourceForm((current) => ({
@@ -621,7 +610,7 @@ export function ImportActionsPanel({
               required
               value={textSourceForm.rawText}
             />
-          </Field>
+          </FormField>
 
           <div className="flex flex-wrap items-center gap-3">
             <Button
@@ -630,17 +619,17 @@ export function ImportActionsPanel({
               type="submit"
               variant="primary"
             >
-              {isSubmitting ? "处理中..." : "保存来源"}
+              {isSubmitting ? "提交中..." : "保存来源"}
             </Button>
             <Button
               disabled={isSubmitting}
               onClick={() => setTextSubmitMode("save_and_review")}
               type="submit"
             >
-              保存并创建解析任务
+              {isSubmitting ? "提交中..." : "保存并触发解析"}
             </Button>
             <Button href="/review" variant="ghost">
-              审核队列
+              打开审核队列
             </Button>
           </div>
         </form>
@@ -648,7 +637,7 @@ export function ImportActionsPanel({
 
       {activeMode === "manual" ? (
         <form className="space-y-5" onSubmit={handleManualQaSubmit}>
-          <Field label="题目">
+          <FormField label="题目">
             <Textarea
               className="min-h-[104px]"
               onChange={(event) =>
@@ -661,9 +650,9 @@ export function ImportActionsPanel({
               required
               value={manualQaForm.questionText}
             />
-          </Field>
+          </FormField>
 
-          <Field label="答案">
+          <FormField label="答案">
             <Textarea
               onChange={(event) =>
                 setManualQaForm((current) => ({
@@ -675,10 +664,10 @@ export function ImportActionsPanel({
               required
               value={manualQaForm.answerText}
             />
-          </Field>
+          </FormField>
 
           <div className="grid gap-4 xl:grid-cols-2">
-            <Field label="分类">
+            <FormField label="分类">
               <CreatableMultiSelect
                 createText="新建分类"
                 createPlaceholder="新分类"
@@ -695,9 +684,9 @@ export function ImportActionsPanel({
                 triggerPlaceholder="选择分类"
                 value={manualQaForm.categories}
               />
-            </Field>
+            </FormField>
 
-            <Field label="标签">
+            <FormField label="标签">
               <CreatableMultiSelect
                 createText="新建标签"
                 createPlaceholder="新标签"
@@ -714,7 +703,7 @@ export function ImportActionsPanel({
                 triggerPlaceholder="选择标签"
                 value={manualQaForm.tags}
               />
-            </Field>
+            </FormField>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">

@@ -1,9 +1,12 @@
-import { PromptTemplate } from "@langchain/core/prompts";
 import { RunnableLambda, RunnableSequence } from "@langchain/core/runnables";
 import { z } from "zod";
 
 import type { QaAnswerMode, QaCitation } from "@/lib/schemas/qa";
 import { openClawLlmClient } from "@/server/adapters/openclaw/llm-client";
+import {
+  qaGroundedAnswerInstructions,
+  qaGroundedAnswerPrompt,
+} from "@/server/prompts/qa-grounded-answer-prompt";
 
 /**
  * [POS] 负责 QA assistant turn 的最终回答生成：优先融合 grounded 上下文，并在 grounding 弱或缺失时继续给出可用回答。
@@ -289,49 +292,13 @@ function buildDeterministicFallback(input: {
   } as const;
 }
 
-const groundedAnswerPrompt = PromptTemplate.fromTemplate(`
-You are an interview-prep assistant inside a local-first QA workspace.
-
-Return a JSON object with:
-- answer: string
-
-Rules:
-- Always answer the user's question in the user's language.
-- Start with the most useful direct answer instead of discussing tooling or retrieval internals.
-- When grounded contexts exist, integrate them naturally into the answer.
-- When grounding is weak or absent, still provide a practical interview-ready answer or answering framework based on general knowledge.
-- Never invent citations, source titles, or personal experiences.
-- If personal details are missing, provide a draft with obvious placeholders or customization hints.
-- For open-ended prompts like self-introduction, motivation, or project summary, produce a ready-to-say answer draft instead of analysis.
-- Keep the answer concise, structured, and immediately usable in an interview.
-
-Support level:
-{supportLevel}
-
-Conversation history:
-{sessionHistory}
-
-Current query:
-{query}
-
-Effective retrieval query:
-{effectiveQuery}
-
-Grounded contexts:
-{questionContexts}
-
-Citations:
-{citations}
-`.trim());
-
 const groundedAnswerChain = RunnableSequence.from([
-  groundedAnswerPrompt,
+  qaGroundedAnswerPrompt,
   new RunnableLambda({
     func: async (promptValue: unknown) =>
       openClawLlmClient.createJsonObject({
         task: "qa",
-        instructions:
-          "Generate a helpful interview-prep answer. Always answer the user, use grounded context when available, and respond with JSON only.",
+        instructions: qaGroundedAnswerInstructions,
         input:
           typeof promptValue === "string"
             ? promptValue

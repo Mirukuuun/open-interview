@@ -1,8 +1,20 @@
-import { PromptTemplate } from "@langchain/core/prompts";
 import { RunnableLambda, RunnableSequence } from "@langchain/core/runnables";
 import { z } from "zod";
 
 import { openClawLlmClient } from "@/server/adapters/openclaw/llm-client";
+import {
+  qaRewriteInstructions,
+  qaRewritePrompt,
+} from "@/server/prompts/qa-rewrite-prompt";
+
+/**
+ * [POS] 负责 QA 会话里的 history-aware query rewrite：在用户追问依赖上下文时，把问题改写成独立可检索查询。
+ * [IN] 当前 query 与近期 session history。
+ * [OUT] 产出 normalized / rewritten / effective query 及 rewrite reason；provider 不可用时保留原 query。
+ *
+ * @feature open-interview-qa-feature.md
+ * @AI_INSTRUCTION 一旦本文件被更新，务必同步更新本注释，以及对应的 L2 文档。
+ */
 
 const rewriteResultSchema = z.object({
   rewrite_applied: z.boolean(),
@@ -50,35 +62,13 @@ function formatSessionHistory(
     .join("\n");
 }
 
-const rewritePrompt = PromptTemplate.fromTemplate(`
-You rewrite follow-up QA queries into standalone retrieval queries for a local interview-prep knowledge base.
-
-Return a JSON object with:
-- rewrite_applied: boolean
-- rewritten_query: string
-- reason: short string
-
-Rules:
-- Keep the user's original intent and language.
-- Use conversation history only to resolve omitted entities or pronouns.
-- If the query is already standalone, keep it nearly unchanged.
-- Never invent facts outside the provided history.
-
-Conversation history:
-{sessionHistory}
-
-Current query:
-{query}
-`.trim());
-
 const rewriteChain = RunnableSequence.from([
-  rewritePrompt,
+  qaRewritePrompt,
   new RunnableLambda({
     func: async (promptValue: unknown) =>
       openClawLlmClient.createJsonObject({
         task: "qa",
-        instructions:
-          "Rewrite the current user query into a standalone retrieval query. Respond with JSON only.",
+        instructions: qaRewriteInstructions,
         input:
           typeof promptValue === "string"
             ? promptValue
