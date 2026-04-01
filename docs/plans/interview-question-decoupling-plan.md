@@ -5,4 +5,4 @@
 [X] task5. 更新对应 API 契约、L2 文档与执行计划状态，完成文档回环。
 [X] task6. 补充或更新测试，覆盖面经确认解耦、面经题推荐/沉淀与题库来源回显。
 [X] task7. 执行同构检查及必要校验，确认 `db:init`、`typecheck`、`lint`、`build` 和目标测试通过。
-[ ] task8. 在当前分支执行 commit、push、`corepack pnpm deploy:mvp` 并完成 `/import`、`/qa`、`/api/health` 回归验证。
+[X] task8. 在当前分支执行 commit、push、`corepack pnpm deploy:mvp` 并完成 `/import`、`/qa`、`/api/health` 回归验证。
