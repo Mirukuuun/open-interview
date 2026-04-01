@@ -251,6 +251,204 @@ describe("interview question decoupling", () => {
     );
   });
 
+  it("only keeps high-confidence interview recommendations within the top three", async () => {
+    const {
+      parseJobRepository,
+      parseReviewService,
+      questionRepository,
+      interviewBrowseService,
+      sourceDocumentRepository,
+    } = await createTestContext();
+
+    const strongQuestion = questionRepository.create({
+      questionText: "Redis 分布式锁会遇到哪些问题？",
+      canonicalAnswer: "需要关注误删、续约和主从切换。",
+      category: "distributed_system",
+      reviewStatus: "active",
+      createdFrom: "manual",
+    });
+    questionRepository.replaceTags(strongQuestion.id, ["redis", "lock"]);
+
+    const lowConfidenceQuestionOne = questionRepository.create({
+      questionText: "分布式事务怎么设计？",
+      canonicalAnswer: "可以从一致性和补偿机制回答。",
+      category: "distributed_system",
+      reviewStatus: "active",
+      createdFrom: "manual",
+    });
+    questionRepository.replaceTags(lowConfidenceQuestionOne.id, ["redis"]);
+
+    const lowConfidenceQuestionTwo = questionRepository.create({
+      questionText: "Kafka 如何保证顺序消费？",
+      canonicalAnswer: "核心是同 key 同 partition。",
+      category: "distributed_system",
+      reviewStatus: "active",
+      createdFrom: "manual",
+    });
+    questionRepository.replaceTags(lowConfidenceQuestionTwo.id, ["lock"]);
+
+    const sourceDocument = sourceDocumentRepository.create({
+      kind: "interview_experience",
+      title: "高德后端一面面经",
+      rawText: "Redis 分布式锁会遇到哪些问题？",
+      parseStatus: "needs_review",
+    });
+    const parseJob = parseJobRepository.create({
+      sourceDocumentId: sourceDocument.id,
+      jobType: "extract_interview",
+      status: "needs_review",
+      resultJson: {
+        interview_experience: {
+          company: "高德",
+          role: "后端开发",
+          round_info: "一面",
+          summary: "Redis 锁",
+          tags: ["redis"],
+        },
+        questions: [
+          {
+            question_text: "Redis 分布式锁会遇到哪些问题？",
+            answer: "要看误删、续约和可用性。",
+            category: "distributed_system",
+            tags: ["redis", "lock"],
+          },
+        ],
+      },
+    });
+
+    if (!parseJob) {
+      throw new Error("Failed to create interview parse job.");
+    }
+
+    const confirmResult = parseReviewService.confirmParseJob(parseJob.id, {
+      interview_experience: {
+        company: "高德",
+        role: "后端开发",
+        round_info: "一面",
+        summary: "Redis 锁",
+        tags: ["redis"],
+      },
+      questions: [
+        {
+          action: "keep",
+          question_text: "Redis 分布式锁会遇到哪些问题？",
+          answer: "要看误删、续约和可用性。",
+          category: "distributed_system",
+          tags: ["redis", "lock"],
+        },
+      ],
+    });
+
+    const interview = interviewBrowseService.getInterviewDetail(
+      confirmResult.importSummary.createdInterviewExperienceId ?? "",
+    );
+    const recommendedQuestions =
+      interview?.questions[0]?.recommendedQuestions.map((question) => question.id) ?? [];
+
+    expect(recommendedQuestions).toEqual([strongQuestion.id]);
+  });
+
+  it("falls back to the top two recommendations when top three has no high-confidence match", async () => {
+    const {
+      parseJobRepository,
+      parseReviewService,
+      questionRepository,
+      interviewBrowseService,
+      sourceDocumentRepository,
+    } = await createTestContext();
+
+    const fallbackQuestionOne = questionRepository.create({
+      questionText: "分布式锁为什么要设置过期时间？",
+      canonicalAnswer: "避免持锁节点异常退出导致死锁。",
+      category: "distributed_system",
+      reviewStatus: "active",
+      createdFrom: "manual",
+    });
+    questionRepository.replaceTags(fallbackQuestionOne.id, ["redis", "design"]);
+
+    const fallbackQuestionTwo = questionRepository.create({
+      questionText: "Kafka 重试和死信队列怎么回答？",
+      canonicalAnswer: "重点是失败隔离和补偿。",
+      category: "distributed_system",
+      reviewStatus: "active",
+      createdFrom: "manual",
+    });
+    questionRepository.replaceTags(fallbackQuestionTwo.id, ["redis", "design"]);
+
+    const fallbackQuestionThree = questionRepository.create({
+      questionText: "MySQL 死锁如何排查？",
+      canonicalAnswer: "先看 InnoDB status 和慢 SQL。",
+      category: "distributed_system",
+      reviewStatus: "active",
+      createdFrom: "manual",
+    });
+    questionRepository.replaceTags(fallbackQuestionThree.id, ["redis"]);
+
+    const sourceDocument = sourceDocumentRepository.create({
+      kind: "interview_experience",
+      title: "滴滴后端一面面经",
+      rawText: "秒杀系统怎么防止超卖？",
+      parseStatus: "needs_review",
+    });
+    const parseJob = parseJobRepository.create({
+      sourceDocumentId: sourceDocument.id,
+      jobType: "extract_interview",
+      status: "needs_review",
+      resultJson: {
+        interview_experience: {
+          company: "滴滴",
+          role: "后端开发",
+          round_info: "一面",
+          summary: "秒杀系统设计",
+          tags: ["redis"],
+        },
+        questions: [
+          {
+            question_text: "秒杀系统怎么防止超卖？",
+            answer: "要控制库存一致性和并发写入。",
+            category: "distributed_system",
+            tags: ["redis", "design"],
+          },
+        ],
+      },
+    });
+
+    if (!parseJob) {
+      throw new Error("Failed to create interview parse job.");
+    }
+
+    const confirmResult = parseReviewService.confirmParseJob(parseJob.id, {
+      interview_experience: {
+        company: "滴滴",
+        role: "后端开发",
+        round_info: "一面",
+        summary: "秒杀系统设计",
+        tags: ["redis"],
+      },
+      questions: [
+        {
+          action: "keep",
+          question_text: "秒杀系统怎么防止超卖？",
+          answer: "要控制库存一致性和并发写入。",
+          category: "distributed_system",
+          tags: ["redis", "design"],
+        },
+      ],
+    });
+
+    const interview = interviewBrowseService.getInterviewDetail(
+      confirmResult.importSummary.createdInterviewExperienceId ?? "",
+    );
+    const recommendedQuestions =
+      interview?.questions[0]?.recommendedQuestions.map((question) => question.id) ?? [];
+
+    expect(recommendedQuestions).toHaveLength(2);
+    expect(recommendedQuestions).toEqual(
+      expect.arrayContaining([fallbackQuestionOne.id, fallbackQuestionTwo.id]),
+    );
+    expect(recommendedQuestions).not.toContain(fallbackQuestionThree.id);
+  });
+
   it("promotes interview questions by merge without overwriting an existing canonical answer", async () => {
     const {
       parseJobRepository,

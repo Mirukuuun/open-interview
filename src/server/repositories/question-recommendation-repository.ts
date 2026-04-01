@@ -29,6 +29,10 @@ type RecommendedQuestionScore = {
   score: number;
 };
 
+const HIGH_CONFIDENCE_RECOMMENDATION_LIMIT = 3;
+const HIGH_CONFIDENCE_SCORE_THRESHOLD = 90;
+const LOW_CONFIDENCE_FALLBACK_LIMIT = 2;
+
 function mergeRecommendedQuestionScore(
   scoreMap: Map<string, RecommendedQuestionScore>,
   input: {
@@ -284,13 +288,21 @@ export function listRecommendedQuestionsForInterviewQuestion(
     });
   }
 
-  return hydrateQuestionCards(
-    Array.from(scoreMap.values())
-      .filter((row) => !excludedQuestionIds.has(row.id))
-      .sort((left, right) => right.score - left.score)
-      .slice(0, limit)
-      .map((row) => row.id),
-  ).map((row) => ({
+  const sortedRecommendations = Array.from(scoreMap.values())
+    .filter((row) => !excludedQuestionIds.has(row.id))
+    .sort((left, right) => right.score - left.score);
+  const highConfidenceRecommendations = sortedRecommendations
+    .slice(0, HIGH_CONFIDENCE_RECOMMENDATION_LIMIT)
+    .filter((row) => row.score >= HIGH_CONFIDENCE_SCORE_THRESHOLD);
+  const selectedRecommendations =
+    highConfidenceRecommendations.length > 0
+      ? highConfidenceRecommendations
+      : sortedRecommendations.slice(
+          0,
+          Math.min(LOW_CONFIDENCE_FALLBACK_LIMIT, limit),
+        );
+
+  return hydrateQuestionCards(selectedRecommendations.map((row) => row.id)).map((row) => ({
     ...row,
     score: scoreMap.get(row.id)?.score ?? 0,
   }));
