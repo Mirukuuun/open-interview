@@ -29,6 +29,7 @@ import {
   sourceKindLabel,
   sourceParseStatusMeta,
 } from "./review-shared";
+import { ReviewConfirmDialog } from "./review-confirm-dialog";
 import { ReviewImportPreview } from "./review-import-preview";
 
 type ReviewJobWorkbenchProps = {
@@ -67,12 +68,11 @@ type InterviewDraft = {
 
 type QuestionDraft = {
   questionText: string;
-  canonicalAnswer: string;
-  sourceAnswer: string;
+  answer: string;
   category: string;
   tags: string;
   confidence: number | null;
-  action: "create" | "merge" | "skip";
+  action: "create" | "merge" | "keep" | "skip";
   targetQuestionId: string;
 };
 
@@ -93,6 +93,8 @@ function actionLabel(action: QuestionDraft["action"]) {
       return "新建";
     case "merge":
       return "合并";
+    case "keep":
+      return "保留";
     case "skip":
       return "跳过";
     default:
@@ -148,15 +150,24 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
   const [questionDrafts, setQuestionDrafts] = useState<QuestionDraft[]>(
     (detail.result?.questions ?? []).map((question) => ({
       questionText: question.question_text,
-      canonicalAnswer: question.canonical_answer ?? "",
-      sourceAnswer: question.source_answer ?? "",
+      answer:
+        question.answer ?? question.source_answer ?? question.canonical_answer ?? "",
       category: question.category ?? "",
       tags: (question.tags ?? []).join(", "),
       confidence: question.confidence ?? null,
-      action: question.merge_hint_question_id ? "merge" : "create",
+      action:
+        detail.sourceDocument.kind === "interview_experience"
+          ? "keep"
+          : question.merge_hint_question_id
+            ? "merge"
+            : "create",
       targetQuestionId: question.merge_hint_question_id ?? "",
     })),
   );
+  const isInterviewSource = detail.sourceDocument.kind === "interview_experience";
+  const supportsCreate = !isInterviewSource;
+  const supportsMerge = !isInterviewSource;
+  const supportsKeep = isInterviewSource;
 
   const activeCandidate = questionDrafts[activeCandidateIndex];
   const activeMergeTarget = detail.mergeTargets.find(
@@ -170,6 +181,7 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
     {
       create: 0,
       merge: 0,
+      keep: 0,
       skip: 0,
     },
   );
@@ -248,7 +260,7 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
+                body: JSON.stringify({
           interview_experience:
             jobSummary.job_type === "extract_interview" &&
             hasInterviewDraftValue(interviewDraft)
@@ -266,8 +278,7 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
               ? { target_question_id: question.targetQuestionId.trim() }
               : {}),
             question_text: question.questionText.trim(),
-            canonical_answer: question.canonicalAnswer.trim() || null,
-            source_answer: question.sourceAnswer.trim() || null,
+            answer: question.answer.trim() || null,
             category: question.category.trim() || null,
             tags: parseTags(question.tags),
           })),
@@ -311,7 +322,13 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
               onClick={openConfirmDialog}
               variant="primary"
             >
-              {isConfirming ? "入库中..." : "确认入库"}
+              {isConfirming
+                ? isInterviewSource
+                  ? "保存中..."
+                  : "入库中..."
+                : isInterviewSource
+                  ? "确认保存"
+                  : "确认入库"}
             </Button>
           </>
         }
@@ -515,37 +532,20 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
                         />
                       </FormField>
 
-                      <FormField label="标准答案">
+                      <FormField label="答案">
                         <Textarea
                           onChange={(event) =>
                             setQuestionDrafts((current) =>
                               current.map((item, itemIndex) =>
                                 itemIndex === index
-                                  ? { ...item, canonicalAnswer: event.target.value }
+                                  ? { ...item, answer: event.target.value }
                                   : item,
                               ),
                             )
                           }
                           onFocus={() => setActiveCandidateIndex(index)}
-                          placeholder="写入 canonical_answer。"
-                          value={question.canonicalAnswer}
-                        />
-                      </FormField>
-
-                      <FormField label="来源答案">
-                        <Textarea
-                          onChange={(event) =>
-                            setQuestionDrafts((current) =>
-                              current.map((item, itemIndex) =>
-                                itemIndex === index
-                                  ? { ...item, sourceAnswer: event.target.value }
-                                  : item,
-                              ),
-                            )
-                          }
-                          onFocus={() => setActiveCandidateIndex(index)}
-                          placeholder="可选。"
-                          value={question.sourceAnswer}
+                          placeholder="原文有答案时保留原文；没有答案时补成完整面试回答。"
+                          value={question.answer}
                         />
                       </FormField>
 
@@ -603,14 +603,25 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
                             onFocus={() => setActiveCandidateIndex(index)}
                             value={question.action}
                           >
-                            <option value="create">新建</option>
-                            <option value="merge">合并</option>
+                            {supportsCreate ? (
+                              <option value="create">新建</option>
+                            ) : null}
+                            {supportsMerge ? (
+                              <option value="merge">合并</option>
+                            ) : null}
+                            {supportsKeep ? (
+                              <option value="keep">保留</option>
+                            ) : null}
                             <option value="skip">跳过</option>
                           </Select>
                         </FormField>
 
                         <FormField
-                          description="填写已有 canonical 题目 ID。当前正式题库 ID 也使用 q_ 前缀，不是临时占位。"
+                          description={
+                            isInterviewSource
+                              ? "面经审核不在这里直接入题库；关联与沉淀在面经详情页完成。"
+                              : "填写已有 canonical 题目 ID。当前正式题库 ID 也使用 q_ 前缀，不是临时占位。"
+                          }
                           label="目标题目 ID"
                         >
                           <Input
@@ -648,6 +659,7 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
               activeCandidate={activeCandidate}
               activeMergeTarget={activeMergeTarget}
               canImport={jobSummary.job_type === "extract_interview"}
+              sourceKind={detail.sourceDocument.kind}
             />
           </div>
         </SurfaceCard>
@@ -656,31 +668,54 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
       <SurfaceCard className="space-y-5">
         <SectionHeading title="批量摘要" />
 
-        <div className="grid gap-3 sm:grid-cols-3">
-          <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
-            <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">
-              新建
-            </div>
-            <div className="mt-1 text-sm font-semibold text-text-strong">
-              {visibleSummary.create}
-            </div>
-          </div>
-          <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
-            <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">
-              合并
-            </div>
-            <div className="mt-1 text-sm font-semibold text-text-strong">
-              {visibleSummary.merge}
-            </div>
-          </div>
-          <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
-            <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">
-              跳过
-            </div>
-            <div className="mt-1 text-sm font-semibold text-text-strong">
-              {visibleSummary.skip}
-            </div>
-          </div>
+        <div className={`grid gap-3 ${isInterviewSource ? "sm:grid-cols-2" : "sm:grid-cols-3"}`}>
+          {isInterviewSource ? (
+            <>
+              <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
+                <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">
+                  保留
+                </div>
+                <div className="mt-1 text-sm font-semibold text-text-strong">
+                  {visibleSummary.keep}
+                </div>
+              </div>
+              <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
+                <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">
+                  跳过
+                </div>
+                <div className="mt-1 text-sm font-semibold text-text-strong">
+                  {visibleSummary.skip}
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
+                <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">
+                  新建
+                </div>
+                <div className="mt-1 text-sm font-semibold text-text-strong">
+                  {visibleSummary.create}
+                </div>
+              </div>
+              <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
+                <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">
+                  合并
+                </div>
+                <div className="mt-1 text-sm font-semibold text-text-strong">
+                  {visibleSummary.merge}
+                </div>
+              </div>
+              <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
+                <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">
+                  跳过
+                </div>
+                <div className="mt-1 text-sm font-semibold text-text-strong">
+                  {visibleSummary.skip}
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {detail.result?.warnings && detail.result.warnings.length > 0 ? (
@@ -713,7 +748,13 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
             onClick={openConfirmDialog}
             variant="primary"
           >
-            {isConfirming ? "入库中..." : "确认入库"}
+            {isConfirming
+              ? isInterviewSource
+                ? "保存中..."
+                : "入库中..."
+              : isInterviewSource
+                ? "确认保存"
+                : "确认入库"}
           </Button>
         </div>
 
@@ -724,48 +765,14 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
         </div>
       </SurfaceCard>
 
-      {isConfirmDialogOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4">
-          <div
-            aria-describedby="confirm-import-description"
-            aria-labelledby="confirm-import-title"
-            aria-modal="true"
-            className="w-full max-w-lg rounded-2xl border border-border-strong bg-white p-6 shadow-xl"
-            role="dialog"
-          >
-            <div className="space-y-3">
-              <p
-                className="text-base font-semibold text-text-strong"
-                id="confirm-import-title"
-              >
-                确认把当前审核结果写入 canonical 题库？
-              </p>
-              <p
-                className="text-sm leading-6 text-text-muted"
-                id="confirm-import-description"
-              >
-                确认后会提交当前候选题处理结果，并刷新页面到最新已确认状态。
-              </p>
-              <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3 text-sm text-text-muted">
-                <p>新建 {visibleSummary.create} 条</p>
-                <p className="mt-1">合并 {visibleSummary.merge} 条</p>
-                <p className="mt-1">跳过 {visibleSummary.skip} 条</p>
-              </div>
-            </div>
-            <div className="mt-6 flex flex-wrap justify-end gap-3">
-              <Button
-                disabled={isConfirming}
-                onClick={() => setIsConfirmDialogOpen(false)}
-              >
-                取消
-              </Button>
-              <Button disabled={isConfirming} onClick={handleConfirm} variant="primary">
-                {isConfirming ? "入库中..." : "确认并入库"}
-              </Button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <ReviewConfirmDialog
+        isConfirming={isConfirming}
+        isInterviewSource={isInterviewSource}
+        isOpen={isConfirmDialogOpen}
+        onClose={() => setIsConfirmDialogOpen(false)}
+        onConfirm={handleConfirm}
+        visibleSummary={visibleSummary}
+      />
     </div>
   );
 }

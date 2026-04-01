@@ -3,7 +3,7 @@
 - doc_type: data_model
 - audience: agents / implementers
 - status: draft
-- updated_at: 2026-03-28
+- updated_at: 2026-04-01
 - parent_doc: `docs/technical-design.md`
 - canonical_for: core entities, field contracts, relationships, state transitions
 
@@ -25,6 +25,7 @@ This document is optimized for agents, not PM-style reading.
 - `source_document` is the raw truth source.
 - `question_item` is the canonical review unit.
 - `interview_experience` is a source/context record, not the canonical question bank itself.
+- `interview_question` is the canonical unit for extracted interview questions before any manual promotion to the bank.
 - AI parse results must land in `parse_job.result_json` first, then enter human review before canonical write.
 - RAG is grounded on `chunk` + `embedding`, but the product truth still lives in structured entities.
 
@@ -40,7 +41,12 @@ source_document
   └─ 0..n chunk
 
 interview_experience
-  └─ n:n question_item   (via source_question_ref)
+  ├─ 1:n interview_question
+  └─ n:n question_item   (via interview_question_link / source_question_ref after promotion)
+
+interview_question
+  ├─ n:n tag             (via interview_question_tag)
+  └─ n:n question_item   (via interview_question_link)
 
 question_item
   ├─ 1:n answer_variant
@@ -138,6 +144,7 @@ interface ParseInterviewExperience {
 
 interface ParseQuestionCandidate {
   question_text: string
+  answer?: string | null
   canonical_answer?: string | null
   source_answer?: string | null
   category?: string | null
@@ -157,6 +164,7 @@ interface ParseResumeProjectCandidate {
 
 Rules:
 - `questions` is required and may be empty.
+- `answer` 是 parse review 阶段的主候选答案字段；兼容旧结果时仍可读取 `canonical_answer` / `source_answer`。
 - `confidence` is advisory only; never auto-confirm solely from confidence.
 - `merge_hint_question_id` is only a hint for review UI.
 
@@ -177,7 +185,30 @@ interface InterviewExperience {
 }
 ```
 
-## 2.5 question_item
+## 2.5 interview_question
+Interview-only extracted question before promotion into the bank.
+
+```ts
+interface InterviewQuestion {
+  id: string
+  interview_experience_id: string
+  source_document_id: string
+  question_text: string
+  normalized_question_text: string
+  source_answer?: string | null
+  source_snippet?: string | null
+  source_order?: number | null
+  category?: string | null
+  created_at: string
+  updated_at: string
+}
+```
+
+Rules:
+- `interview_question` 保留面经题原始语境，不自动进入 `question_item`。
+- 只有显式执行 promote / merge 后，才建立到题库的正式关联。
+
+## 2.6 question_item
 Canonical question bank unit.
 
 ```ts
@@ -200,10 +231,10 @@ interface QuestionItem {
 Rules:
 - `normalized_question_text` is used for dedupe and exact-ish matching.
 - `canonical_answer` is the current primary answer stored in the question bank.
-- Human-reviewed parse confirm and manual Q&A import should prefer the uploaded/source answer when deciding `canonical_answer`.
+- Human-reviewed parse confirm and manual Q&A import should prefer the reviewed single `answer`; when兼容旧 parse payload 时仍优先采用上传来源中的答案文本。
 - `review_status='draft'` can be used if future flows allow unreviewed entries.
 
-## 2.6 answer_variant
+## 2.7 answer_variant
 Multiple answer views for one question.
 
 ```ts
@@ -222,7 +253,7 @@ interface AnswerVariant {
 Notes:
 - `personal` is retained as a legacy/internal variant type, but question-bank browse APIs should not expose it as a first-class filter or separate primary-answer concept.
 
-## 2.7 tag
+## 2.8 tag
 Shared tag entity.
 
 ```ts
@@ -235,8 +266,8 @@ interface Tag {
 }
 ```
 
-## 2.8 source_question_ref
-Many-to-many mapping between source/interview and canonical question.
+## 2.9 source_question_ref
+Many-to-many mapping between source_document and canonical question.
 
 ```ts
 interface SourceQuestionRef {
@@ -249,7 +280,23 @@ interface SourceQuestionRef {
 }
 ```
 
-## 2.9 question_tag
+Rules:
+- `source_question_ref` 只在题库题已经成立后创建，不再承担面经原题本体存储。
+
+## 2.10 interview_question_link
+Formal many-to-many mapping between interview questions and bank questions after manual promotion.
+
+```ts
+interface InterviewQuestionLink {
+  id: string
+  interview_question_id: string
+  question_item_id: string
+  link_type: 'promoted_create' | 'promoted_merge'
+  created_at: string
+}
+```
+
+## 2.11 question_tag
 ```ts
 interface QuestionTag {
   question_item_id: string
@@ -257,7 +304,7 @@ interface QuestionTag {
 }
 ```
 
-## 2.10 resume_document
+## 2.12 resume_document
 Structured resume root.
 
 ```ts
@@ -271,7 +318,7 @@ interface ResumeDocument {
 }
 ```
 
-## 2.11 resume_project
+## 2.13 resume_project
 Project extracted from resume.
 
 ```ts

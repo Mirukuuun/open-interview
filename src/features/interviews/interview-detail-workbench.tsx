@@ -6,8 +6,10 @@ import { SurfaceCard } from "@/components/ui/surface-card";
 import { DetailGrid } from "@/components/workbench/detail-grid";
 import { PageHeader } from "@/components/workbench/page-header";
 import { SectionHeading } from "@/components/workbench/section-heading";
-import { formatCategoryLabel, formatTagLabel } from "@/lib/taxonomy-display";
+import { formatTagLabel } from "@/lib/taxonomy-display";
 import { interviewBrowseService } from "@/server/services/interview-browse-service";
+
+import { InterviewQuestionCard } from "./interview-question-card";
 
 type InterviewDetailWorkbenchProps = {
   interview: NonNullable<
@@ -90,34 +92,7 @@ export function InterviewDetailWorkbench({
             ) : (
               <div className="space-y-3">
                 {interview.questions.map((question) => (
-                  <div
-                    className="rounded-xl border border-border-muted bg-surface-muted p-4"
-                    key={question.id}
-                  >
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Link
-                        className="text-sm font-semibold text-text-strong hover:text-accent"
-                        href={`/questions/${question.id}`}
-                      >
-                        {question.questionText}
-                      </Link>
-                      {question.category ? (
-                        <Badge>
-                          {formatCategoryLabel(question.category) ?? question.category}
-                        </Badge>
-                      ) : null}
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {question.tags.map((tag) => (
-                        <Badge key={tag}>{formatTagLabel(tag) ?? tag}</Badge>
-                      ))}
-                    </div>
-                    {question.sourceSnippet ? (
-                      <div className="mt-3 whitespace-pre-wrap rounded-lg border border-border-muted bg-white px-3 py-3 text-sm leading-6 text-text-strong">
-                        {question.sourceSnippet}
-                      </div>
-                    ) : null}
-                  </div>
+                  <InterviewQuestionCard key={question.id} question={question} />
                 ))}
               </div>
             )}

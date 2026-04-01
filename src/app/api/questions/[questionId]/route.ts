@@ -54,6 +54,21 @@ export async function GET(_: Request, { params }: QuestionRouteProps) {
           variant_type: answerVariant.variantType,
           content: answerVariant.content,
         })),
+        linked_interview_questions: question.linkedInterviewQuestions.map(
+          (linkedQuestion) => ({
+            interview_question_id: linkedQuestion.interviewQuestionId,
+            question_text: linkedQuestion.questionText,
+            source_answer: linkedQuestion.sourceAnswer,
+            source_snippet: linkedQuestion.sourceSnippet,
+            link_type: linkedQuestion.linkType,
+            interview_experience: {
+              id: linkedQuestion.interviewExperience.id,
+              company: linkedQuestion.interviewExperience.company,
+              role: linkedQuestion.interviewExperience.role,
+              round_info: linkedQuestion.interviewExperience.roundInfo,
+            },
+          }),
+        ),
         related_questions: question.relatedQuestions.map((relatedQuestion) => ({
           id: relatedQuestion.id,
           question_text: relatedQuestion.questionText,

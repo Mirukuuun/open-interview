@@ -53,6 +53,11 @@ export const answerVariantAuthorTypes = ["user", "ai", "system"] as const;
 
 export const tagTypes = ["topic", "company", "role", "skill", "custom"] as const;
 
+export const interviewQuestionLinkTypes = [
+  "promoted_create",
+  "promoted_merge",
+] as const;
+
 export const chunkOwnerTypes = [
   "source_document",
   "question_item",

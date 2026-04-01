@@ -36,10 +36,29 @@ export async function GET(_: Request, { params }: InterviewRouteProps) {
         updated_at: interview.updatedAt,
         questions: interview.questions.map((question) => ({
           id: question.id,
+          source_kind: question.sourceKind,
           question_text: question.questionText,
+          source_answer: question.sourceAnswer,
           category: question.category,
           source_snippet: question.sourceSnippet,
           tags: question.tags,
+          promoted_questions: question.promotedQuestions.map((promotedQuestion) => ({
+            question_item_id: promotedQuestion.questionItemId,
+            question_text: promotedQuestion.questionText,
+            category: promotedQuestion.category,
+            tags: promotedQuestion.tags,
+            link_type: promotedQuestion.linkType,
+          })),
+          recommended_questions: question.recommendedQuestions.map(
+            (recommendedQuestion) => ({
+              id: recommendedQuestion.id,
+              question_text: recommendedQuestion.questionText,
+              category: recommendedQuestion.category,
+              source_count: recommendedQuestion.sourceCount,
+              tags: recommendedQuestion.tags,
+              match_score: recommendedQuestion.score,
+            }),
+          ),
         })),
         source_document: {
           id: interview.sourceDocument.id,

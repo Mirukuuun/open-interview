@@ -3,7 +3,7 @@
 - doc_type: api_schema
 - audience: agents / implementers
 - status: draft
-- updated_at: 2026-03-28
+- updated_at: 2026-04-01
 - parent_doc: `docs/technical-design.md`
 - canonical_for: HTTP endpoints, request/response contracts, async flow conventions
 
@@ -103,7 +103,8 @@ Create a source from pasted text.
 ```
 
 ### Import rule
-- 确认导入时，题库只保留一个主答案；如果同时提交 `source_answer` 和 `canonical_answer`，服务会优先将来源答案写入 `canonical_answer`。
+- `interview_experience` 确认导入后默认只写面经与面经题，不自动进入题库。
+- `knowledge_note` 和手工录题仍可直接沉淀到题库；题库只保留一个主答案，review 流优先提交单一 `answer`。
 
 ## 2.2 POST `/api/sources/upload`
 Multipart upload for file-based source.
@@ -235,7 +236,7 @@ Return full parse result for review UI.
       "questions": [
         {
           "question_text": "Redis 分布式锁会遇到哪些问题？",
-          "canonical_answer": "需要考虑误删、续约、主从切换一致性等。",
+          "answer": "需要考虑误删、续约、主从切换一致性等。",
           "category": "distributed_system",
           "tags": ["redis", "lock"],
           "confidence": 0.87,
@@ -263,23 +264,19 @@ Human-reviewed import into canonical tables.
   },
   "questions": [
     {
-      "action": "merge",
-      "target_question_id": "q_redis_lock_001",
+      "action": "keep",
       "question_text": "Redis 分布式锁会遇到哪些问题？",
-      "canonical_answer": "需要考虑误删、续约、主从切换一致性等。",
+      "answer": "需要考虑误删、续约、主从切换一致性等。",
       "category": "distributed_system",
       "tags": ["redis", "lock"]
-    },
-    {
-      "action": "create",
-      "question_text": "为什么 ThreadLocal 在线程池里要手动清理？",
-      "canonical_answer": "线程复用可能导致数据串用与内存泄漏。",
-      "category": "java_concurrency",
-      "tags": ["threadlocal", "thread_pool"]
     }
   ]
 }
 ```
+
+### Confirm rule
+- `interview_experience` 类型只接受 `keep | skip`，写入 `interview_question`。
+- `knowledge_note` 类型仍接受 `create | merge | skip`，直接写入 `question_item`。
 
 ### Response
 ```json
@@ -291,8 +288,9 @@ Human-reviewed import into canonical tables.
       "status": "confirmed"
     },
     "import_summary": {
-      "created_questions": 1,
-      "merged_questions": 1,
+      "created_questions": 0,
+      "merged_questions": 0,
+      "kept_interview_questions": 1,
       "created_interview_experience_id": "intv_001"
     }
   }
@@ -347,6 +345,17 @@ Question detail.
         {
           "source_document_id": "src_001",
           "title": "美团后端一面面经"
+        }
+      ],
+      "linked_interview_questions": [
+        {
+          "interview_question_id": "iq_001",
+          "question_text": "Redis 分布式锁会遇到哪些问题？",
+          "link_type": "promoted_merge",
+          "interview_experience": {
+            "id": "intv_001",
+            "company": "美团"
+          }
         }
       ],
       "answer_variants": [
@@ -586,10 +595,46 @@ Return one interview experience with extracted questions.
       "tags": ["java", "redis", "mq"],
       "questions": [
         {
-          "id": "q_redis_lock_001",
-          "question_text": "Redis 分布式锁会遇到哪些问题？"
+          "id": "iq_001",
+          "source_kind": "interview_question",
+          "question_text": "Redis 分布式锁会遇到哪些问题？",
+          "source_answer": "需要考虑误删、续约、主从切换一致性等。",
+          "promoted_questions": [],
+          "recommended_questions": [
+            {
+              "id": "q_redis_lock_001",
+              "question_text": "Redis 分布式锁有哪些风险？",
+              "match_score": 128
+            }
+          ]
         }
       ]
+    }
+  }
+}
+```
+
+## 5.3 POST `/api/interview-questions/:interviewQuestionId/promote`
+Promote one interview question into the bank.
+
+### Request
+```json
+{
+  "action": "merge",
+  "target_question_id": "q_redis_lock_001"
+}
+```
+
+### Response
+```json
+{
+  "ok": true,
+  "data": {
+    "promotion": {
+      "interview_question_id": "iq_001",
+      "question_item_id": "q_redis_lock_001",
+      "question_text": "Redis 分布式锁有哪些风险？",
+      "link_type": "promoted_merge"
     }
   }
 }
@@ -893,6 +938,7 @@ interface OpenClawParseResponse {
     } | null
     questions: Array<{
       question_text: string
+      answer?: string | null
       canonical_answer?: string | null
       source_answer?: string | null
       category?: string | null

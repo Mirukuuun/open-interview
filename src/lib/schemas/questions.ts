@@ -123,6 +123,20 @@ export const relatedQuestionSchema = z.object({
   shared_source_count: z.number().int().min(0).optional(),
 });
 
+export const linkedInterviewQuestionSchema = z.object({
+  interview_question_id: z.string().min(1),
+  question_text: z.string().min(1),
+  source_answer: z.string().min(1).nullable().optional(),
+  source_snippet: z.string().min(1).nullable().optional(),
+  link_type: z.enum(["promoted_create", "promoted_merge"]),
+  interview_experience: z.object({
+    id: z.string().min(1),
+    company: z.string().min(1).nullable().optional(),
+    role: z.string().min(1).nullable().optional(),
+    round_info: z.string().min(1).nullable().optional(),
+  }),
+});
+
 export const questionDetailSchema = z.object({
   id: z.string().min(1),
   question_text: z.string().min(1),
@@ -135,6 +149,7 @@ export const questionDetailSchema = z.object({
   tags: z.array(z.string()),
   sources: z.array(questionSourceSchema),
   answer_variants: z.array(questionAnswerVariantSchema),
+  linked_interview_questions: z.array(linkedInterviewQuestionSchema),
   related_questions: z.array(relatedQuestionSchema),
 });
 

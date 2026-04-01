@@ -152,6 +152,7 @@ function parseQuestionListItem(row: {
   };
 }
 
+
 export const questionBrowseRepository = {
   listPracticePool() {
     const rows = sqlite
@@ -510,6 +511,39 @@ export const questionBrowseRepository = {
       role: string | null;
       roundInfo: string | null;
     }>;
+    const linkedInterviewQuestions = sqlite
+      .prepare(
+        `
+          SELECT
+            iq.id AS interviewQuestionId,
+            iq.question_text AS interviewQuestionText,
+            iq.source_answer AS sourceAnswer,
+            iq.source_snippet AS sourceSnippet,
+            iql.link_type AS linkType,
+            ie.id AS interviewId,
+            ie.company AS company,
+            ie.role AS role,
+            ie.round_info AS roundInfo
+          FROM interview_question_links iql
+          INNER JOIN interview_questions iq
+            ON iq.id = iql.interview_question_id
+          INNER JOIN interview_experiences ie
+            ON ie.id = iq.interview_experience_id
+          WHERE iql.question_item_id = ?
+          ORDER BY iq.updated_at DESC, iq.created_at DESC
+        `,
+      )
+      .all(questionId) as Array<{
+      interviewQuestionId: string;
+      interviewQuestionText: string;
+      sourceAnswer: string | null;
+      sourceSnippet: string | null;
+      linkType: "promoted_create" | "promoted_merge";
+      interviewId: string;
+      company: string | null;
+      role: string | null;
+      roundInfo: string | null;
+    }>;
 
     const relatedBySource = sqlite
       .prepare(
@@ -624,6 +658,19 @@ export const questionBrowseRepository = {
               roundInfo: source.roundInfo,
             }
           : undefined,
+      })),
+      linkedInterviewQuestions: linkedInterviewQuestions.map((linkedQuestion) => ({
+        interviewQuestionId: linkedQuestion.interviewQuestionId,
+        questionText: linkedQuestion.interviewQuestionText,
+        sourceAnswer: linkedQuestion.sourceAnswer,
+        sourceSnippet: linkedQuestion.sourceSnippet,
+        linkType: linkedQuestion.linkType,
+        interviewExperience: {
+          id: linkedQuestion.interviewId,
+          company: linkedQuestion.company,
+          role: linkedQuestion.role,
+          roundInfo: linkedQuestion.roundInfo,
+        },
       })),
       relatedQuestions: relatedQuestions.map((relatedQuestion) => ({
         id: relatedQuestion.id,

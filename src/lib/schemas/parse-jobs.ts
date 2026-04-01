@@ -71,7 +71,12 @@ export const parseJobStatusSchema = z.enum([
 
 export const parseJobProviderSchema = z.enum(["openclaw"]);
 
-export const reviewQuestionActionSchema = z.enum(["create", "merge", "skip"]);
+export const reviewQuestionActionSchema = z.enum([
+  "create",
+  "merge",
+  "keep",
+  "skip",
+]);
 
 export const createParseJobRequestSchema = z.object({
   source_document_id: z.string().trim().min(1),
@@ -160,6 +165,10 @@ export const getParseJobResultResponseDataSchema = z.object({
 
 const confirmQuestionBaseSchema = z.object({
   question_text: z.string().trim().min(1),
+  answer: z.preprocess(
+    coerceNullableString,
+    z.string().min(1).nullable().optional(),
+  ),
   canonical_answer: z.preprocess(
     coerceNullableString,
     z.string().min(1).nullable().optional(),
@@ -195,6 +204,9 @@ export const parseJobConfirmQuestionSchema = z.discriminatedUnion("action", [
     target_question_id: z.string().trim().min(1),
   }),
   confirmQuestionBaseSchema.extend({
+    action: z.literal("keep"),
+  }),
+  confirmQuestionBaseSchema.extend({
     action: z.literal("skip"),
   }),
 ]);
@@ -209,6 +221,7 @@ export const confirmParseJobResponseDataSchema = z.object({
   import_summary: z.object({
     created_questions: z.number().int().min(0),
     merged_questions: z.number().int().min(0),
+    kept_interview_questions: z.number().int().min(0),
     skipped_questions: z.number().int().min(0),
     created_interview_experience_id: z.string().min(1).nullable().optional(),
   }),

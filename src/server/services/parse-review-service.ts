@@ -14,19 +14,23 @@ import type {
   ParseJobSummary,
 } from "@/lib/schemas/parse-jobs";
 import type {
-  ParseInterviewExperience,
   ParseResult,
 } from "@/lib/schemas/parse-result";
 import { openClawParseSourceAdapter } from "@/server/adapters/openclaw/parse-source";
 import { sqlite } from "@/server/db/client";
 import {
-  interviewExperienceRepository,
   parseJobRepository,
   questionRepository,
   sourceDocumentRepository,
   tagRepository,
 } from "@/server/repositories";
 import type { SourceDocumentRecord } from "@/server/repositories/source-document-repository";
+import {
+  confirmCanonicalQuestionWrite,
+  confirmInterviewQuestionWrite,
+  upsertInterviewExperienceForSource,
+} from "@/server/services/parse-review-confirmation";
+import { ParseReviewServiceError } from "@/server/services/parse-review-errors";
 
 type ReviewQueueFilters = {
   status?: ParseJobStatus;
@@ -94,49 +98,11 @@ type ConfirmParseJobResult = {
   importSummary: {
     createdQuestions: number;
     mergedQuestions: number;
+    keptInterviewQuestions: number;
     skippedQuestions: number;
     createdInterviewExperienceId: string | null;
   };
 };
-
-export class ParseReviewServiceError extends Error {
-  code: string;
-  statusCode: number;
-  details?: unknown;
-
-  constructor(
-    code: string,
-    message: string,
-    statusCode = 400,
-    details?: unknown,
-  ) {
-    super(message);
-    this.name = "ParseReviewServiceError";
-    this.code = code;
-    this.statusCode = statusCode;
-    this.details = details;
-  }
-}
-
-function trimNullable(value: string | null | undefined) {
-  if (value === undefined || value === null) {
-    return null;
-  }
-
-  const trimmedValue = value.trim();
-
-  return trimmedValue.length > 0 ? trimmedValue : null;
-}
-
-function normalizeTagList(tags: string[] | undefined) {
-  return Array.from(
-    new Set(
-      (tags ?? [])
-        .map((tag) => tag.trim())
-        .filter((tag) => tag.length > 0),
-    ),
-  );
-}
 
 function deriveJobTypeForSource(
   kind: "interview_experience" | "knowledge_note" | "resume" | "manual_input",
@@ -286,82 +252,6 @@ function attachMergeHints(result: ParseResult) {
       };
     }),
   } satisfies ParseResult;
-}
-
-function buildSourceSnippet(
-  question: {
-    question_text: string;
-    source_answer?: string | null;
-    canonical_answer?: string | null;
-  },
-  sourceOrder: number,
-) {
-  const snippetParts = [`Question ${sourceOrder + 1}: ${question.question_text}`];
-
-  if (question.source_answer) {
-    snippetParts.push(`Source answer: ${question.source_answer}`);
-  }
-
-  if (
-    question.canonical_answer &&
-    question.canonical_answer !== question.source_answer
-  ) {
-    snippetParts.push(`Reviewed answer: ${question.canonical_answer}`);
-  }
-
-  return snippetParts.join("\n");
-}
-
-function hasInterviewExperienceValue(
-  interviewExperience: ParseInterviewExperience | null | undefined,
-) {
-  if (!interviewExperience) {
-    return false;
-  }
-
-  return Boolean(
-    trimNullable(interviewExperience.company) ||
-      trimNullable(interviewExperience.role) ||
-      trimNullable(interviewExperience.round_info) ||
-      trimNullable(interviewExperience.summary) ||
-      normalizeTagList(interviewExperience.tags).length > 0,
-  );
-}
-
-function createAnswerVariantIfMissing(
-  questionItemId: string,
-  content: string | null | undefined,
-  variantType: "canonical",
-) {
-  const normalizedContent = trimNullable(content);
-
-  if (!normalizedContent) {
-    return null;
-  }
-
-  const existingAnswerVariant = questionRepository
-    .listAnswerVariants(questionItemId)
-    .find((variant) => variant.content.trim() === normalizedContent);
-
-  if (existingAnswerVariant) {
-    return existingAnswerVariant;
-  }
-
-  return questionRepository.createAnswerVariant({
-    questionItemId,
-    variantType,
-    content: normalizedContent,
-    authorType: "ai",
-  });
-}
-
-function resolvePrimaryAnswer(question: {
-  source_answer?: string | null;
-  canonical_answer?: string | null;
-}) {
-  return (
-    trimNullable(question.source_answer) ?? trimNullable(question.canonical_answer)
-  );
 }
 
 function buildMergeTarget(questionId: string) {
@@ -613,14 +503,7 @@ export const parseReviewService = {
       return toParseJobSummary(parseJob);
     }
 
-    if (parseJob.status === "needs_review") {
-      throw new ParseReviewServiceError(
-        "invalid_state",
-        "Only failed parse jobs can be retried.",
-        409,
-      );
-    }
-
+    // Any unconfirmed terminal state can be re-queued for a fresh parse pass.
     return toParseJobSummary(queueParseJob(jobId));
   },
 
@@ -764,103 +647,58 @@ export const parseReviewService = {
     return sqlite.transaction(() => {
       let createdQuestions = 0;
       let mergedQuestions = 0;
+      let keptInterviewQuestions = 0;
       let skippedQuestions = 0;
-      let createdInterviewExperienceId: string | null = null;
-
-      if (hasInterviewExperienceValue(input.interview_experience)) {
-        const interviewExperience = interviewExperienceRepository.upsertBySourceDocumentId({
-          sourceDocumentId: sourceDocument.id,
-          company: trimNullable(input.interview_experience?.company),
-          role: trimNullable(input.interview_experience?.role),
-          roundInfo: trimNullable(input.interview_experience?.round_info),
-          summary: trimNullable(input.interview_experience?.summary),
-        });
-
-        interviewExperienceRepository.replaceTags(
-          interviewExperience.id,
-          normalizeTagList(input.interview_experience?.tags),
-        );
-        createdInterviewExperienceId = interviewExperience.id;
-      }
+      const createdInterviewExperienceId = upsertInterviewExperienceForSource({
+        sourceDocumentId: sourceDocument.id,
+        sourceKind: sourceDocument.kind,
+        interviewExperience: input.interview_experience,
+      });
 
       input.questions.forEach((question, index) => {
-        if (question.action === "skip") {
-          skippedQuestions += 1;
-          return;
-        }
-
-        const primaryAnswer = resolvePrimaryAnswer(question);
-        const category = trimNullable(question.category);
-        const tags = normalizeTagList(question.tags);
-
-        if (question.action === "create") {
-          const existingQuestion = questionRepository.findByNormalizedText(
-            question.question_text,
-          );
-
-          if (existingQuestion) {
+        if (sourceDocument.kind === "interview_experience") {
+          if (!createdInterviewExperienceId) {
             throw new ParseReviewServiceError(
-              "conflict",
-              `Question "${question.question_text}" already exists. Switch the decision to merge or edit the text first.`,
-              409,
+              "internal_error",
+              "Interview experience disappeared during confirmation.",
+              500,
             );
           }
 
-          const createdQuestion = questionRepository.create({
-            questionText: question.question_text,
-            canonicalAnswer: primaryAnswer,
-            category,
-            reviewStatus: "active",
-            createdFrom: "ai_parse",
+          const counters = {
+            keptInterviewQuestions,
+            skippedQuestions,
+          };
+
+          confirmInterviewQuestionWrite({
+            interviewExperienceId: createdInterviewExperienceId,
+            sourceDocumentId: sourceDocument.id,
+            question,
+            index,
+            counters,
           });
 
-          questionRepository.replaceTags(createdQuestion.id, tags);
-          createAnswerVariantIfMissing(
-            createdQuestion.id,
-            primaryAnswer,
-            "canonical",
-          );
-          questionRepository.createSourceQuestionRef({
-            sourceDocumentId: sourceDocument.id,
-            questionItemId: createdQuestion.id,
-            sourceSnippet: buildSourceSnippet(question, index),
-            sourceOrder: index,
-          });
-          createdQuestions += 1;
+          keptInterviewQuestions = counters.keptInterviewQuestions;
+          skippedQuestions = counters.skippedQuestions;
           return;
         }
 
-        const targetQuestion = questionRepository.findById(question.target_question_id);
+        const counters = {
+          createdQuestions,
+          mergedQuestions,
+          skippedQuestions,
+        };
 
-        if (!targetQuestion) {
-          throw new ParseReviewServiceError(
-            "not_found",
-            `Target question ${question.target_question_id} was not found.`,
-            404,
-          );
-        }
-
-        questionRepository.update(targetQuestion.id, {
-          canonicalAnswer: primaryAnswer ?? targetQuestion.canonicalAnswer,
-          category: targetQuestion.category ?? category,
-          reviewStatus:
-            targetQuestion.reviewStatus === "draft" ? "active" : targetQuestion.reviewStatus,
-        });
-
-        const mergedTags = [
-          ...questionRepository.listTags(targetQuestion.id).map((tag) => tag.name),
-          ...tags,
-        ];
-
-        questionRepository.replaceTags(targetQuestion.id, mergedTags);
-        createAnswerVariantIfMissing(targetQuestion.id, primaryAnswer, "canonical");
-        questionRepository.createSourceQuestionRef({
+        confirmCanonicalQuestionWrite({
           sourceDocumentId: sourceDocument.id,
-          questionItemId: targetQuestion.id,
-          sourceSnippet: buildSourceSnippet(question, index),
-          sourceOrder: index,
+          question,
+          index,
+          counters,
         });
-        mergedQuestions += 1;
+
+        createdQuestions = counters.createdQuestions;
+        mergedQuestions = counters.mergedQuestions;
+        skippedQuestions = counters.skippedQuestions;
       });
 
       const confirmedJob = parseJobRepository.update(jobId, {
@@ -883,6 +721,7 @@ export const parseReviewService = {
         importSummary: {
           createdQuestions,
           mergedQuestions,
+          keptInterviewQuestions,
           skippedQuestions,
           createdInterviewExperienceId,
         },

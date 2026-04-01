@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 
 import { apiError } from "@/server/api/envelope";
-import { ParseReviewServiceError } from "@/server/services/parse-review-service";
+import { ParseReviewServiceError } from "@/server/services/parse-review-errors";
 import { ImportServiceError } from "@/server/services/import-service-error";
 import { QaSessionServiceError } from "@/server/services/qa-session-service";
 import { ResumeDeepDiveServiceError } from "@/server/services/resume-deep-dive-service";
 import { ResumeServiceError } from "@/server/services/resume-service";
 import { PracticeServiceError } from "@/server/services/practice-service";
+import { InterviewQuestionServiceError } from "@/server/services/interview-question-service";
 
 export function toServiceErrorResponse(
   error: unknown,
@@ -17,6 +18,7 @@ export function toServiceErrorResponse(
     error instanceof ParseReviewServiceError ||
     error instanceof QaSessionServiceError ||
     error instanceof PracticeServiceError ||
+    error instanceof InterviewQuestionServiceError ||
     error instanceof ResumeServiceError ||
     error instanceof ResumeDeepDiveServiceError
   ) {

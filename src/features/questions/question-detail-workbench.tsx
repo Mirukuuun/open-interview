@@ -196,6 +196,46 @@ export function QuestionDetailWorkbench({
 
           <SurfaceCard className="space-y-4">
             <SectionHeading
+              title={`来源面经题（${question.linkedInterviewQuestions.length}）`}
+            />
+            {question.linkedInterviewQuestions.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border-strong bg-surface-muted p-4 text-sm text-text-muted">
+                这道题目前没有手动沉淀的面经题来源。
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {question.linkedInterviewQuestions.map((linkedQuestion) => (
+                  <div
+                    className="rounded-xl border border-border-muted bg-surface-muted p-4"
+                    key={`${linkedQuestion.interviewQuestionId}-${linkedQuestion.linkType}`}
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge tone="accent">{linkedQuestion.linkType}</Badge>
+                      <Link
+                        className="text-sm font-semibold text-text-strong hover:text-accent"
+                        href={`/interviews/${linkedQuestion.interviewExperience.id}`}
+                      >
+                        {linkedQuestion.interviewExperience.company ?? "未知公司"} /{" "}
+                        {linkedQuestion.interviewExperience.role ?? "未知岗位"} /{" "}
+                        {linkedQuestion.interviewExperience.roundInfo ?? "未知轮次"}
+                      </Link>
+                    </div>
+                    <div className="mt-3 whitespace-pre-wrap text-sm leading-6 text-text-strong">
+                      {linkedQuestion.questionText}
+                    </div>
+                    {linkedQuestion.sourceAnswer ? (
+                      <div className="mt-3 whitespace-pre-wrap rounded-lg border border-border-muted bg-white px-3 py-3 text-sm leading-6 text-text-strong">
+                        {linkedQuestion.sourceAnswer}
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            )}
+          </SurfaceCard>
+
+          <SurfaceCard className="space-y-4">
+            <SectionHeading
               title={`来源（${question.sources.length}）`}
             />
             {question.sources.length === 0 ? (

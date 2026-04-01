@@ -66,12 +66,33 @@ export const listInterviewsResponseDataSchema = z.object({
   total: z.number().int().min(0),
 });
 
-export const interviewQuestionLinkSchema = z.object({
+export const interviewRecommendedQuestionSchema = z.object({
   id: z.string().min(1),
   question_text: z.string().min(1),
   category: z.string().min(1).nullable().optional(),
+  source_count: z.number().int().min(0),
+  tags: z.array(z.string()),
+  match_score: z.number().min(0),
+});
+
+export const promotedInterviewQuestionSchema = z.object({
+  question_item_id: z.string().min(1),
+  question_text: z.string().min(1),
+  category: z.string().min(1).nullable().optional(),
+  tags: z.array(z.string()),
+  link_type: z.enum(["promoted_create", "promoted_merge"]),
+});
+
+export const interviewQuestionSchema = z.object({
+  id: z.string().min(1),
+  source_kind: z.enum(["interview_question", "legacy_question_link"]),
+  question_text: z.string().min(1),
+  source_answer: z.string().min(1).nullable().optional(),
+  category: z.string().min(1).nullable().optional(),
   source_snippet: z.string().min(1).nullable().optional(),
   tags: z.array(z.string()),
+  promoted_questions: z.array(promotedInterviewQuestionSchema),
+  recommended_questions: z.array(interviewRecommendedQuestionSchema),
 });
 
 export const interviewSourceDocumentSchema = z.object({
@@ -100,7 +121,7 @@ export const interviewDetailSchema = z.object({
   question_count: z.number().int().min(0),
   tags: z.array(z.string()),
   updated_at: z.string().datetime(),
-  questions: z.array(interviewQuestionLinkSchema),
+  questions: z.array(interviewQuestionSchema),
   source_document: interviewSourceDocumentSchema,
 });
 

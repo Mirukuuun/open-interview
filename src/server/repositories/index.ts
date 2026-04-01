@@ -2,6 +2,7 @@ export * from "@/server/repositories/source-document-repository";
 export * from "@/server/repositories/parse-job-repository";
 export * from "@/server/repositories/question-repository";
 export * from "@/server/repositories/interview-experience-repository";
+export * from "@/server/repositories/interview-question-repository";
 export * from "@/server/repositories/tag-repository";
 export * from "@/server/repositories/chunk-repository";
 export * from "@/server/repositories/vector-sync-repository";

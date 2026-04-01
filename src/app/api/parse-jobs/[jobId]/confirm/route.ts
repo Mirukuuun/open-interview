@@ -45,6 +45,7 @@ export async function POST(request: Request, { params }: ConfirmParseJobRoutePro
       import_summary: {
         created_questions: result.importSummary.createdQuestions,
         merged_questions: result.importSummary.mergedQuestions,
+        kept_interview_questions: result.importSummary.keptInterviewQuestions,
         skipped_questions: result.importSummary.skippedQuestions,
         created_interview_experience_id:
           result.importSummary.createdInterviewExperienceId,

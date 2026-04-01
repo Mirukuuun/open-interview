@@ -7,6 +7,15 @@ import {
   shouldUseFtsQuery,
 } from "@/server/repositories/search-helpers";
 
+/**
+ * [POS] 负责面经列表与详情的 SQLite 查询边界，并兼容新旧面经题模型。
+ * [IN] 面经筛选条件、interview id。
+ * [OUT] 返回面经列表、详情、面经原题和历史题库关联的最小读模型。
+ *
+ * @feature open-interview-interviews-feature.md
+ * @AI_INSTRUCTION 一旦本文件被更新，务必同步更新本注释，以及对应的 L2 feature 文档。
+ */
+
 type ListInterviewsInput = {
   query?: string;
   company?: string;
@@ -18,6 +27,23 @@ type ListInterviewsInput = {
 type InterviewFacet = {
   name: string;
   count: number;
+};
+
+type InterviewQuestionRow = {
+  id: string;
+  sourceKind: "interview_question" | "legacy_question_link";
+  questionText: string;
+  sourceAnswer: string | null;
+  category: string | null;
+  sourceSnippet: string | null;
+  tags: string[];
+  promotedQuestions: Array<{
+    questionItemId: string;
+    questionText: string;
+    category: string | null;
+    tags: string[];
+    linkType: "promoted_create" | "promoted_merge";
+  }>;
 };
 
 function buildInterviewWhereClause(input: ListInterviewsInput) {
@@ -92,6 +118,158 @@ function buildInterviewWhereClause(input: ListInterviewsInput) {
   };
 }
 
+function listInterviewQuestionRows(interviewId: string) {
+  const questions = sqlite
+    .prepare(
+      `
+        SELECT
+          iq.id AS id,
+          iq.question_text AS questionText,
+          iq.source_answer AS sourceAnswer,
+          iq.category AS category,
+          iq.source_snippet AS sourceSnippet,
+          COALESCE((
+            SELECT json_group_array(name)
+            FROM (
+              SELECT t.name AS name
+              FROM interview_question_tags iqt
+              INNER JOIN tags t
+                ON t.id = iqt.tag_id
+              WHERE iqt.interview_question_id = iq.id
+              ORDER BY t.name COLLATE NOCASE
+            )
+          ), '[]') AS tagsJson
+        FROM interview_questions iq
+        WHERE iq.interview_experience_id = ?
+        ORDER BY
+          CASE WHEN iq.source_order IS NULL THEN 1 ELSE 0 END,
+          iq.source_order ASC,
+          iq.updated_at DESC
+      `,
+    )
+    .all(interviewId) as Array<{
+    id: string;
+    questionText: string;
+    sourceAnswer: string | null;
+    category: string | null;
+    sourceSnippet: string | null;
+    tagsJson: string;
+  }>;
+
+  if (questions.length === 0) {
+    return [];
+  }
+
+  const promotedLinks = sqlite
+    .prepare(
+      `
+        SELECT
+          iql.interview_question_id AS interviewQuestionId,
+          iql.link_type AS linkType,
+          q.id AS questionItemId,
+          q.question_text AS questionText,
+          q.category AS category,
+          COALESCE((
+            SELECT json_group_array(name)
+            FROM (
+              SELECT t.name AS name
+              FROM question_tags qt
+              INNER JOIN tags t
+                ON t.id = qt.tag_id
+              WHERE qt.question_item_id = q.id
+              ORDER BY t.name COLLATE NOCASE
+            )
+          ), '[]') AS tagsJson
+        FROM interview_question_links iql
+        INNER JOIN question_items q
+          ON q.id = iql.question_item_id
+        WHERE iql.interview_question_id IN (
+          SELECT id
+          FROM interview_questions
+          WHERE interview_experience_id = ?
+        )
+          AND q.review_status = 'active'
+        ORDER BY iql.created_at DESC
+      `,
+    )
+    .all(interviewId) as Array<{
+    interviewQuestionId: string;
+    linkType: "promoted_create" | "promoted_merge";
+    questionItemId: string;
+    questionText: string;
+    category: string | null;
+    tagsJson: string;
+  }>;
+  const promotedLinkMap = new Map<
+    string,
+    InterviewQuestionRow["promotedQuestions"]
+  >();
+
+  for (const promotedLink of promotedLinks) {
+    const current = promotedLinkMap.get(promotedLink.interviewQuestionId) ?? [];
+
+    current.push({
+      questionItemId: promotedLink.questionItemId,
+      questionText: promotedLink.questionText,
+      category: promotedLink.category,
+      tags: parseJsonStringArray(promotedLink.tagsJson),
+      linkType: promotedLink.linkType,
+    });
+    promotedLinkMap.set(promotedLink.interviewQuestionId, current);
+  }
+
+  return questions.map((question) => ({
+    id: question.id,
+    sourceKind: "interview_question" as const,
+    questionText: question.questionText,
+    sourceAnswer: question.sourceAnswer,
+    category: question.category,
+    sourceSnippet: question.sourceSnippet,
+    tags: parseJsonStringArray(question.tagsJson),
+    promotedQuestions: promotedLinkMap.get(question.id) ?? [],
+  }));
+}
+
+function listLegacyInterviewQuestionRows(sourceDocumentId: string) {
+  return sqlite
+    .prepare(
+      `
+        SELECT
+          q.id AS id,
+          q.question_text AS questionText,
+          q.category AS category,
+          sqr.source_snippet AS sourceSnippet,
+          COALESCE((
+            SELECT json_group_array(name)
+            FROM (
+              SELECT t.name AS name
+              FROM question_tags qt
+              INNER JOIN tags t
+                ON t.id = qt.tag_id
+              WHERE qt.question_item_id = q.id
+              ORDER BY t.name COLLATE NOCASE
+            )
+          ), '[]') AS tagsJson
+        FROM source_question_refs sqr
+        INNER JOIN question_items q
+          ON q.id = sqr.question_item_id
+        WHERE sqr.source_document_id = ?
+          AND q.review_status = 'active'
+        ORDER BY
+          CASE WHEN sqr.source_order IS NULL THEN 1 ELSE 0 END,
+          sqr.source_order ASC,
+          q.updated_at DESC
+      `,
+    )
+    .all(sourceDocumentId) as Array<{
+    id: string;
+    questionText: string;
+    category: string | null;
+    sourceSnippet: string | null;
+    tagsJson: string;
+  }>;
+}
+
 export const interviewBrowseRepository = {
   list(input: ListInterviewsInput) {
     const whereClause = buildInterviewWhereClause(input);
@@ -107,11 +285,22 @@ export const interviewBrowseRepository = {
             i.round_info AS roundInfo,
             i.summary AS summary,
             i.updated_at AS updatedAt,
-            (
-              SELECT COUNT(*)
-              FROM source_question_refs sqr
-              WHERE sqr.source_document_id = i.source_document_id
-            ) AS questionCount,
+            CASE
+              WHEN EXISTS (
+                SELECT 1
+                FROM interview_questions iq
+                WHERE iq.interview_experience_id = i.id
+              ) THEN (
+                SELECT COUNT(*)
+                FROM interview_questions iq
+                WHERE iq.interview_experience_id = i.id
+              )
+              ELSE (
+                SELECT COUNT(*)
+                FROM source_question_refs sqr
+                WHERE sqr.source_document_id = i.source_document_id
+              )
+            END AS questionCount,
             COALESCE((
               SELECT json_group_array(name)
               FROM (
@@ -237,11 +426,22 @@ export const interviewBrowseRepository = {
             i.round_info AS roundInfo,
             i.summary AS summary,
             i.updated_at AS updatedAt,
-            (
-              SELECT COUNT(*)
-              FROM source_question_refs sqr
-              WHERE sqr.source_document_id = i.source_document_id
-            ) AS questionCount,
+            CASE
+              WHEN EXISTS (
+                SELECT 1
+                FROM interview_questions iq
+                WHERE iq.interview_experience_id = i.id
+              ) THEN (
+                SELECT COUNT(*)
+                FROM interview_questions iq
+                WHERE iq.interview_experience_id = i.id
+              )
+              ELSE (
+                SELECT COUNT(*)
+                FROM source_question_refs sqr
+                WHERE sqr.source_document_id = i.source_document_id
+              )
+            END AS questionCount,
             COALESCE((
               SELECT json_group_array(name)
               FROM (
@@ -300,43 +500,20 @@ export const interviewBrowseRepository = {
       return undefined;
     }
 
-    const questions = sqlite
-      .prepare(
-        `
-          SELECT
-            q.id AS id,
-            q.question_text AS questionText,
-            q.category AS category,
-            sqr.source_snippet AS sourceSnippet,
-            COALESCE((
-              SELECT json_group_array(name)
-              FROM (
-                SELECT t.name AS name
-                FROM question_tags qt
-                INNER JOIN tags t
-                  ON t.id = qt.tag_id
-                WHERE qt.question_item_id = q.id
-                ORDER BY t.name COLLATE NOCASE
-              )
-            ), '[]') AS tagsJson
-          FROM source_question_refs sqr
-          INNER JOIN question_items q
-            ON q.id = sqr.question_item_id
-          WHERE sqr.source_document_id = ?
-            AND q.review_status = 'active'
-          ORDER BY
-            CASE WHEN sqr.source_order IS NULL THEN 1 ELSE 0 END,
-            sqr.source_order ASC,
-            q.updated_at DESC
-        `,
-      )
-      .all(interview.sourceDocumentId) as Array<{
-      id: string;
-      questionText: string;
-      category: string | null;
-      sourceSnippet: string | null;
-      tagsJson: string;
-    }>;
+    const interviewQuestions = listInterviewQuestionRows(interview.id);
+    const questions =
+      interviewQuestions.length > 0
+        ? interviewQuestions
+        : listLegacyInterviewQuestionRows(interview.sourceDocumentId).map((question) => ({
+            id: question.id,
+            sourceKind: "legacy_question_link" as const,
+            questionText: question.questionText,
+            sourceAnswer: null,
+            category: question.category,
+            sourceSnippet: question.sourceSnippet,
+            tags: parseJsonStringArray(question.tagsJson),
+            promotedQuestions: [],
+          }));
 
     return {
       id: interview.id,
@@ -348,13 +525,7 @@ export const interviewBrowseRepository = {
       updatedAt: interview.updatedAt,
       questionCount: interview.questionCount,
       tags: parseJsonStringArray(interview.tagsJson),
-      questions: questions.map((question) => ({
-        id: question.id,
-        questionText: question.questionText,
-        category: question.category,
-        sourceSnippet: question.sourceSnippet,
-        tags: parseJsonStringArray(question.tagsJson),
-      })),
+      questions,
       sourceDocument: {
         id: interview.sourceId,
         title: interview.sourceTitle,

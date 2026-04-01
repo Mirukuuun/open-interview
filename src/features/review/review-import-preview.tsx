@@ -9,14 +9,15 @@ type ReviewImportPreviewProps = {
   activeCandidate?:
     | {
         questionText: string;
-        canonicalAnswer: string;
+        answer: string;
         category: string;
         tags: string;
-        action: "create" | "merge" | "skip";
+        action: "create" | "merge" | "keep" | "skip";
       }
     | undefined;
   activeMergeTarget: ReviewJobDetail["mergeTargets"][number] | undefined;
   canImport: boolean;
+  sourceKind: ReviewJobDetail["sourceDocument"]["kind"];
 };
 
 function parseTags(value: string) {
@@ -42,6 +43,7 @@ export function ReviewImportPreview({
   activeCandidate,
   activeMergeTarget,
   canImport,
+  sourceKind,
 }: ReviewImportPreviewProps) {
   if (!canImport) {
     return <EmptyList title="当前类型仅支持查看，不支持确认写入" />;
@@ -49,6 +51,44 @@ export function ReviewImportPreview({
 
   if (!activeCandidate) {
     return <EmptyList title="暂无候选题预览" />;
+  }
+
+  if (sourceKind === "interview_experience") {
+    if (activeCandidate.action === "skip") {
+      return <EmptyList title="当前候选题不会保留到面经详情中" />;
+    }
+
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge tone="accent">面经题预览</Badge>
+          <Badge>{activeCandidate.action === "keep" ? "保留" : "跳过"}</Badge>
+        </div>
+        <div className="rounded-xl border border-border-muted bg-surface-muted p-4">
+          <p className="text-sm font-semibold text-text-strong">
+            {activeCandidate.questionText || "未填写题目"}
+          </p>
+          <p className="mt-3 text-sm leading-6 text-text-muted">
+            分类: {formatCategoryLabel(activeCandidate.category) ?? "未设置"}
+          </p>
+          <p className="mt-2 text-sm leading-6 text-text-muted">
+            标签: {formatLocalizedTagSummary(parseTags(activeCandidate.tags))}
+          </p>
+        </div>
+        <FormField label="原答案 / 来源答案">
+          <Textarea readOnly value={activeCandidate.answer} />
+        </FormField>
+        {activeMergeTarget ? (
+          <div className="rounded-xl border border-border-muted bg-surface-muted p-4 text-sm leading-6 text-text-muted">
+            <p className="font-semibold text-text-strong">题库建议</p>
+            <p className="mt-2">{activeMergeTarget.questionText}</p>
+            <p className="mt-2">
+              这只是推荐题库题；确认审核后不会自动入题库，后续需在面经详情页手动沉淀。
+            </p>
+          </div>
+        ) : null}
+      </div>
+    );
   }
 
   if (activeCandidate.action === "merge") {
@@ -103,8 +143,8 @@ export function ReviewImportPreview({
           标签: {formatLocalizedTagSummary(parseTags(activeCandidate.tags))}
         </p>
       </div>
-      <FormField label="标准答案预览">
-        <Textarea readOnly value={activeCandidate.canonicalAnswer} />
+      <FormField label="答案预览">
+        <Textarea readOnly value={activeCandidate.answer} />
       </FormField>
     </div>
   );
