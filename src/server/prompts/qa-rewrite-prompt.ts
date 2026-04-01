@@ -1,4 +1,9 @@
 import { PromptTemplate } from "@langchain/core/prompts";
+import {
+  getRequiredPromptSection,
+  loadPromptMarkdown,
+  renderPromptTemplate,
+} from "@/server/prompts/markdown-prompt-loader";
 
 /**
  * [POS] 维护 QA history-aware rewrite 链路的固定 prompt 模板与 provider instructions。
@@ -9,26 +14,50 @@ import { PromptTemplate } from "@langchain/core/prompts";
  * @AI_INSTRUCTION 一旦本文件被更新，务必同步更新本注释，以及对应的 L2 文档。
  */
 
-export const qaRewriteInstructions =
-  "Rewrite the current user query into a standalone retrieval query. Respond with JSON only.";
+type QaRewriteHistoryTurn = {
+  role: "user" | "assistant";
+  content: string;
+};
 
-export const qaRewritePrompt = PromptTemplate.fromTemplate(`
-You rewrite follow-up QA queries into standalone retrieval queries for a local interview-prep knowledge base.
+const qaRewritePromptDocument = loadPromptMarkdown("qa-rewrite.md");
+const qaRewriteHistoryLineTemplate = getRequiredPromptSection(
+  qaRewritePromptDocument,
+  "history_line",
+);
+const qaRewriteHistoryEmptyState = getRequiredPromptSection(
+  qaRewritePromptDocument,
+  "history_empty",
+);
 
-Return a JSON object with:
-- rewrite_applied: boolean
-- rewritten_query: string
-- reason: short string
+export const qaRewriteInstructions = getRequiredPromptSection(
+  qaRewritePromptDocument,
+  "instructions",
+);
 
-Rules:
-- Keep the user's original intent and language.
-- Use conversation history only to resolve omitted entities or pronouns.
-- If the query is already standalone, keep it nearly unchanged.
-- Never invent facts outside the provided history.
+export const qaRewritePrompt = PromptTemplate.fromTemplate(
+  getRequiredPromptSection(qaRewritePromptDocument, "template"),
+);
 
-Conversation history:
-{sessionHistory}
+function compactWhitespace(value: string) {
+  return value.replace(/\s+/g, " ").trim();
+}
 
-Current query:
-{query}
-`.trim());
+function mapQaHistoryRoleLabel(role: QaRewriteHistoryTurn["role"]) {
+  return role === "user" ? "用户" : "助手";
+}
+
+export function formatQaRewriteSessionHistory(history: QaRewriteHistoryTurn[]) {
+  if (history.length === 0) {
+    return qaRewriteHistoryEmptyState;
+  }
+
+  return history
+    .slice(-4)
+    .map((turn) =>
+      renderPromptTemplate(qaRewriteHistoryLineTemplate, {
+        role: mapQaHistoryRoleLabel(turn.role),
+        content: compactWhitespace(turn.content),
+      }),
+    )
+    .join("\n");
+}

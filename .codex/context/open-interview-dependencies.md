@@ -2,7 +2,7 @@
 
 - doc_type: context_l1
 - layer: L1
-- updated_at: 2026-03-28
+- updated_at: 2026-04-01
 - canonical_for: 外部依赖、开发命令、文档依赖
 
 ## 运行时依赖
@@ -53,5 +53,5 @@
 
 ## 交付约定
 
-- 面向当前服务器交付的需求，完成代码与检查后默认执行 `corepack pnpm deploy:mvp`
+- 面向当前服务器交付的需求，完成代码与检查后，先在当前分支执行 `commit` 与 `push`，再执行 `corepack pnpm deploy:mvp`
 - `deploy:mvp` 负责 `db:init`、`build`、重启正式服务、reload 代理与公网 smoke 验证

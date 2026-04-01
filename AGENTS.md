@@ -53,7 +53,7 @@
 - 当前线上正式服务端口固定为 `3106`，由 `open-interview-mvp.service` 托管。
 - `career.mimiruku.cn` 通过 `caddy.service` 反向代理到 `127.0.0.1:3106`。
 - `3000` 仅保留给本地 `next dev` 或临时调试使用，不能视为正式实例端口。
-- 面向当前服务器交付的需求，在完成编码、文档和检查后，默认还要执行一次 `corepack pnpm deploy:mvp`；部署是 coding loop 的一部分，不单独省略。
+- 面向当前服务器交付的需求，在完成编码、文档和检查后，先在当前分支执行一次 `commit` 与 `push`，再执行 `corepack pnpm deploy:mvp`；部署是 coding loop 的一部分，不单独省略。
 
 ## 代码风格与命名约定
 - 遵循现有 TypeScript 风格：2 空格缩进、保留分号、使用双引号。

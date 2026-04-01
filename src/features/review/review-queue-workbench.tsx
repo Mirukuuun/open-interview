@@ -474,7 +474,8 @@ export function ReviewQueueWorkbench({
                       </td>
                       <td className="px-4 py-4 align-top">
                         <div className="flex flex-wrap gap-2">
-                          {job.status === "failed" ? (
+                          {job.status === "failed" ||
+                          job.status === "needs_review" ? (
                             <Button
                               disabled={
                                 isSubmitting &&

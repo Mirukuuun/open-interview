@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { answerGroundedQa } from "../src/server/retrieval/qa-grounded-answer-chain";
+import { rewriteQaQuery } from "../src/server/retrieval/qa-rewrite-chain";
 import {
   buildQaRetrievalSummary,
   classifyQaSupportLevel,
@@ -75,6 +76,34 @@ describe("qa retrieval support", () => {
 });
 
 describe("qa grounded answer chain", () => {
+  it("sends a localized rewrite prompt to the LLM", async () => {
+    const createJsonObjectSpy = vi
+      .spyOn(openClawLlmClient, "createJsonObject")
+      .mockResolvedValue({
+        rewrite_applied: true,
+        rewritten_query: "Redis 分布式锁这题怎么答？",
+        reason: "补全了上文指代。",
+      });
+
+    const result = await rewriteQaQuery({
+      query: "这题怎么答？",
+      sessionHistory: [
+        {
+          role: "user",
+          content: "Redis 分布式锁会遇到哪些问题？",
+        },
+      ],
+    });
+
+    const request = createJsonObjectSpy.mock.calls[0]?.[0];
+
+    expect(request?.instructions).toContain("仅返回 JSON");
+    expect(request?.input).toContain("会话历史：");
+    expect(request?.input).toContain("用户：Redis 分布式锁会遇到哪些问题？");
+    expect(request?.input).toContain("当前问题：");
+    expect(result.effectiveQuery).toBe("Redis 分布式锁这题怎么答？");
+  });
+
   it("returns a general fallback answer when local grounding is absent", async () => {
     vi.spyOn(openClawLlmClient, "createJsonObject").mockRejectedValue(
       new Error("provider unavailable"),
@@ -95,9 +124,11 @@ describe("qa grounded answer chain", () => {
   });
 
   it("keeps grounded answer mode while building support summary from local citations", async () => {
-    vi.spyOn(openClawLlmClient, "createJsonObject").mockResolvedValue({
-      answer: "你可以先讲结论，再展开误删、续约和主从切换一致性。",
-    });
+    const createJsonObjectSpy = vi
+      .spyOn(openClawLlmClient, "createJsonObject")
+      .mockResolvedValue({
+        answer: "你可以先讲结论，再展开误删、续约和主从切换一致性。",
+      });
 
     const result = await answerGroundedQa({
       query: "Redis 分布式锁这题怎么答？",
@@ -127,9 +158,14 @@ describe("qa grounded answer chain", () => {
         },
       ],
     });
+    const request = createJsonObjectSpy.mock.calls[0]?.[0];
 
     expect(result.answerMode).toBe("grounded_answered");
     expect(result.answer).toContain("误删");
     expect(result.supportSummary).toContain("2 条引用");
+    expect(request?.instructions).toContain("面试回答");
+    expect(request?.input).toContain("本地依据上下文：");
+    expect(request?.input).toContain("标准答案：需要考虑误删、续约");
+    expect(request?.input).toContain("引用：");
   });
 });

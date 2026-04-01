@@ -17,6 +17,7 @@ export const parseInterviewExperienceSchema = z.object({
 
 export const parseQuestionCandidateSchema = z.object({
   question_text: z.string().min(1),
+  answer: z.string().min(1).nullable().optional(),
   canonical_answer: z.string().min(1).nullable().optional(),
   source_answer: z.string().min(1).nullable().optional(),
   category: z.string().min(1).nullable().optional(),

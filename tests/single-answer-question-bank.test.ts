@@ -121,8 +121,7 @@ describe("single-answer question bank", () => {
         questions: [
           {
             question_text: existingQuestion.questionText,
-            canonical_answer: "模型整理答案",
-            source_answer: "上传原文答案",
+            answer: "上传原文答案",
             category: "java_concurrency",
             tags: ["thread"],
           },
@@ -141,8 +140,7 @@ describe("single-answer question bank", () => {
           action: "merge",
           target_question_id: existingQuestion.id,
           question_text: existingQuestion.questionText,
-          canonical_answer: "模型整理答案",
-          source_answer: "上传原文答案",
+          answer: "上传原文答案",
           category: "java_concurrency",
           tags: ["thread"],
         },

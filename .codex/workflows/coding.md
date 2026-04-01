@@ -3,7 +3,7 @@
 - doc_type: workflow
 - applies_to: coding
 - doc_root: `.codex`
-- updated_at: 2026-03-29
+- updated_at: 2026-04-01
 
 ## 前置读取
 
@@ -29,7 +29,7 @@
    - `[ ]` 表示未完成，`[X]` 表示已完成。
    - 每完成一项任务，必须立即把对应行从 `[ ]` 更新为 `[X]`，不能等到任务结束后一次性回填。
    - 任务过程中新增工作项时，继续追加新的 `taskN.` 行，并保持编号连续。
-   - Plan 至少覆盖：文档读取、实现 / 改动、测试或 smoke 验证、L2 文档回环、同构检查；若任务涉及部署，还要显式写入部署与回归验证项。
+   - Plan 至少覆盖：文档读取、实现 / 改动、测试或 smoke 验证、L2 文档回环、同构检查；若任务涉及部署，还要显式写入 `commit` / `push`、部署与回归验证项。
    - 断点继续时，先读取对应 Plan 文档，再基于当前勾选状态恢复执行。
 
 ## 标准流程
@@ -57,12 +57,13 @@
 7. 完成后手动执行同构/契约检查：
    - `python3 .catpaw/scripts/check_isomorphism.py --check`
 8. 若本次改动涉及交付门槛，再执行 `AGENTS.md` 约定的 `db:init`、`typecheck`、`lint`、`build`。
-9. 本仓库当前默认交付到 `career.mimiruku.cn`，需求完成后还要执行 `corepack pnpm deploy:mvp`，把部署纳入 coding loop。
-10. 部署后至少回归验证：
+9. 当所有测试、smoke 与人工验收完成后，直接在当前分支执行 `commit` 与 `push`，确保待部署内容已经进入远端分支。
+10. 本仓库当前默认交付到 `career.mimiruku.cn`，完成当前分支的 `commit` / `push` 后还要执行 `corepack pnpm deploy:mvp`，把部署纳入 coding loop。
+11. 部署后至少回归验证：
    - `https://career.mimiruku.cn/import`
    - `https://career.mimiruku.cn/qa`
    - `https://career.mimiruku.cn/api/health`
-11. 结束任务前，确认 Plan 文档中的所有已完成事项都已标记为 `[X]`，未完成项保留 `[ ]` 并能反映真实阻塞状态。
+12. 结束任务前，确认 Plan 文档中的所有已完成事项都已标记为 `[X]`，未完成项保留 `[ ]` 并能反映真实阻塞状态。
 
 ## 质量红线
 

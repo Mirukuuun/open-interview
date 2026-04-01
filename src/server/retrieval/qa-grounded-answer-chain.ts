@@ -4,6 +4,9 @@ import { z } from "zod";
 import type { QaAnswerMode, QaCitation } from "@/lib/schemas/qa";
 import { openClawLlmClient } from "@/server/adapters/openclaw/llm-client";
 import {
+  formatQaGroundedAnswerCitations,
+  formatQaGroundedAnswerQuestionContexts,
+  formatQaGroundedAnswerSessionHistory,
   qaGroundedAnswerInstructions,
   qaGroundedAnswerPrompt,
 } from "@/server/prompts/qa-grounded-answer-prompt";
@@ -23,78 +26,6 @@ const groundedAnswerResultSchema = z.object({
 
 function compactWhitespace(value: string) {
   return value.replace(/\s+/g, " ").trim();
-}
-
-function formatSessionHistory(
-  history: Array<{
-    role: "user" | "assistant";
-    content: string;
-  }>,
-) {
-  if (history.length === 0) {
-    return "No conversation history.";
-  }
-
-  return history
-    .slice(-4)
-    .map((turn) => `${turn.role.toUpperCase()}: ${compactWhitespace(turn.content)}`)
-    .join("\n");
-}
-
-function formatCitations(citations: QaCitation[]) {
-  if (citations.length === 0) {
-    return "No grounded citations available.";
-  }
-
-  return citations
-    .slice(0, 4)
-    .map((citation, index) => {
-      const sourceLine = citation.source_document
-        ? `Source: ${citation.source_document.title}`
-        : "Source: none";
-
-      return [
-        `[${index + 1}] ${citation.label}`,
-        citation.snippet ? `Snippet: ${compactWhitespace(citation.snippet)}` : null,
-        sourceLine,
-      ]
-        .filter(Boolean)
-        .join("\n");
-    })
-    .join("\n\n");
-}
-
-function formatQuestionContexts(
-  questionContexts: Array<{
-    questionText: string;
-    canonicalAnswer: string | null;
-    personalAnswer: string | null;
-    sourceSnippet: string | null;
-  }>,
-) {
-  if (questionContexts.length === 0) {
-    return "No grounded question contexts available.";
-  }
-
-  return questionContexts
-    .slice(0, 4)
-    .map((context, index) =>
-      [
-        `Context ${index + 1}: ${context.questionText}`,
-        context.canonicalAnswer
-          ? `Canonical answer: ${compactWhitespace(context.canonicalAnswer)}`
-          : null,
-        context.personalAnswer
-          ? `Personal answer: ${compactWhitespace(context.personalAnswer)}`
-          : null,
-        context.sourceSnippet
-          ? `Source snippet: ${compactWhitespace(context.sourceSnippet)}`
-          : null,
-      ]
-        .filter(Boolean)
-        .join("\n"),
-    )
-    .join("\n\n");
 }
 
 function buildSupportSummary(input: {
@@ -338,9 +269,11 @@ export async function answerGroundedQa(input: {
       query: compactWhitespace(input.query),
       effectiveQuery: compactWhitespace(input.effectiveQuery),
       supportLevel: input.supportLevel,
-      sessionHistory: formatSessionHistory(input.sessionHistory),
-      questionContexts: formatQuestionContexts(input.questionContexts),
-      citations: formatCitations(input.citations),
+      sessionHistory: formatQaGroundedAnswerSessionHistory(input.sessionHistory),
+      questionContexts: formatQaGroundedAnswerQuestionContexts(
+        input.questionContexts,
+      ),
+      citations: formatQaGroundedAnswerCitations(input.citations),
     });
 
     return {

@@ -35,7 +35,7 @@ afterEach(() => {
 });
 
 describe("openClawParseSourceAdapter", () => {
-  it("sends a chinese-only parse prompt to the LLM path", async () => {
+  it("sends a markdown-backed chinese parse prompt to the LLM path", async () => {
     const createJsonObjectSpy = vi
       .spyOn(openClawLlmClient, "createJsonObject")
       .mockResolvedValue({
@@ -45,8 +45,8 @@ describe("openClawParseSourceAdapter", () => {
         questions: [
           {
             question_text: "什么是线程和进程？",
-            canonical_answer: "线程是进程内更小的执行单元。",
-            source_answer: "进程是程序的一次执行过程。",
+            answer:
+              "进程是程序的一次执行过程，是系统运行程序的基本单位。线程是比进程更小的执行单位，同一进程中的线程会共享堆和方法区。",
             category: "java_concurrency",
             tags: ["concurrency"],
             confidence: 0.9,
@@ -68,12 +68,13 @@ describe("openClawParseSourceAdapter", () => {
 
     const request = createJsonObjectSpy.mock.calls[0]?.[0];
 
-    expect(request?.instructions).toContain("All natural-language fields in the JSON must use Simplified Chinese");
-    expect(request?.instructions).toContain("preserve the full raw answer span");
-    expect(request?.input).toContain("Use Simplified Chinese for all natural-language JSON fields");
-    expect(request?.input).toContain("canonical_answer should be written in concise Simplified Chinese");
-    expect(request?.input).toContain("source_answer must preserve the full answer span");
-    expect(request?.input).toContain("return fewer questions instead of shortening source_answer");
+    expect(request?.instructions).toContain("所有自然语言字段都必须使用简体中文");
+    expect(request?.instructions).toContain("完整答案片段");
+    expect(request?.instructions).toContain("面向面试回答");
+    expect(request?.input).toContain("提示词版本：extract_interview_v4");
+    expect(request?.input).toContain("仅返回 JSON，不要包裹 markdown");
+    expect(request?.input).toContain("`answer` 是当前题目的唯一候选答案字段");
+    expect(request?.input).not.toContain("宁可少返回几个问题");
   });
 
   it("falls back to heuristic parsing for markdown interview notes when the LLM path fails", async () => {
@@ -94,7 +95,7 @@ describe("openClawParseSourceAdapter", () => {
 
     expect(result.questions.length).toBeGreaterThanOrEqual(2);
     expect(result.questions[0]?.question_text).toBe("什么是线程和进程？");
-    expect(result.questions[0]?.source_answer).toContain("进程是程序的一次执行过程");
+    expect(result.questions[0]?.answer).toContain("进程是程序的一次执行过程");
     expect(result.questions[1]?.question_text).toBe("ThreadLocal 有什么风险？");
     expect(result.questions[1]?.tags).toContain("threadlocal");
     const firstWarning = result.warnings?.[0] ?? "";
@@ -128,9 +129,7 @@ describe("openClawParseSourceAdapter", () => {
       questions: [
         {
           question_text: "介绍一下OSI七层模型和各层作用",
-          canonical_answer:
-            "OSI七层包括应用层、表示层、会话层、传输层、网络层、数据链路层、物理层。",
-          source_answer:
+          answer:
             "应用层、表示层、会话层、传输层、网络层、数据链路层、物理层",
           category: "networking",
           tags: ["network"],
@@ -151,13 +150,13 @@ describe("openClawParseSourceAdapter", () => {
       },
     });
 
-    expect(result.questions[0]?.source_answer).toContain(
+    expect(result.questions[0]?.answer).toContain(
       "1. 应用层：为计算机用户提供服务",
     );
-    expect(result.questions[0]?.source_answer).toContain(
+    expect(result.questions[0]?.answer).toContain(
       "7. 物理层：进行比特流传输",
     );
-    expect(result.warnings?.[0]).toContain("Expanded 1 source_answer");
+    expect(result.warnings?.[0]).toContain("Expanded 1 answer");
   });
 
   it('recognizes "介绍一下" headings in heuristic interview parsing', async () => {
@@ -177,7 +176,7 @@ describe("openClawParseSourceAdapter", () => {
     });
 
     expect(result.questions[0]?.question_text).toBe("七层分类模型介绍一下");
-    expect(result.questions[0]?.source_answer).toContain(
+    expect(result.questions[0]?.answer).toContain(
       "7. 物理层：进行比特流传输",
     );
   });

@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { openClawLlmClient } from "@/server/adapters/openclaw/llm-client";
 import {
+  formatQaRewriteSessionHistory,
   qaRewriteInstructions,
   qaRewritePrompt,
 } from "@/server/prompts/qa-rewrite-prompt";
@@ -44,22 +45,6 @@ function shouldRewriteQuery(query: string, historyLength: number) {
   return /\b(这个|那个|它|他|她|刚才|上面|继续|展开|补充|为什么|怎么做的)\b/u.test(
     compactQuery,
   );
-}
-
-function formatSessionHistory(
-  history: Array<{
-    role: "user" | "assistant";
-    content: string;
-  }>,
-) {
-  if (history.length === 0) {
-    return "No conversation history.";
-  }
-
-  return history
-    .slice(-4)
-    .map((turn) => `${turn.role.toUpperCase()}: ${compactWhitespace(turn.content)}`)
-    .join("\n");
 }
 
 const rewriteChain = RunnableSequence.from([
@@ -107,7 +92,7 @@ export async function rewriteQaQuery(input: {
   try {
     result = await rewriteChain.invoke({
       query: normalizedQuery,
-      sessionHistory: formatSessionHistory(input.sessionHistory),
+      sessionHistory: formatQaRewriteSessionHistory(input.sessionHistory),
     });
   } catch {
     return {

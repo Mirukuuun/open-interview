@@ -42,6 +42,7 @@ type ParseSourceInput = {
 
 type LlmInterviewQuestion = {
   question_text: string;
+  answer?: string | null;
   canonical_answer?: string | null;
   source_answer?: string | null;
   category?: string | null;
@@ -181,6 +182,7 @@ const llmInterviewResultSchema = z.object({
   questions: z.array(
     z.object({
       question_text: z.string(),
+      answer: z.string().nullish(),
       canonical_answer: z.string().nullish(),
       source_answer: z.string().nullish(),
       category: z.string().nullish(),
@@ -875,6 +877,10 @@ function mergeQuestionCandidate(
     existing.source_answer = candidate.source_answer;
   }
 
+  if (!existing.answer && candidate.answer) {
+    existing.answer = candidate.answer;
+  }
+
   if (!existing.canonical_answer && candidate.canonical_answer) {
     existing.canonical_answer = candidate.canonical_answer;
   }
@@ -897,7 +903,7 @@ function normalizeLlmQuestionCandidates(
   const normalizedVocabulary = normalizeCanonicalVocabulary(canonicalVocabulary);
   const dedupeMap = new Map<string, ParseQuestionCandidate>();
   const usedHeuristicIndexes = new Set<number>();
-  let heuristicSourceAnswerReplaceCount = 0;
+  let heuristicAnswerExpandCount = 0;
 
   rawQuestions.forEach((rawQuestion, questionIndex) => {
     const questionText = cleanQuestionText(rawQuestion.question_text);
@@ -906,7 +912,10 @@ function normalizeLlmQuestionCandidates(
       return;
     }
 
-    const sourceAnswer = trimNullableString(rawQuestion.source_answer);
+    const explicitAnswer = trimNullableString(rawQuestion.answer);
+    const legacySourceAnswer = trimNullableString(rawQuestion.source_answer);
+    const legacyCanonicalAnswer = trimNullableString(rawQuestion.canonical_answer);
+    const currentAnswer = explicitAnswer ?? legacySourceAnswer ?? legacyCanonicalAnswer;
     const orderAlignedHeuristicCandidate = heuristicQuestions[questionIndex];
     const orderAlignedScore = orderAlignedHeuristicCandidate
       ? computeQuestionMatchScore(
@@ -926,12 +935,12 @@ function normalizeLlmQuestionCandidates(
       (orderAlignedHeuristicCandidate &&
       !usedHeuristicIndexes.has(questionIndex) &&
       shouldPreferHeuristicSourceAnswer(
-        sourceAnswer,
+        legacySourceAnswer ?? currentAnswer,
         orderAlignedHeuristicCandidate.source_answer,
       ) &&
       (orderAlignedScore >= 0.18 ||
         compactComparableText(orderAlignedHeuristicCandidate.source_answer).includes(
-          compactComparableText(sourceAnswer),
+          compactComparableText(legacySourceAnswer ?? currentAnswer),
         ))
         ? {
             index: questionIndex,
@@ -939,23 +948,30 @@ function normalizeLlmQuestionCandidates(
             score: orderAlignedScore,
           }
         : null);
-    const resolvedSourceAnswer = shouldPreferHeuristicSourceAnswer(
-      sourceAnswer,
-      heuristicMatch?.candidate.source_answer,
-    )
-      ? trimNullableString(heuristicMatch?.candidate.source_answer)
-      : sourceAnswer;
+    const heuristicSourceAnswer = trimNullableString(heuristicMatch?.candidate.source_answer);
+    const shouldExpandAnswer = shouldPreferHeuristicSourceAnswer(
+      currentAnswer,
+      heuristicSourceAnswer,
+    );
+    const resolvedAnswer = shouldExpandAnswer
+      ? heuristicSourceAnswer ?? currentAnswer
+      : currentAnswer;
+    const resolvedSourceAnswer =
+      legacySourceAnswer ??
+      (heuristicSourceAnswer &&
+      resolvedAnswer &&
+      compactComparableText(heuristicSourceAnswer) ===
+        compactComparableText(resolvedAnswer)
+        ? heuristicSourceAnswer
+        : null);
 
-    if (resolvedSourceAnswer && resolvedSourceAnswer !== sourceAnswer && heuristicMatch) {
+    if (heuristicMatch && (shouldExpandAnswer || resolvedSourceAnswer)) {
       usedHeuristicIndexes.add(heuristicMatch.index);
-      heuristicSourceAnswerReplaceCount += 1;
     }
 
-    const canonicalAnswer =
-      trimNullableString(rawQuestion.canonical_answer) ?? resolvedSourceAnswer;
     const category = trimNullableString(rawQuestion.category);
     const combinedText = collapseWhitespace(
-      [questionText, resolvedSourceAnswer, canonicalAnswer, category]
+      [questionText, resolvedAnswer, resolvedSourceAnswer, category]
         .filter((value): value is string => Boolean(value))
         .join(" "),
     );
@@ -965,9 +981,14 @@ function normalizeLlmQuestionCandidates(
       normalizedVocabulary.tags,
     );
 
+    if (shouldExpandAnswer && heuristicMatch) {
+      heuristicAnswerExpandCount += 1;
+    }
+
     mergeQuestionCandidate(dedupeMap, {
       question_text: questionText,
-      canonical_answer: canonicalAnswer ?? null,
+      answer: resolvedAnswer ?? null,
+      canonical_answer: resolvedAnswer ?? null,
       source_answer: resolvedSourceAnswer ?? null,
       category: resolveQuestionCategory(
         category,
@@ -977,7 +998,7 @@ function normalizeLlmQuestionCandidates(
       tags,
       confidence: clampConfidence(
         rawQuestion.confidence,
-        resolvedSourceAnswer ? 0.78 : 0.68,
+        resolvedAnswer ? 0.78 : 0.68,
       ),
       merge_hint_question_id: null,
     });
@@ -985,7 +1006,7 @@ function normalizeLlmQuestionCandidates(
 
   return {
     questions: Array.from(dedupeMap.values()),
-    heuristicSourceAnswerReplaceCount,
+    heuristicAnswerExpandCount,
   };
 }
 
@@ -1081,16 +1102,16 @@ async function buildInterviewResultFromLlm(
     parsedModelResult.interview_experience,
   );
   const heuristicQuestions = extractQuestionCandidates(lines, input.canonicalVocabulary);
-  const { questions, heuristicSourceAnswerReplaceCount } = normalizeLlmQuestionCandidates(
+  const { questions, heuristicAnswerExpandCount } = normalizeLlmQuestionCandidates(
     parsedModelResult.questions,
     input.canonicalVocabulary,
     heuristicQuestions,
   );
   const warnings = normalizeStringList([
     ...(parsedModelResult.warnings ?? []),
-    ...(heuristicSourceAnswerReplaceCount > 0
+    ...(heuristicAnswerExpandCount > 0
       ? [
-          `Expanded ${heuristicSourceAnswerReplaceCount} source_answer value(s) from raw source structure because the model response looked abbreviated.`,
+          `Expanded ${heuristicAnswerExpandCount} answer value(s) from raw source structure because the model response looked abbreviated.`,
         ]
       : []),
     ...(input.rawText.length > interviewPromptMaxChars
@@ -1286,6 +1307,7 @@ function finalizeCandidate(
   const existing = dedupeMap.get(normalizedQuestionText);
   const candidate: ParseQuestionCandidate = {
     question_text: questionText,
+    answer: sourceAnswer || null,
     canonical_answer: sourceAnswer || null,
     source_answer: sourceAnswer || null,
     category: resolveQuestionCategory(
@@ -1308,6 +1330,10 @@ function finalizeCandidate(
 
   if (!existing.source_answer && candidate.source_answer) {
     existing.source_answer = candidate.source_answer;
+  }
+
+  if (!existing.answer && candidate.answer) {
+    existing.answer = candidate.answer;
   }
 
   if (!existing.canonical_answer && candidate.canonical_answer) {

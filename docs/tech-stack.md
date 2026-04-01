@@ -252,7 +252,7 @@ Default implementation mode for bounded build slices:
 - use full-permission mode for bounded implementation tasks when needed
 - keep one meaningful slice per run
 - require a short change report and known-risk summary after each run
-- treat deployment as part of the coding loop for this repo: after a delivered requirement, run `corepack pnpm deploy:mvp`
+- treat deployment as part of the coding loop for this repo: after tests and acceptance finish, `commit` and `push` the current branch before running `corepack pnpm deploy:mvp`
 - `deploy:mvp` is the canonical server deploy path: `db:init -> build -> restart open-interview-mvp.service -> reload caddy.service -> smoke`
 
 Codex should always read first:

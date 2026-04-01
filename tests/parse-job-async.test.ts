@@ -227,8 +227,7 @@ describe("parseReviewService async parse job execution", () => {
       questions: [
         {
           question_text: "线程和进程有什么区别？",
-          canonical_answer: "线程是进程内更轻量的执行单元。",
-          source_answer: "线程是比进程更小的执行单位。",
+          answer: "线程是比进程更小的执行单位。",
           category: "java_concurrency",
           tags: ["thread"],
           confidence: 0.92,
@@ -310,8 +309,7 @@ describe("parseReviewService async parse job execution", () => {
       questions: [
         {
           question_text: "Redis 分布式锁会遇到哪些问题？",
-          canonical_answer: "需要考虑误删、续约和主从切换一致性。",
-          source_answer: "要考虑误删和主从切换。",
+          answer: "要考虑误删和主从切换。",
           category: "distributed_system",
           tags: ["redis", "lock"],
           confidence: 0.88,
@@ -329,6 +327,103 @@ describe("parseReviewService async parse job execution", () => {
 
     expect(completedJob?.status).toBe("needs_review");
     expect(completedJob?.attemptCount).toBe(2);
+    expect(sourceDocumentRepository.findById(sourceDocument.id)?.parseStatus).toBe(
+      "needs_review",
+    );
+  });
+
+  it("requeues a needs_review parse job immediately when retrying and completes in background", async () => {
+    const {
+      openClawParseSourceAdapter,
+      parseJobRepository,
+      parseReviewService,
+      sourceDocumentRepository,
+    } = await createTestContext();
+
+    const sourceDocument = sourceDocumentRepository.create({
+      kind: "interview_experience",
+      title: "缓存专题面经",
+      rawText: "缓存一致性和穿透击穿雪崩相关问题。",
+      parseStatus: "needs_review",
+    });
+    const parseJob = parseJobRepository.create({
+      sourceDocumentId: sourceDocument.id,
+      jobType: "extract_interview",
+      status: "needs_review",
+      attemptCount: 1,
+      resultJson: {
+        source_summary: "旧的缓存题候选",
+        interview_experience: null,
+        questions: [
+          {
+            question_text: "缓存穿透怎么处理？",
+            answer: "布隆过滤器和空值缓存是常见手段。",
+            category: "distributed_system",
+            tags: ["cache"],
+            confidence: 0.72,
+            merge_hint_question_id: null,
+          },
+        ],
+        warnings: [],
+      },
+    });
+    const deferredParseResult = createDeferred<ParseResult>();
+
+    if (!parseJob) {
+      throw new Error("Failed to create parse job for needs_review retry test.");
+    }
+
+    const parseSpy = vi
+      .spyOn(openClawParseSourceAdapter, "parse")
+      .mockImplementation(() => deferredParseResult.promise);
+
+    const retryResult = await Promise.race([
+      parseReviewService.retryParseJob(parseJob.id),
+      delay(100).then(() => "timed_out" as const),
+    ]);
+
+    expect(retryResult).not.toBe("timed_out");
+
+    if (retryResult === "timed_out") {
+      throw new Error("retryParseJob should not wait for parse completion.");
+    }
+
+    expect(retryResult.status).toBe("pending");
+    expect(retryResult.error_message).toBeNull();
+    expect(parseJobRepository.findById(parseJob.id)?.status).toBe("pending");
+    expect(parseJobRepository.findById(parseJob.id)?.resultJson).toBeNull();
+    expect(sourceDocumentRepository.findById(sourceDocument.id)?.parseStatus).toBe(
+      "pending",
+    );
+
+    await waitForCondition(() => parseSpy.mock.calls.length === 1);
+    expect(parseJobRepository.findById(parseJob.id)?.status).toBe("running");
+
+    deferredParseResult.resolve({
+      source_summary: "缓存一致性专题",
+      interview_experience: null,
+      questions: [
+        {
+          question_text: "缓存和数据库一致性怎么保证？",
+          answer: "常见做法是延迟双删或基于 binlog 异步修正。",
+          category: "distributed_system",
+          tags: ["cache", "consistency"],
+          confidence: 0.9,
+          merge_hint_question_id: null,
+        },
+      ],
+      warnings: [],
+    });
+
+    await waitForCondition(
+      () => parseJobRepository.findById(parseJob.id)?.status === "needs_review",
+    );
+
+    const completedJob = parseJobRepository.findById(parseJob.id);
+
+    expect(completedJob?.status).toBe("needs_review");
+    expect(completedJob?.attemptCount).toBe(2);
+    expect(completedJob?.resultJson?.questions).toHaveLength(1);
     expect(sourceDocumentRepository.findById(sourceDocument.id)?.parseStatus).toBe(
       "needs_review",
     );

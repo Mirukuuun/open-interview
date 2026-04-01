@@ -1,3 +1,9 @@
+import {
+  getRequiredPromptSection,
+  loadPromptMarkdown,
+  renderPromptTemplate,
+} from "@/server/prompts/markdown-prompt-loader";
+
 /**
  * [POS] 维护 practice exam AI 评分链路的固定 instructions 与输入拼装模板。
  * [IN] assessment item 的题面、标准答案、用户回答、分类与标签快照。
@@ -20,26 +26,57 @@ function compactWhitespace(value: string | null | undefined) {
   return (value ?? "").replace(/\s+/g, " ").trim();
 }
 
-export const practiceGradingInstructions = [
-  "你是资深中文技术面试官，要根据标准答案评估候选人的开放题回答。",
-  "请严格输出 JSON 对象，不要输出 markdown。",
-  "每题满分 10 分，分别给出 accuracy_score、coverage_score、clarity_score，均为 0-10 的整数。",
-  "score 也是 0-10 的整数，综合考虑准确性、覆盖度和表达清晰度。",
-  "strengths 只保留 1-3 条，missed_points 只保留 1-4 条，必须具体。",
-  "overall_feedback 用中文总结本轮考试的整体表现、薄弱点和下一步复习建议。",
-].join("\n");
+const practiceGradingPromptDocument = loadPromptMarkdown("practice-grading.md");
+const practiceGradingItemTemplate = getRequiredPromptSection(
+  practiceGradingPromptDocument,
+  "item_template",
+);
+const practiceGradingItemSeparator = getRequiredPromptSection(
+  practiceGradingPromptDocument,
+  "separator",
+);
+
+export const practiceGradingInstructions = getRequiredPromptSection(
+  practiceGradingPromptDocument,
+  "instructions",
+);
 
 export function buildPracticeGradingPromptInput(items: PracticeGradingPromptItem[]) {
   return items
-    .map((item) =>
-      [
-        `题号: ${item.sequenceNo}`,
-        `问题: ${compactWhitespace(item.questionTextSnapshot)}`,
-        `标准答案: ${compactWhitespace(item.canonicalAnswerSnapshot) || "无"}`,
-        `用户回答: ${compactWhitespace(item.userAnswer) || "未作答"}`,
-        `分类: ${item.categorySnapshot ?? "未分类"}`,
-        `标签: ${item.tags.join(", ") || "无"}`,
-      ].join("\n"),
-    )
-    .join("\n\n---\n\n");
+    .map((item) => {
+      const canonicalAnswer = compactWhitespace(item.canonicalAnswerSnapshot);
+      const userAnswer = compactWhitespace(item.userAnswer);
+      const category = compactWhitespace(item.categorySnapshot);
+      const tags = item.tags.join(", ");
+
+      return renderPromptTemplate(practiceGradingItemTemplate, {
+        sequenceNo: item.sequenceNo,
+        questionTextSnapshot: compactWhitespace(item.questionTextSnapshot),
+        canonical_answer: canonicalAnswer
+          ? {
+              canonicalAnswer,
+            }
+          : null,
+        missing_canonical_answer: !canonicalAnswer,
+        user_answer: userAnswer
+          ? {
+              userAnswer,
+            }
+          : null,
+        missing_user_answer: !userAnswer,
+        category: category
+          ? {
+              category,
+            }
+          : null,
+        missing_category: !category,
+        tags: tags
+          ? {
+              tags,
+            }
+          : null,
+        missing_tags: !tags,
+      });
+    })
+    .join(`\n\n${practiceGradingItemSeparator}\n\n`);
 }
