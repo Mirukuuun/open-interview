@@ -112,6 +112,18 @@ function hasInterviewDraftValue(value: InterviewDraft) {
   );
 }
 
+function resolveDraftAnswer(question: {
+  canonical_answer?: string | null;
+  source_answer?: string | null;
+}) {
+  const legacyAnswer =
+    "answer" in question && typeof question.answer === "string"
+      ? question.answer
+      : null;
+
+  return legacyAnswer ?? question.source_answer ?? question.canonical_answer ?? "";
+}
+
 async function readApiResponse<T>(response: Response) {
   const payload = (await response.json().catch(() => null)) as
     | ApiSuccess<T>
@@ -150,8 +162,7 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
   const [questionDrafts, setQuestionDrafts] = useState<QuestionDraft[]>(
     (detail.result?.questions ?? []).map((question) => ({
       questionText: question.question_text,
-      answer:
-        question.answer ?? question.source_answer ?? question.canonical_answer ?? "",
+      answer: resolveDraftAnswer(question),
       category: question.category ?? "",
       tags: (question.tags ?? []).join(", "),
       confidence: question.confidence ?? null,
