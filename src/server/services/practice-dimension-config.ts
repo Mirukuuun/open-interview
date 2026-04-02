@@ -1,6 +1,7 @@
 import {
   getPracticeDimensionLabel,
   practiceDimensionCatalog,
+  practiceDimensionKeySchema,
   type PracticeDimensionKey,
 } from "@/lib/practice-dimensions";
 
@@ -51,6 +52,24 @@ const tagSignalMap: Record<string, PracticeDimensionWeight[]> = {
   backend_framework: [{ key: "system_design_engineering", weight: 1 }],
   spring: [{ key: "system_design_engineering", weight: 1 }],
   test: [{ key: "system_design_engineering", weight: 1 }],
+};
+
+const legacyPracticeDimensionAliasMap: Record<string, PracticeDimensionKey> = {
+  distributed_system: "distributed_systems",
+  database: "database_storage",
+  java_concurrency: "java_fundamentals",
+  concurrency: "java_fundamentals",
+  backend_framework: "system_design_engineering",
+  networking: "computer_fundamentals",
+  network: "computer_fundamentals",
+  redis: "distributed_systems",
+  "分布式系统": "distributed_systems",
+  "分布式": "distributed_systems",
+  "数据库": "database_storage",
+  "java_并发": "java_fundamentals",
+  "并发": "java_fundamentals",
+  "后端框架": "system_design_engineering",
+  "网络协议": "computer_fundamentals",
 };
 
 function normalizeSignal(value: string | null | undefined) {
@@ -116,6 +135,39 @@ function addSignalWeights(
   weights.forEach((weight) => {
     target.set(weight.key, (target.get(weight.key) ?? 0) + weight.weight);
   });
+}
+
+function pickPrimaryDimension(
+  weights: PracticeDimensionWeight[] | undefined,
+): PracticeDimensionKey | null {
+  if (!weights || weights.length === 0) {
+    return null;
+  }
+
+  return [...weights].sort((left, right) => right.weight - left.weight)[0]?.key ?? null;
+}
+
+export function resolvePracticeDimensionKey(
+  signal: string | null | undefined,
+): PracticeDimensionKey | null {
+  const normalizedSignal = normalizeSignal(signal);
+
+  if (!normalizedSignal) {
+    return null;
+  }
+
+  const directMatch = practiceDimensionKeySchema.safeParse(normalizedSignal);
+
+  if (directMatch.success) {
+    return directMatch.data;
+  }
+
+  return (
+    legacyPracticeDimensionAliasMap[normalizedSignal] ??
+    pickPrimaryDimension(categorySignalMap[normalizedSignal]) ??
+    pickPrimaryDimension(tagSignalMap[normalizedSignal]) ??
+    null
+  );
 }
 
 export function resolvePracticeDimensionWeights(input: {

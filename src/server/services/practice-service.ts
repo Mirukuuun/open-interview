@@ -9,12 +9,18 @@ import {
   practiceQuestionSchema,
   submitAssessmentSessionRequestSchema,
 } from "@/lib/schemas/practice";
-import type { PracticeDimensionKey } from "@/lib/practice-dimensions";
+import {
+  getPracticeDimensionLabel,
+  type PracticeDimensionKey,
+} from "@/lib/practice-dimensions";
 import { assessmentRepository } from "@/server/repositories/assessment-repository";
 import { practiceProfileRepository } from "@/server/repositories/practice-profile-repository";
 import { nowUtcIso } from "@/server/repositories/ids";
 import { questionBankService } from "@/server/services/question-bank-service";
-import { resolvePracticeDimensionWeights } from "@/server/services/practice-dimension-config";
+import {
+  resolvePracticeDimensionKey,
+  resolvePracticeDimensionWeights,
+} from "@/server/services/practice-dimension-config";
 import { gradeAssessmentBatch } from "@/server/services/practice-grading";
 import { z } from "zod";
 
@@ -73,6 +79,43 @@ function filterPracticeQuestionsByDimension(
       category: question.category,
       tags: question.tags,
     }).some((weight) => weight.key === dimension),
+  );
+}
+
+function normalizeRecentExamWeakAreas(
+  weakAreas: ReturnType<typeof assessmentRepository.listRecentCompleted>[number]["weakAreas"],
+) {
+  const normalizedAreas = new Map<
+    PracticeDimensionKey,
+    {
+      key: PracticeDimensionKey;
+      label: string;
+      average_score: number;
+    }
+  >();
+
+  weakAreas.forEach((area) => {
+    const resolvedKey =
+      resolvePracticeDimensionKey(area.key) ?? resolvePracticeDimensionKey(area.label);
+
+    if (!resolvedKey) {
+      return;
+    }
+
+    const normalizedArea = {
+      key: resolvedKey,
+      label: getPracticeDimensionLabel(resolvedKey),
+      average_score: area.averageScore,
+    };
+    const existingArea = normalizedAreas.get(resolvedKey);
+
+    if (!existingArea || normalizedArea.average_score < existingArea.average_score) {
+      normalizedAreas.set(resolvedKey, normalizedArea);
+    }
+  });
+
+  return Array.from(normalizedAreas.values()).sort(
+    (left, right) => left.average_score - right.average_score,
   );
 }
 
@@ -185,11 +228,7 @@ export const practiceService = {
         question_count: session.questionCount,
         completed_at: session.completedAt,
         weak_labels: session.weakLabels.slice(0, 3),
-        weak_areas: session.weakAreas.slice(0, 3).map((area) => ({
-          key: area.key,
-          label: area.label,
-          average_score: area.averageScore,
-        })),
+        weak_areas: normalizeRecentExamWeakAreas(session.weakAreas).slice(0, 3),
       }),
     );
 
