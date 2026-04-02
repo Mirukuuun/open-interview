@@ -6,4 +6,4 @@
 [X] task6. 执行同构检查、`db:init`、`lint`、`typecheck`、`build`，确认改动可交付
 [X] task7. 执行 `git commit`、`git push`、`corepack pnpm deploy:mvp`，并回归 `/questions`、`/import`、`/qa`、`/api/health`
 [X] task8. 消除 stage build 对 `next-env.d.ts` 与 `tsconfig.json` 的自动改写副作用，并忽略 `.next-runtime*` 运行时产物，保持主仓库工作区可回到干净状态
-[ ] task9. 提交 follow-up 脚本与忽略规则修正，推送后再次执行部署，确保远端与线上 commit 对齐
+[X] task9. 提交 follow-up 脚本与忽略规则修正，推送后再次执行部署，确保远端与线上 commit 对齐
