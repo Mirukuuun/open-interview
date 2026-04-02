@@ -4,4 +4,6 @@
 [X] task4. 修改部署脚本，固化 runtime dist drop-in、stage build、产物切换与 `/questions` 回归校验
 [X] task5. 更新与部署契约相关的上下文文档，记录 runtime dist 隔离约定
 [X] task6. 执行同构检查、`db:init`、`lint`、`typecheck`、`build`，确认改动可交付
-[ ] task7. 执行 `git commit`、`git push`、`corepack pnpm deploy:mvp`，并回归 `/questions`、`/import`、`/qa`、`/api/health`
+[X] task7. 执行 `git commit`、`git push`、`corepack pnpm deploy:mvp`，并回归 `/questions`、`/import`、`/qa`、`/api/health`
+[X] task8. 消除 stage build 对 `next-env.d.ts` 与 `tsconfig.json` 的自动改写副作用，并忽略 `.next-runtime*` 运行时产物，保持主仓库工作区可回到干净状态
+[ ] task9. 提交 follow-up 脚本与忽略规则修正，推送后再次执行部署，确保远端与线上 commit 对齐

@@ -12,6 +12,8 @@ RUNTIME_DIST_BACKUP_DIR="${RUNTIME_DIST_DIR}.backup"
 SYSTEMD_DROPIN_DIR="/etc/systemd/system/${APP_SERVICE}.d"
 RUNTIME_DIST_DROPIN_FILE="${SYSTEMD_DROPIN_DIR}/runtime-dist.conf"
 RUNTIME_SWAPPED="0"
+NEXT_ENV_SNAPSHOT_FILE=""
+TSCONFIG_SNAPSHOT_FILE=""
 
 wait_for_url() {
   local label="$1"
@@ -30,6 +32,28 @@ wait_for_url() {
 
   echo "[deploy] ${label} failed: ${url}" >&2
   return 1
+}
+
+snapshot_typegen_files() {
+  NEXT_ENV_SNAPSHOT_FILE="$(mktemp)"
+  TSCONFIG_SNAPSHOT_FILE="$(mktemp)"
+
+  cp "next-env.d.ts" "${NEXT_ENV_SNAPSHOT_FILE}"
+  cp "tsconfig.json" "${TSCONFIG_SNAPSHOT_FILE}"
+}
+
+restore_typegen_files() {
+  if [ -n "${NEXT_ENV_SNAPSHOT_FILE}" ] && [ -f "${NEXT_ENV_SNAPSHOT_FILE}" ]; then
+    cp "${NEXT_ENV_SNAPSHOT_FILE}" "next-env.d.ts"
+    rm -f "${NEXT_ENV_SNAPSHOT_FILE}"
+    NEXT_ENV_SNAPSHOT_FILE=""
+  fi
+
+  if [ -n "${TSCONFIG_SNAPSHOT_FILE}" ] && [ -f "${TSCONFIG_SNAPSHOT_FILE}" ]; then
+    cp "${TSCONFIG_SNAPSHOT_FILE}" "tsconfig.json"
+    rm -f "${TSCONFIG_SNAPSHOT_FILE}"
+    TSCONFIG_SNAPSHOT_FILE=""
+  fi
 }
 
 ensure_runtime_dist_dropin() {
@@ -66,6 +90,7 @@ rollback_runtime_dist() {
 handle_deploy_error() {
   local exit_code="$?"
 
+  restore_typegen_files
   rollback_runtime_dist
   exit "${exit_code}"
 }
@@ -81,7 +106,9 @@ corepack pnpm db:init
 
 echo "[deploy] build app into ${RUNTIME_DIST_STAGE_DIR}"
 rm -rf "${RUNTIME_DIST_STAGE_DIR}"
+snapshot_typegen_files
 NEXT_DIST_DIR="${RUNTIME_DIST_STAGE_DIR}" corepack pnpm build
+restore_typegen_files
 
 echo "[deploy] stop ${APP_SERVICE}"
 systemctl stop "${APP_SERVICE}"

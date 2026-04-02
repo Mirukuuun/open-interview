@@ -3,6 +3,8 @@
 
 # next build output
 /.next
+/.next-runtime
+/.next-runtime.*
 /out
 
 # local env
