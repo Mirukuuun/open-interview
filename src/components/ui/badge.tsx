@@ -7,9 +7,9 @@ type BadgeProps = React.HTMLAttributes<HTMLSpanElement> & {
 const toneClasses: Record<NonNullable<BadgeProps["tone"]>, string> = {
   neutral:
     "border border-border-muted bg-surface-muted text-[var(--text-muted)]",
-  accent: "bg-accent-soft text-accent",
-  success: "bg-emerald-100 text-success",
-  warning: "bg-amber-100 text-warning",
+  accent: "border border-transparent bg-accent-soft text-accent",
+  success: "border border-transparent bg-success-soft text-success",
+  warning: "border border-transparent bg-amber-100 text-warning",
 };
 
 export function Badge({
@@ -20,7 +20,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium tracking-[0.08em] uppercase",
+        "inline-flex min-h-7 items-center rounded-full px-2.5 py-1 text-[11px] font-medium tracking-[0.08em] uppercase",
         toneClasses[tone],
         className,
       )}

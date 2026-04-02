@@ -6,11 +6,11 @@ type ButtonVariant = "primary" | "secondary" | "ghost";
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "bg-accent text-white shadow-sm hover:bg-blue-700 focus-visible:outline-accent",
+    "border border-transparent bg-accent text-white shadow-[0_1px_0_rgba(79,70,229,0.18)] hover:bg-accent-secondary",
   secondary:
-    "border border-border-strong bg-white text-text-strong hover:bg-surface-muted focus-visible:outline-border-strong",
+    "border border-border-strong bg-white text-text-strong hover:border-accent hover:bg-accent-soft",
   ghost:
-    "bg-transparent text-text-muted hover:bg-surface-muted hover:text-text-strong focus-visible:outline-border-strong",
+    "border border-transparent bg-transparent text-text-muted hover:bg-surface-muted hover:text-text-strong",
 };
 
 type SharedProps = {
@@ -34,7 +34,7 @@ function isLinkButtonProps(
 
 function buttonClasses(variant: ButtonVariant, className?: string) {
   return cn(
-    "inline-flex h-9 items-center justify-center rounded-lg px-3 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-60",
+    "inline-flex h-11 min-w-[2.75rem] items-center justify-center rounded-[14px] px-4 text-sm font-medium tracking-[0.01em] transition-[background-color,border-color,color,transform,box-shadow] duration-150 ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-60",
     variantClasses[variant],
     className,
   );

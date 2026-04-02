@@ -2,12 +2,14 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { LoaderCircle } from "lucide-react";
 
 import type {
   AskQaSessionResponseData,
   CreateQaSessionResponseData,
 } from "@/lib/schemas/qa";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -144,7 +146,7 @@ export function QaAskForm({
     <form className="space-y-3" onSubmit={handleSubmit}>
       <div className="rounded-[28px] border border-border-strong bg-surface-muted p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
         <Textarea
-          className="min-h-[110px] resize-none border-0 bg-transparent px-2 py-2 text-[15px] leading-7 shadow-none focus:border-0"
+          className="min-h-[110px] resize-none border-0 bg-transparent px-2 py-2 text-[15px] leading-7 shadow-none focus:border-0 focus-visible:ring-0"
           disabled={isSubmitting}
           onChange={(event) => setQuery(event.target.value)}
           onKeyDown={handleTextareaKeyDown}
@@ -175,7 +177,14 @@ export function QaAskForm({
               type="submit"
               variant="primary"
             >
-              {isSubmitting ? "思考中..." : "发送"}
+              {isSubmitting ? (
+                <>
+                  <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                  思考中...
+                </>
+              ) : (
+                "发送"
+              )}
             </Button>
           </div>
         </div>
@@ -185,7 +194,7 @@ export function QaAskForm({
         <div className="flex flex-wrap gap-2">
           {promptSuggestions.map((suggestion) => (
             <button
-              className="rounded-full border border-border-muted bg-white px-3 py-2 text-sm text-text-strong transition-colors hover:border-accent hover:bg-accent-soft/30"
+              className="interactive-card rounded-full border border-border-muted bg-white px-3 py-2 text-sm text-text-strong focus-visible:outline-none"
               key={suggestion}
               onClick={() => applyPromptSuggestion(suggestion)}
               type="button"
@@ -196,6 +205,20 @@ export function QaAskForm({
         </div>
       ) : null}
 
+      {isSubmitting ? (
+        <div className="rounded-[24px] border border-border-strong bg-white px-4 py-4">
+          <div className="flex items-center gap-2 text-sm font-medium text-text-strong">
+            <LoaderCircle className="h-4 w-4 animate-spin text-accent" />
+            正在整理 grounded answer
+          </div>
+          <div className="mt-4 space-y-3">
+            <Skeleton className="h-4 w-1/3" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-[92%]" />
+          </div>
+        </div>
+      ) : null}
+
       {errorMessage ? (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
           {errorMessage}
@@ -203,7 +226,7 @@ export function QaAskForm({
       ) : null}
 
       <details className="rounded-2xl border border-border-muted bg-white px-4 py-3">
-        <summary className="cursor-pointer text-xs font-semibold tracking-[0.14em] text-text-muted uppercase">
+        <summary className="rounded-lg text-xs font-semibold tracking-[0.14em] text-text-muted uppercase focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2">
           检索选项
         </summary>
 

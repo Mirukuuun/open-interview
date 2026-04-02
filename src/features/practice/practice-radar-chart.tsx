@@ -1,3 +1,5 @@
+import { useId } from "react";
+
 import { SurfaceCard } from "@/components/ui/surface-card";
 
 export type PracticeRadarChartDimension = {
@@ -34,6 +36,8 @@ export function PracticeRadarChart({
   dimensions,
   highlightedKeys = [],
 }: PracticeRadarChartProps) {
+  const descriptionId = useId();
+
   if (dimensions.length === 0) {
     return (
       <SurfaceCard muted>
@@ -62,7 +66,7 @@ export function PracticeRadarChart({
 
   return (
     <SurfaceCard className="space-y-4">
-      <div className="space-y-1">
+      <div className="space-y-1" id={descriptionId}>
         <h3 className="text-sm font-semibold text-text-strong">{title}</h3>
         <p className="text-sm leading-6 text-text-muted">{description}</p>
       </div>
@@ -70,6 +74,7 @@ export function PracticeRadarChart({
       <div className="overflow-x-auto">
         <svg
           aria-label={title}
+          aria-describedby={descriptionId}
           className="mx-auto h-[320px] w-[320px]"
           viewBox="0 0 320 320"
         >
@@ -140,9 +145,13 @@ export function PracticeRadarChart({
 
           <polygon
             fill="rgba(37, 99, 235, 0.16)"
+            pathLength={1}
             points={polygonPoints}
             stroke="rgb(37, 99, 235)"
+            strokeDasharray={1}
+            strokeDashoffset={1}
             strokeWidth="2"
+            style={{ animation: "radar-draw 900ms ease-out forwards" }}
           />
           {dimensions.map((dimension, index) => {
             const point = polarToCartesian(
@@ -169,7 +178,7 @@ export function PracticeRadarChart({
         </svg>
       </div>
 
-      <div className="grid gap-2 md:grid-cols-2">
+      <div className="grid gap-2 md:grid-cols-2" id={`${descriptionId}-table`}>
         {dimensions.map((dimension) => (
           <div
             className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3"

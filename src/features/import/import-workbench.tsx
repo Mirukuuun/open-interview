@@ -1,4 +1,5 @@
-import { DetailGrid } from "@/components/workbench/detail-grid";
+import { Upload } from "lucide-react";
+
 import { EmptyList } from "@/components/workbench/empty-list";
 import { PageHeader } from "@/components/workbench/page-header";
 import { SectionHeading } from "@/components/workbench/section-heading";
@@ -100,41 +101,54 @@ export function ImportWorkbench({
             <Button href="/questions">打开题库</Button>
           </>
         }
-        routeLabel="/import"
-        title="导入内容"
-      />
-
-      <DetailGrid
-        items={[
-          { label: "当前重点", value: "手工录入 / 文件上传" },
-          { label: "次级入口", value: "粘贴原文" },
-          { label: "最近来源", value: `${recentSources.length} 条` },
-          { label: "后续处理", value: "审核队列" },
+        description="在单页内完成上传、粘贴或手工录题，然后把解析后的候选结果送进审核队列继续沉淀。"
+        highlights={[
+          {
+            label: "当前重点",
+            value: "上传 / 手工录题",
+            meta: "最快进入题库的两个入口",
+          },
+          {
+            label: "最近来源",
+            value: `${recentSources.length}`,
+            meta: `累计来源 ${totalSources}`,
+          },
+          {
+            label: "后续处理",
+            value: "审核队列",
+            meta: "解析与人工确认会在这里继续",
+          },
+          {
+            label: "当前题库",
+            value: `${workspaceSummary.activeQuestionCount}`,
+            meta: "可直接回流到题库、练习与 QA",
+          },
         ]}
+        title="导入内容"
       />
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.88fr)] xl:[--import-panel-height:min(720px,calc(100vh-15rem))] xl:items-stretch">
         <SurfaceCard className="space-y-5 xl:flex xl:h-[var(--import-panel-height)] xl:flex-col">
           <SectionHeading title="导入方式" />
           {showOnboarding ? (
-            <div className="rounded-2xl border border-border-strong bg-[linear-gradient(135deg,rgba(219,234,254,0.75),rgba(255,255,255,0.92))] px-5 py-5">
+            <div className="rounded-[28px] border border-border-strong bg-[linear-gradient(135deg,rgba(238,242,255,0.98)_0%,rgba(255,255,255,0.98)_52%,rgba(209,250,229,0.72)_100%)] px-6 py-6">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-text-muted">
                 首次体验
               </p>
-              <h3 className="mt-2 text-lg font-semibold tracking-[-0.03em] text-text-strong">
-                先导入，再审核，再沉淀到题库
+              <h3 className="mt-3 text-2xl font-bold tracking-[-0.05em] text-text-strong">
+                先把材料放进来，再把它变成可练的题库。
               </h3>
-              <p className="mt-2 text-sm leading-6 text-text-muted">
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-text-muted">
                 当前还没有题库内容。先从上传、粘贴或手工录题开始，确认候选结果后再去题库、随机练习或 grounded QA 继续使用。
               </p>
-              <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <div className="reveal-list mt-5 grid gap-3 md:grid-cols-3">
                 {[
                   "1. 导入文件、原文或手工问答。",
                   "2. 到审核队列确认候选并保留来源。",
                   "3. 回到题库、练习或 AI 问答继续使用。",
                 ].map((step) => (
                   <div
-                    className="rounded-xl border border-white/70 bg-white/85 px-4 py-4 text-sm leading-6 text-text-strong"
+                    className="rounded-[22px] border border-white/80 bg-white/86 px-4 py-4 text-sm leading-6 text-text-strong"
                     key={step}
                   >
                     {step}
@@ -160,7 +174,9 @@ export function ImportWorkbench({
           {recentSources.length === 0 ? (
             <div className="xl:min-h-0 xl:flex-1">
               <EmptyList
-                title="还没有导入内容"
+                description="上传文件、粘贴原文或手工录题后，这里会保留最近来源并引导你继续进入审核队列。"
+                icon={Upload}
+                title="把第一份材料放进来"
               />
             </div>
           ) : (

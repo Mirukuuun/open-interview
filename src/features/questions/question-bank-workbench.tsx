@@ -212,6 +212,9 @@ export function QuestionBankWorkbench({
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full border-separate border-spacing-0">
+                <caption className="sr-only">
+                  题库列表，包含题目、分类、标签、来源数、更新时间和详情入口。
+                </caption>
                 <thead>
                   <tr className="text-left">
                     {[

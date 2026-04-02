@@ -116,7 +116,7 @@ function renderRelatedQuestions(
     <div className="space-y-3">
       {relatedQuestions.map((question) => (
         <Link
-          className="block rounded-2xl border border-border-muted bg-white px-4 py-4 transition-colors hover:border-accent hover:bg-accent-soft/25"
+          className="interactive-card block rounded-2xl border border-border-muted bg-white px-4 py-4 focus-visible:outline-none"
           href={`/questions/${question.id}`}
           key={question.id}
         >
@@ -228,7 +228,7 @@ function renderAssistantExtras(
       ) : null}
 
       <details className="rounded-2xl border border-border-muted bg-white px-4 py-3">
-        <summary className="cursor-pointer text-sm font-semibold text-text-strong">
+        <summary className="rounded-lg text-sm font-semibold text-text-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2">
           查看依据与相关问题
         </summary>
         <div className="mt-4 space-y-5">
@@ -249,7 +249,7 @@ function renderAssistantExtras(
       </details>
 
       <details className="rounded-2xl border border-border-muted bg-white px-4 py-3">
-        <summary className="cursor-pointer text-sm font-semibold text-text-strong">
+        <summary className="rounded-lg text-sm font-semibold text-text-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2">
           查看检索摘要与调试信息
         </summary>
         <div className="mt-4">{renderRetrievalTrace(turn.retrieval_log)}</div>
@@ -288,7 +288,9 @@ export function QaWorkbenchShell({
               <h1 className="text-2xl font-semibold tracking-[-0.04em] text-text-strong">
                 AI 问答
               </h1>
-              <p className="text-sm leading-6 text-text-muted">本地题库问答。</p>
+              <p className="text-sm leading-6 text-text-muted">
+                chat-first grounded QA。
+              </p>
             </div>
 
             <Button
@@ -312,14 +314,14 @@ export function QaWorkbenchShell({
               还没有会话。直接在右侧输入你的第一条问题即可。
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="reveal-list space-y-2">
               {recentSessions.map((session) => {
                 const active = activeSession?.aiSession.id === session.id;
 
                 return (
                   <div
                     className={cn(
-                      "rounded-2xl border px-3 py-3 transition-colors",
+                      "interactive-card rounded-2xl border px-3 py-3",
                       active
                         ? "border-accent bg-accent-soft/35"
                         : "border-border-muted bg-white hover:border-accent hover:bg-accent-soft/20",
@@ -327,7 +329,10 @@ export function QaWorkbenchShell({
                     key={session.id}
                   >
                     <div className="flex items-start gap-2">
-                      <Link className="min-w-0 flex-1" href={`/qa/${session.id}`}>
+                      <Link
+                        className="min-w-0 flex-1 rounded-2xl focus-visible:outline-none"
+                        href={`/qa/${session.id}`}
+                      >
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="text-sm font-semibold text-text-strong">
                             {session.title ?? "未命名会话"}
@@ -414,7 +419,7 @@ export function QaWorkbenchShell({
                 </div>
               </div>
             ) : (
-              <div className="mx-auto flex max-w-3xl flex-col gap-4">
+              <div className="reveal-list mx-auto flex max-w-3xl flex-col gap-4">
                 {turns.map((turn) => (
                   <article
                     className={cn(

@@ -398,6 +398,9 @@ export function ReviewQueueWorkbench({
         ) : (
           <div className="overflow-hidden rounded-xl border border-border-strong">
             <table className="min-w-full border-collapse text-left text-sm">
+              <caption className="sr-only">
+                解析任务列表，包含任务来源、类型、状态、时间、候选题数量和操作入口。
+              </caption>
               <thead className="bg-surface-muted">
                 <tr>
                   {["任务", "来源", "类型", "状态", "时间", "候选题", "操作"].map(

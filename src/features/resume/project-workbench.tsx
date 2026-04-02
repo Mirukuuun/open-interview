@@ -116,7 +116,7 @@ export function ProjectWorkbench({ project }: { project: ResumeProjectDetail }) 
               <div className="space-y-3">
                 {project.sessions.map((session) => (
                   <Link
-                    className="block rounded-xl border border-border-strong bg-white px-4 py-4 transition-colors hover:border-accent hover:bg-accent-soft/30"
+                    className="interactive-card block rounded-xl border border-border-strong bg-white px-4 py-4 focus-visible:outline-none"
                     href={`/resume/projects/${project.id}/session/${session.id}`}
                     key={session.id}
                   >

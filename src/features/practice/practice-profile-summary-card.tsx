@@ -35,16 +35,22 @@ export function PracticeProfileSummaryCard({
       <div className="space-y-3">
         {dimensions.map((dimension) => (
           <div
-            className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3"
+            className="rounded-[24px] border border-border-muted bg-surface-muted px-4 py-4"
             key={dimension.key}
           >
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-semibold text-text-strong">
                 {dimension.label}
               </p>
-              <p className="text-sm font-semibold text-text-strong">
+              <p className="text-base font-bold tracking-[-0.03em] text-text-strong">
                 {dimension.score.toFixed(1)}
               </p>
+            </div>
+            <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
+              <div
+                className="h-full rounded-full bg-accent"
+                style={{ width: `${Math.min(100, dimension.score * 10)}%` }}
+              />
             </div>
             <p className="mt-1 text-xs leading-5 text-text-muted">
               证据值 {dimension.evidence_count.toFixed(2)}
