@@ -8,5 +8,5 @@
 [X] task8. 实现 resume landing 去 placeholder 化、coach hints 强化与项目亮点结构化展示增强。
 [X] task9. 更新相关 L2/context、`docs/ui-flows.md` 与必要的使用/恢复文档，完成文档回环。
 [X] task10. 执行同构检查、`db:init`、`typecheck`、`lint`、`build` 并修复问题。
-[ ] task11. 在当前分支执行 `commit` 与 `push`，确保远端包含本次改动。
-[ ] task12. 执行 `corepack pnpm deploy:mvp` 并回归验证 `/import`、`/qa`、`/api/health`。
+[X] task11. 在当前分支执行 `commit` 与 `push`，确保远端包含本次改动。
+[X] task12. 执行 `corepack pnpm deploy:mvp` 并回归验证 `/import`、`/qa`、`/api/health`。
