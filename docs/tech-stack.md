@@ -199,6 +199,8 @@ Recommended deployment stance:
 - start with **Milvus standalone / self-hosted**
 - do not require hosted vector SaaS in MVP
 - do not jump directly to distributed Milvus cluster operations
+- Milvus standalone compose services should use `restart: unless-stopped`, so transient etcd / host jitter does not leave the vector backend permanently offline
+- when `vector_backend.status` is `pending`, use the repo-local sync path `corepack pnpm vector:sync:qa:drain` under the same `MILVUS_*` / `EMBEDDING_*` env as the target runtime to drain backlog back to `ok`; keep batch size aligned with the runtime-safe value (current production baseline is `8`) instead of blindly raising it
 
 Low-resource development fallback may exist temporarily, but it is **not** the canonical production path.
 

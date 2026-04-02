@@ -18,7 +18,9 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node scripts/db/init.mjs",
     "db:init": "node scripts/db/init.mjs",
-    "export:question-bank": "node scripts/db/export-question-bank.mjs"
+    "export:question-bank": "node scripts/db/export-question-bank.mjs",
+    "vector:sync:qa": "corepack pnpm exec tsx src/server/jobs/qa-milvus-sync-job.ts",
+    "vector:sync:qa:drain": "bash scripts/vector/drain-qa-milvus-sync.sh"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",

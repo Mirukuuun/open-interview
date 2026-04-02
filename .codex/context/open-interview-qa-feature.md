@@ -33,3 +33,5 @@
 - SQLite 继续是 retrieval metadata 真相源；Milvus 只承担向量索引和语义召回后端角色。
 - embedding 配置必须走独立的 `EMBEDDING_*` / `EMBEDDING_PROVIDER_NAME` 链路，不能隐式回退到 `LLM_*`。
 - QA 侧边相关题目展示分类时，默认使用与题库一致的中文 taxonomy 显示映射。
+- `vector_backend.status=pending` 表示 Milvus 已可用但仍有 chunk backlog 待同步；此时 QA 仍可工作，只是向量召回覆盖率尚未完全恢复。
+- 向量 foundation 的恢复路径应通过本地 sync job drain backlog，而不是手工改写 SQLite sync state。
