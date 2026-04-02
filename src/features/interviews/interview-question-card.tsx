@@ -183,9 +183,14 @@ export function InterviewQuestionCard({ question }: InterviewQuestionCardProps) 
       ) : null}
 
       {question.sourceSnippet ? (
-        <div className="mt-3 whitespace-pre-wrap rounded-lg border border-border-muted bg-white px-3 py-3 text-sm leading-6 text-text-muted">
-          {question.sourceSnippet}
-        </div>
+        <details className="mt-3 rounded-lg border border-border-muted bg-white px-3 py-3">
+          <summary className="cursor-pointer text-sm font-semibold text-text-strong">
+            查看原文 QA
+          </summary>
+          <div className="mt-3 whitespace-pre-wrap border-t border-border-muted pt-3 text-sm leading-6 text-text-muted">
+            {question.sourceSnippet}
+          </div>
+        </details>
       ) : null}
 
       {feedback ? (
