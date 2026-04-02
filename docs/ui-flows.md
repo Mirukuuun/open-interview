@@ -2,8 +2,8 @@
 
 - doc_type: ui_flows
 - audience: agents / implementers
-- status: draft
-- updated_at: 2026-03-23
+- status: active
+- updated_at: 2026-04-02
 - parent_doc: `docs/technical-design.md`
 - canonical_for: route map, page states, component boundaries, UI data dependencies, interaction flows
 
@@ -73,6 +73,7 @@ Rules:
 - `Review Queue` should show a badge count for `needs_review` if available.
 - `Question Bank` is expected to be the default landing page after the system has data.
 - Initial empty product can land on `Import`.
+- `/` should redirect by workspace state: empty bank -> `/import`, existing bank -> `/questions`.
 
 ## 1.3 Top bar contract
 
@@ -187,6 +188,7 @@ Actions:
 - parse job created
 - parse failed
 - recent items available
+- first-run onboarding card that explains `Import -> Review Queue -> Question Bank -> Practice / QA`
 
 ### Done when
 - User can complete ingestion without leaving the page.
@@ -314,7 +316,7 @@ Bottom summary panel:
 - `GET /api/parse-jobs/:jobId`
 - `GET /api/parse-jobs/:jobId/result`
 - `POST /api/parse-jobs/:jobId/confirm`
-- supporting search for merge target may later use `GET /api/search?q=...&scope=questions`
+- merge target 推荐应优先复用 parse result / interview question recommendation 与专门的 promote / merge 主链，而不是依赖一个未落地的统一 `/api/search`。
 
 ### Page states
 - loading job/result
@@ -380,7 +382,6 @@ Each row shows:
 - `GET /api/questions`
 - `GET /api/questions/:questionId`
 - `PATCH /api/questions/:questionId`
-- `GET /api/search`
 
 ### Page states
 - empty bank
@@ -410,17 +411,20 @@ Purpose:
 - primary answer
 - supplemental answer views
 - related questions
+- linked interview questions（手动沉淀 / merge 关系）
 - sources / linked interviews
 - optional edit panel
 
 ### Actions
-- edit canonical fields
-- add answer variant
+- return to filtered list
+- previous / next navigation within current list context
+- open linked interview
 - open related source
 - ask AI based on this question
 
 ### Done when
 - This route can stand alone without the list page.
+- User can同时看清 canonical answer、补充视角、来源与沉淀自哪些面经题。
 
 ---
 
@@ -452,6 +456,7 @@ Recommended 2-column layout:
 - `View Answer`
 - `Next Question`
 - `Restart`
+- optional `Dimension Filter` from weak areas / profile
 
 Rules:
 - One round shuffles the full active bank.
@@ -463,6 +468,7 @@ Rules:
 - answer all 10 questions in textareas
 - `Submit and Grade`
 - view total score, weak areas, exam radar, profile radar, and per-question feedback
+- when a dimension filter is active, exam creation must stay within that filtered pool
 
 ### Result information architecture
 - top summary: total score + overall feedback + next-study direction
@@ -488,6 +494,7 @@ Rules:
 ### Critical UX rules
 - Do not reveal the reference answer before the user explicitly asks.
 - Mock exam must preserve a stable question snapshot for the whole session.
+- Active dimension filter must be explicit and dismissible within one click.
 - Result page should make weak areas and next-study direction obvious within one screen.
 - Result page must explicitly distinguish `本次考试雷达` and `长期能力画像`; they are not the same widget with different titles.
 - MVP-2 fixed profile dimensions are:
@@ -512,7 +519,7 @@ Purpose:
 - review interview experiences as grouped context
 
 ### Layout
-List + filters + optional preview panel.
+List + filters + company-grouped browse sections.
 
 ### List item contract
 - company
@@ -520,6 +527,8 @@ List + filters + optional preview panel.
 - round_info
 - summary
 - question_count
+- promoted_question_count
+- promotion_status
 - tags
 - updated_at
 
@@ -534,6 +543,7 @@ List + filters + optional preview panel.
 
 ### Done when
 - User can browse by interview source, not only by canonical question.
+- User can quickly see which interviews are still waiting for manual沉淀.
 
 ---
 
@@ -543,14 +553,22 @@ Purpose:
 
 ### Sections
 - header metadata
+- promotion summary / continue-promote CTA
 - summary
-- linked questions
-- raw source snippet / source link
+- interview-question cards（包含标签、来源答案、推荐题库题、已沉淀结果）
+- raw source text / source link
 
 ### Actions
 - jump to canonical question
+- create or merge this interview question into the question bank
 - open original source
 - ask AI about this interview
+
+### Critical UX rules
+- 单条面经题上的 `source_answer` 应默认直接可见。
+- 更长的原文 QA / snippet 应折叠在 `查看原文 QA` 之类的 details 区块里，避免详情页首屏过长。
+- “面经题” 与“题库题”要显式区分，不能再默认把两者视为同一实体。
+- 面经详情首屏必须能看到沉淀完成度与继续沉淀入口，不要求用户先长距离滚动。
 
 ---
 
@@ -579,6 +597,10 @@ Secondary information pattern:
 
 These should live behind assistant-turn expanders instead of occupying a permanent right-side column.
 
+Question-bank entry contract:
+- `/questions/:questionId` can launch QA via `/qa?q=<question_text>`
+- initial query prefill should not create a session until the user actually sends the question
+
 ### Required interactions
 - ask question
 - create session
@@ -594,13 +616,13 @@ These should live behind assistant-turn expanders instead of occupying a permane
 - `POST /api/qa/sessions/:sessionId/ask`
 - `DELETE /api/qa/sessions/:sessionId`
 - `GET /api/qa/sessions/:sessionId`
-- optional direct retrieval inspect via `POST /api/retrieval/query`
 
 ### Response rendering contract
 Must show:
 - answer
 - visible transcript history
 - session management affordances
+- answer markdown for headings, lists, emphasis, paragraphs, and code blocks
 
 Should show if available:
 - uncertainty / support message when grounding is weak
@@ -640,6 +662,7 @@ Purpose:
 2 sections:
 - current resume source / parse state
 - project list
+- real-data spotlight for deep-dive continuation
 
 ### Actions
 - upload resume
@@ -737,7 +760,9 @@ System checkpoints:
 /questions
   -> open question detail
   -> ask AI based on this question
-  -> /qa or /qa/:sessionId
+  -> /qa?q=<question_text>
+  -> user sends question
+  -> /qa/:sessionId
   -> grounded answer + citations
 ```
 

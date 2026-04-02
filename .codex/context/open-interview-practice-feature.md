@@ -1,7 +1,7 @@
 # Open Interview Practice Feature
 
 - doc_type: context_l2
-- updated_at: 2026-03-31
+- updated_at: 2026-04-02
 
 ## Manifest
 
@@ -13,9 +13,9 @@
 
 ## Data Flow
 
-1. 页面加载时读取 active 题库生成随机练习题池，同时读取最近考试结果摘要与 singleton 长期能力画像。
+1. 页面加载时读取 active 题库生成随机练习题池，同时读取最近考试结果摘要与 singleton 长期能力画像；若存在定向维度参数，则先按维度映射过滤题池。
 2. 随机练习在客户端对当前题池洗牌，逐题展示题目，待用户手动回答后再揭晓标准答案。
-3. 模拟考试创建 `assessment_session` 与 10 条 `assessment_item` 快照，并在 item 层同步写入 `dimension_weights_json`，保证整套考试在评分前后使用相同题面与固定维度映射。
+3. 模拟考试创建 `assessment_session` 与 10 条 `assessment_item` 快照，并在 item 层同步写入 `dimension_weights_json`，保证整套考试在评分前后使用相同题面与固定维度映射；若当前为定向练习，则抽题只来自该维度过滤后的题池。
 4. 用户提交 10 题答案后，service 调用评分链路生成单题分数、整体反馈与本次考试维度摘要，再按覆盖权重增量更新 `practice_profile` / `practice_profile_dimension`。
 5. 结果页展示总分、逐题点评、薄弱项、本次考试雷达和长期能力画像，帮助用户决定下一轮复习重点。
 
@@ -30,4 +30,5 @@
 - `assessment_item` 必须额外快照维度权重，保证 taxonomy 或映射规则变化后，历史考试与画像更新仍可复现。
 - 本次考试雷达只展示当前试卷覆盖到的固定维度；长期能力画像始终展示全量固定维度。
 - 长期能力画像只更新本次考试有覆盖证据的维度，未覆盖维度保持原值；更新强度与 `coverage_weight` 成正比。
+- 最近考试和长期画像都应能一键跳转到对应维度的定向练习，并允许随时退出过滤回到全量随机练习。
 - 历史旧考试若缺少 `dimension_weights_json`，允许继续查看历史 summary，但不会回填进长期能力画像。

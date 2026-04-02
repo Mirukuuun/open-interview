@@ -1,13 +1,13 @@
 # Open Interview Server Core Feature
 
 - doc_type: context_l2
-- updated_at: 2026-04-01
+- updated_at: 2026-04-02
 
 ## Manifest
 
 - 主要目录：`src/server/api`、`src/server/db`、`src/server/repositories`、`src/server/services`、`src/server/retrieval`、`src/server/prompts`、`src/prompts`
-- 相关脚本：`scripts/db/init.mjs`
-- 相关文档：`docs/data-model.md`、`docs/api-schema.md`
+- 相关脚本：`scripts/db/init.mjs`、`scripts/db/backup.mjs`、`scripts/db/export-question-bank.mjs`
+- 相关文档：`docs/data-model.md`、`docs/api-schema.md`、`docs/data-safety-baseline.md`
 
 ## Data Flow
 
@@ -30,5 +30,6 @@
 - 线上 LLM provider 超时必须通过 service env 可配置，以便为长文档解析单独放宽等待窗口。
 - parse review 确认导入和手动录题必须折叠为单一主答案落库；review 候选编辑以单一答案为主，兼容旧 payload 时仍优先采用来源答案。
 - 题库浏览 API 不再暴露“个人答案”筛选语义，避免将 answer variant 类型差异误导成主答案差异。
+- 数据安全基线必须至少覆盖 SQLite 一致性备份、恢复说明和 canonical question bank JSON 导出。
 - `extract_interview` 的确认导入必须按 source kind 分流：`interview_experience` 写 `interview_question`，`knowledge_note` 才直接写 `question_item`。
 - 面经题与题库题之间的正式关系只通过 `interview_question_link` 和手动沉淀动作建立，不允许在面经确认阶段隐式创建。

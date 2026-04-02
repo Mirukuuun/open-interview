@@ -31,6 +31,7 @@ export async function POST(request: Request) {
   try {
     const result = practiceService.createExamSession({
       questionCount: parseResult.data.question_count,
+      dimension: parseResult.data.dimension,
     });
     const responseData = createAssessmentSessionResponseDataSchema.parse(result);
 

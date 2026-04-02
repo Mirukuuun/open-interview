@@ -3,7 +3,7 @@
 - doc_type: api_schema
 - audience: agents / implementers
 - status: draft
-- updated_at: 2026-04-01
+- updated_at: 2026-04-02
 - parent_doc: `docs/technical-design.md`
 - canonical_for: HTTP endpoints, request/response contracts, async flow conventions
 
@@ -297,6 +297,23 @@ Human-reviewed import into canonical tables.
 }
 ```
 
+## 3.5 POST `/api/parse-jobs/:jobId/retry`
+Retry a finished / failed parse job with the same source and job type.
+
+### Response
+```json
+{
+  "ok": true,
+  "data": {
+    "parse_job": {
+      "id": "job_002",
+      "status": "pending",
+      "job_type": "extract_interview"
+    }
+  }
+}
+```
+
 ---
 
 ## 4. Question bank APIs
@@ -390,9 +407,12 @@ Create a 10-question exam session from active questions that already have canoni
 ### Request
 ```json
 {
-  "question_count": 10
+  "question_count": 10,
+  "dimension": "distributed_systems"
 }
 ```
+
+`dimension` 可选；提供后表示创建一场定向考试，只从该固定维度映射到的题目中抽取 10 道带标准答案的题。
 
 ### Response
 ```json
@@ -642,120 +662,28 @@ Promote one interview question into the bank.
 
 ---
 
-## 6. Search APIs
+## 6. Search APIs（deferred / not current canonical contract）
 
-## 6.1 GET `/api/search`
-Unified search across question / answer / source / project.
+当前仓库**没有**统一的 `/api/search` 公共路由。
 
-### Query params
-- `q`: required
-- `scope?`: `all | questions | interviews | answers | projects`
-- `strategy?`: `fts | hybrid`
-- `page?`
-- `page_size?`
+当前实际做法：
+- Question Bank 搜索 / 过滤走 `GET /api/questions` 的 `q` / `category` / `tag` / `difficulty` / `sort` 参数
+- Interview browse 走 `GET /api/interviews` 的列表与过滤参数
+- interview question -> question bank 的推荐 / promote 由专门 service 和 `POST /api/interview-questions/:interviewQuestionId/promote` 主链承接
 
-### Response
-```json
-{
-  "ok": true,
-  "data": {
-    "items": [
-      {
-        "type": "question",
-        "id": "q_redis_lock_001",
-        "title": "Redis 分布式锁会遇到哪些问题？",
-        "snippet": "需要考虑误删、续约、主从切换一致性等。",
-        "score": 0.92,
-        "reason": "fts"
-      }
-    ],
-    "facets": {
-      "categories": [
-        { "name": "distributed_system", "count": 12 }
-      ],
-      "tags": [
-        { "name": "redis", "count": 8 }
-      ]
-    },
-    "page": 1,
-    "page_size": 20,
-    "total": 1
-  }
-}
-```
-
-Rules:
-- `strategy=fts` is available in MVP-1.
-- `strategy=hybrid` becomes available in MVP-2 after embeddings are enabled.
+如果后续重新引入统一 `/api/search`，应在实现真实路由后再把它写回本文件。
 
 ---
 
-## 7. RAG retrieval APIs
+## 7. Retrieval maintenance APIs（deferred / not current canonical contract）
 
-These are internal-but-first-class APIs because this project is agent-oriented and should expose explainable retrieval contracts.
+当前仓库**没有**公开的 `/api/retrieval/query`、`/api/chunks/rebuild`、`/api/embeddings/rebuild` 路由作为稳定产品 API。
 
-## 7.1 POST `/api/retrieval/query`
-Run retrieval without LLM answer generation.
+当前实际做法：
+- QA retrieval 调试信息通过 `/api/qa/sessions/:sessionId` 返回的 turn / retrieval log 暴露给工作台
+- retrieval / chunk / embedding 的维护职责收口在 server 内部 service、job、脚本与运维流程中
 
-### Request
-```json
-{
-  "query": "怎么回答 Redis 锁和 RedLock？",
-  "query_type": "qa",
-  "top_k": 8,
-  "strategy": "hybrid"
-}
-```
-
-### Response
-```json
-{
-  "ok": true,
-  "data": {
-    "retrieval_log": {
-      "id": "ret_001",
-      "strategy": "hybrid"
-    },
-    "hits": [
-      {
-        "owner_type": "question_item",
-        "owner_id": "q_redis_lock_001",
-        "chunk_id": "chunk_101",
-        "score": 0.92,
-        "reason": "merged",
-        "snippet": "Redis 分布式锁会遇到哪些问题？"
-      }
-    ]
-  }
-}
-```
-
-## 7.2 POST `/api/chunks/rebuild`
-Rebuild chunks for one owner or whole dataset.
-
-### Request
-```json
-{
-  "owner_type": "question_item",
-  "owner_id": "q_redis_lock_001"
-}
-```
-
-## 7.3 POST `/api/embeddings/rebuild`
-Generate embeddings for pending chunks.
-
-### Request
-```json
-{
-  "owner_type": "question_item",
-  "owner_id": "q_redis_lock_001"
-}
-```
-
-MVP note:
-- These endpoints may be admin/internal only.
-- `POST /api/embeddings/rebuild` is now expected to drive `chunk_embeddings` + Milvus sync state, not persist `vector_json` in SQLite.
-- They still deserve stable schemas because agents may call them.
+如果后续决定把 retrieval inspect / rebuild 能力提升为正式 HTTP API，再补对应契约与错误码。
 
 ---
 
@@ -1023,16 +951,16 @@ If implementing API-first:
 4. `/api/parse-jobs/:jobId`
 5. `/api/parse-jobs/:jobId/result`
 6. `/api/parse-jobs/:jobId/confirm`
-7. `/api/questions`
-8. `/api/questions/:questionId`
-9. `/api/practice/exams`
-10. `/api/practice/exams/:sessionId`
-11. `/api/practice/exams/:sessionId/submit`
-12. `/api/practice/profile`
-13. `/api/interviews`
-14. `/api/interviews/:interviewId`
-15. `/api/search`
-16. `/api/retrieval/query`
+7. `/api/parse-jobs/:jobId/retry`
+8. `/api/questions`
+9. `/api/questions/:questionId`
+10. `/api/practice/exams`
+11. `/api/practice/exams/:sessionId`
+12. `/api/practice/exams/:sessionId/submit`
+13. `/api/practice/profile`
+14. `/api/interviews`
+15. `/api/interviews/:interviewId`
+16. `/api/interview-questions/:interviewQuestionId/promote`
 17. `/api/qa/sessions`
 18. `/api/qa/sessions/:sessionId/ask`
 19. resume / deep-dive endpoints
@@ -1044,20 +972,20 @@ If implementing API-first:
 ### MVP-1 required
 - ingestion endpoints
 - parse job endpoints
-- confirm endpoint
+- confirm / retry endpoint
 - question / interview list + detail
-- `/api/search?strategy=fts`
+- QA session主链
 
 ### MVP-2 required
-- `/api/retrieval/query`
 - `/api/practice/exams/*`
 - `/api/practice/profile`
-- chunk + embedding rebuild endpoints
-- `/api/qa/sessions/*`
-- `/api/search?strategy=hybrid`
-
-### MVP-3 required
+- interview question promote / merge
 - resume + deep-dive endpoints
+
+### Deferred / internal-only for now
+- public `/api/search`
+- public `/api/retrieval/query`
+- chunk / embedding rebuild endpoints
 
 ---
 

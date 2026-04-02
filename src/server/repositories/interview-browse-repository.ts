@@ -301,6 +301,27 @@ export const interviewBrowseRepository = {
                 WHERE sqr.source_document_id = i.source_document_id
               )
             END AS questionCount,
+            CASE
+              WHEN EXISTS (
+                SELECT 1
+                FROM interview_questions iq
+                WHERE iq.interview_experience_id = i.id
+              ) THEN (
+                SELECT COUNT(DISTINCT iql.interview_question_id)
+                FROM interview_questions iq
+                INNER JOIN interview_question_links iql
+                  ON iql.interview_question_id = iq.id
+                WHERE iq.interview_experience_id = i.id
+              )
+              ELSE (
+                SELECT COUNT(*)
+                FROM source_question_refs sqr
+                INNER JOIN question_items q
+                  ON q.id = sqr.question_item_id
+                WHERE sqr.source_document_id = i.source_document_id
+                  AND q.review_status = 'active'
+              )
+            END AS promotedQuestionCount,
             COALESCE((
               SELECT json_group_array(name)
               FROM (
@@ -334,6 +355,7 @@ export const interviewBrowseRepository = {
       summary: string | null;
       updatedAt: string;
       questionCount: number;
+      promotedQuestionCount: number;
       tagsJson: string;
     }>;
 
@@ -364,6 +386,7 @@ export const interviewBrowseRepository = {
         summary: item.summary,
         updatedAt: item.updatedAt,
         questionCount: item.questionCount,
+        promotedQuestionCount: item.promotedQuestionCount,
         tags: parseJsonStringArray(item.tagsJson),
       })),
       page: input.page,

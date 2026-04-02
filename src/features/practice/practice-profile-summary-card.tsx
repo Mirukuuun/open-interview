@@ -1,23 +1,20 @@
 "use client";
 
+import type { PracticeDimensionKey } from "@/lib/practice-dimensions";
 import type { PracticeProfile, PracticeProfileDimension } from "@/lib/schemas/practice";
 import { SurfaceCard } from "@/components/ui/surface-card";
+import { Button } from "@/components/ui/button";
 import { SectionHeading } from "@/components/workbench/section-heading";
+import { formatDateTimeLabel } from "@/lib/date-time";
 
 type PracticeProfileSummaryCardProps = {
+  activeDimensionKey?: PracticeDimensionKey | null;
   profile: PracticeProfile;
   dimensions: PracticeProfileDimension[];
 };
 
-function formatDateTime(value: string | null | undefined) {
-  if (!value) {
-    return "尚未建立画像";
-  }
-
-  return value.replace("T", " ").replace(/\.\d{3}Z$/, "Z");
-}
-
 export function PracticeProfileSummaryCard({
+  activeDimensionKey,
   profile,
   dimensions,
 }: PracticeProfileSummaryCardProps) {
@@ -32,7 +29,7 @@ export function PracticeProfileSummaryCard({
           {profile.dimension_catalog_version}
         </p>
         <p className="mt-2 text-sm leading-6 text-text-strong">
-          最近评估：{formatDateTime(profile.last_assessed_at)}
+          最近评估：{formatDateTimeLabel(profile.last_assessed_at, "尚未建立画像")}
         </p>
       </div>
       <div className="space-y-3">
@@ -56,6 +53,14 @@ export function PracticeProfileSummaryCard({
                 ? ""
                 : ` · 最近一场 ${dimension.last_exam_score.toFixed(1)}`}
             </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                href={`/practice?dimension=${dimension.key}`}
+                variant={activeDimensionKey === dimension.key ? "primary" : "secondary"}
+              >
+                {activeDimensionKey === dimension.key ? "当前定向维度" : "按此维度练习"}
+              </Button>
+            </div>
           </div>
         ))}
       </div>

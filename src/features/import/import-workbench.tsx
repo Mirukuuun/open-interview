@@ -5,7 +5,9 @@ import { SectionHeading } from "@/components/workbench/section-heading";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SurfaceCard } from "@/components/ui/surface-card";
+import { formatDateTimeLabel } from "@/lib/date-time";
 import type { SourceDocumentRecord } from "@/server/repositories/source-document-repository";
+import type { WorkspaceSummary } from "@/server/services/workspace-summary-service";
 
 import { ImportActionsPanel } from "./import-actions-panel";
 
@@ -16,15 +18,8 @@ type ImportWorkbenchProps = {
   };
   recentSources: SourceDocumentRecord[];
   totalSources: number;
+  workspaceSummary: WorkspaceSummary;
 };
-
-function formatTimestamp(timestamp: string) {
-  return new Intl.DateTimeFormat("zh-CN", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    hour12: false,
-  }).format(new Date(timestamp));
-}
 
 function summarizeText(rawText: string) {
   const compactText = rawText.replace(/\s+/g, " ").trim();
@@ -90,7 +85,10 @@ export function ImportWorkbench({
   manualQaOptions,
   recentSources,
   totalSources,
+  workspaceSummary,
 }: ImportWorkbenchProps) {
+  const showOnboarding = totalSources === 0 && workspaceSummary.activeQuestionCount === 0;
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -118,6 +116,39 @@ export function ImportWorkbench({
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.88fr)] xl:[--import-panel-height:min(720px,calc(100vh-15rem))] xl:items-stretch">
         <SurfaceCard className="space-y-5 xl:flex xl:h-[var(--import-panel-height)] xl:flex-col">
           <SectionHeading title="导入方式" />
+          {showOnboarding ? (
+            <div className="rounded-2xl border border-border-strong bg-[linear-gradient(135deg,rgba(219,234,254,0.75),rgba(255,255,255,0.92))] px-5 py-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-text-muted">
+                首次体验
+              </p>
+              <h3 className="mt-2 text-lg font-semibold tracking-[-0.03em] text-text-strong">
+                先导入，再审核，再沉淀到题库
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-text-muted">
+                当前还没有题库内容。先从上传、粘贴或手工录题开始，确认候选结果后再去题库、随机练习或 grounded QA 继续使用。
+              </p>
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                {[
+                  "1. 导入文件、原文或手工问答。",
+                  "2. 到审核队列确认候选并保留来源。",
+                  "3. 回到题库、练习或 AI 问答继续使用。",
+                ].map((step) => (
+                  <div
+                    className="rounded-xl border border-white/70 bg-white/85 px-4 py-4 text-sm leading-6 text-text-strong"
+                    key={step}
+                  >
+                    {step}
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <Button href="/review" variant="primary">
+                  打开审核队列
+                </Button>
+                <Button href="/questions">查看题库入口</Button>
+              </div>
+            </div>
+          ) : null}
           <div className="xl:min-h-0 xl:flex-1 xl:overflow-y-auto xl:pr-1">
             <ImportActionsPanel manualQaOptions={manualQaOptions} />
           </div>
@@ -158,7 +189,7 @@ export function ImportWorkbench({
                         </div>
                       </div>
                       <p className="text-xs text-text-muted">
-                        {formatTimestamp(source.createdAt)}
+                        {formatDateTimeLabel(source.createdAt)}
                       </p>
                     </div>
 

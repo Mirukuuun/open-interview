@@ -83,6 +83,7 @@ export function InterviewQuestionCard({ question }: InterviewQuestionCardProps) 
   const hasCreateLink = question.promotedQuestions.some(
     (promotedQuestion) => promotedQuestion.linkType === "promoted_create",
   );
+  const promotionStatus = hasPromotedQuestions ? "已沉淀到题库" : "待沉淀";
 
   async function handleCreatePromotion() {
     setIsCreating(true);
@@ -160,6 +161,9 @@ export function InterviewQuestionCard({ question }: InterviewQuestionCardProps) 
       <div className="flex flex-wrap items-center gap-2">
         <Badge tone="accent">
           {question.sourceKind === "interview_question" ? "面经原题" : "历史题库关联"}
+        </Badge>
+        <Badge tone={hasPromotedQuestions ? "success" : "warning"}>
+          {promotionStatus}
         </Badge>
         {question.category ? (
           <Badge>{formatCategoryLabel(question.category) ?? question.category}</Badge>

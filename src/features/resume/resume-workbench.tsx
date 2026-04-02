@@ -8,16 +8,19 @@ import { SectionHeading } from "@/components/workbench/section-heading";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SurfaceCard } from "@/components/ui/surface-card";
+import { formatDateTimeLabel } from "@/lib/date-time";
 
 import { ResumeSourcePanel } from "./resume-source-panel";
-
-function formatDateTime(value: string) {
-  return value.replace("T", " ").replace(/\.\d{3}Z$/, "Z");
-}
 
 export function ResumeWorkbench({ workspace }: { workspace: ResumeWorkspace }) {
   const newestResume = workspace.activeResume;
   const firstProject = newestResume?.projects[0];
+  const spotlightProjects =
+    newestResume?.projects
+      .filter(
+        (project) => project.highlights.length > 0 || project.session_count > 0,
+      )
+      .slice(0, 3) ?? [];
 
   return (
     <div className="space-y-6">
@@ -54,6 +57,54 @@ export function ResumeWorkbench({ workspace }: { workspace: ResumeWorkspace }) {
           },
         ]}
       />
+
+      <SurfaceCard className="space-y-4">
+        <SectionHeading
+          description="这里优先暴露可继续深挖的项目、已提取亮点和当前简历来源，让项目表达训练不再停留在占位态。"
+          title="项目表达训练入口"
+        />
+        {spotlightProjects.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-border-strong bg-surface-muted px-4 py-4 text-sm leading-6 text-text-muted">
+            还没有可继续深挖的项目。先保存并解析简历，写入结构化项目后，这里会展示可继续训练的重点项目。
+          </div>
+        ) : (
+          <div className="grid gap-3 lg:grid-cols-3">
+            {spotlightProjects.map((project) => (
+              <div
+                className="rounded-xl border border-border-muted bg-surface-muted px-4 py-4"
+                key={project.id}
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-sm font-semibold text-text-strong">{project.name}</p>
+                  <Badge>{`${project.session_count} 个会话`}</Badge>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-text-muted">
+                  {project.summary ?? "还没有项目摘要。"}
+                </p>
+                {project.highlights.length > 0 ? (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {project.highlights.slice(0, 2).map((highlight) => (
+                      <Badge key={`${project.id}-${highlight}`} tone="accent">
+                        {highlight}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : null}
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <Button href={`/resume/projects/${project.id}`} variant="primary">
+                    打开项目
+                  </Button>
+                  {project.latest_session_id ? (
+                    <Button href={`/resume/projects/${project.id}/session/${project.latest_session_id}`}>
+                      继续深挖
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </SurfaceCard>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
         <SurfaceCard className="space-y-5">
@@ -93,7 +144,7 @@ export function ResumeWorkbench({ workspace }: { workspace: ResumeWorkspace }) {
                     ) : null}
                     {project.latest_session_updated_at ? (
                       <p className="mt-3 text-xs text-text-muted">
-                        最近会话: {formatDateTime(project.latest_session_updated_at)}
+                        最近会话: {formatDateTimeLabel(project.latest_session_updated_at)}
                       </p>
                     ) : null}
                   </Link>
@@ -121,7 +172,7 @@ export function ResumeWorkbench({ workspace }: { workspace: ResumeWorkspace }) {
                     </p>
                     <p className="mt-2 text-sm text-text-muted">
                       {resume.project_count} 个项目 • 更新于{" "}
-                      {formatDateTime(resume.updated_at)}
+                      {formatDateTimeLabel(resume.updated_at)}
                     </p>
                   </Link>
                 ))}

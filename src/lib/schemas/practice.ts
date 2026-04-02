@@ -42,6 +42,15 @@ export const practiceRecentExamSchema = z.object({
   question_count: z.number().int().min(1),
   completed_at: z.string().datetime().nullable().optional(),
   weak_labels: z.array(z.string()),
+  weak_areas: z
+    .array(
+      z.object({
+        key: practiceDimensionKeySchema,
+        label: z.string().min(1),
+        average_score: z.number().min(0).max(10),
+      }),
+    )
+    .default([]),
 });
 
 export const practiceDimensionWeightSchema = z.object({
@@ -180,6 +189,7 @@ export const practiceProfileDimensionSchema = z.object({
 export const createAssessmentSessionRequestSchema = z
   .object({
     question_count: coercePositiveInteger(10, 10).default(10),
+    dimension: practiceDimensionKeySchema.optional(),
   })
   .strict();
 

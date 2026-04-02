@@ -6,6 +6,7 @@ import { SurfaceCard } from "@/components/ui/surface-card";
 import { DetailGrid } from "@/components/workbench/detail-grid";
 import { PageHeader } from "@/components/workbench/page-header";
 import { SectionHeading } from "@/components/workbench/section-heading";
+import { formatDateTimeLabel } from "@/lib/date-time";
 import type { ListQuestionsQuery } from "@/lib/schemas/questions";
 import {
   buildQuestionDetailHref,
@@ -19,10 +20,6 @@ type QuestionDetailWorkbenchProps = {
   navigation: ReturnType<typeof questionBankService.getQuestionNavigation>;
   question: NonNullable<ReturnType<typeof questionBankService.getQuestionDetail>>;
 };
-
-function formatDateTime(value: string) {
-  return value.replace("T", " ").replace(/\.\d{3}Z$/, "Z");
-}
 
 function renderTagList(tags: string[]) {
   if (tags.length === 0) {
@@ -62,6 +59,7 @@ export function QuestionDetailWorkbench({
         page: navigation.next.page,
       })
     : undefined;
+  const qaPrefillHref = `/qa?q=${encodeURIComponent(question.questionText)}`;
 
   return (
     <div className="space-y-6">
@@ -71,6 +69,7 @@ export function QuestionDetailWorkbench({
             <Button href={listHref}>返回题库</Button>
             {previousHref ? <Button href={previousHref}>上一条</Button> : null}
             {nextHref ? <Button href={nextHref}>下一条</Button> : null}
+            <Button href={qaPrefillHref}>基于这题发起 QA</Button>
             {primaryInterview?.interviewExperience ? (
               <Button
                 href={`/interviews/${primaryInterview.interviewExperience.id}`}
@@ -99,7 +98,7 @@ export function QuestionDetailWorkbench({
           },
           { label: "难度", value: question.difficulty ?? "未设置" },
           { label: "来源数", value: String(question.sourceCount) },
-          { label: "更新时间", value: formatDateTime(question.updatedAt) },
+          { label: "更新时间", value: formatDateTimeLabel(question.updatedAt) },
         ]}
       />
 

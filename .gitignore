@@ -26,6 +26,8 @@ coverage
 # local workspace artifacts
 tmp/
 storage/*.sqlite*
+storage/backups/
+storage/exports/
 storage/raw/
 src/server/db/migrations/meta/
 

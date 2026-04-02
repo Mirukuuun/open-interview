@@ -2,18 +2,11 @@ import type {
   ParseJobStatus,
   ParseJobSummary,
 } from "@/lib/schemas/parse-jobs";
+import { formatDateTimeLabel } from "@/lib/date-time";
 import type { SourceDocumentRecord } from "@/server/repositories/source-document-repository";
 
 export function formatTimestamp(timestamp: string | null | undefined) {
-  if (!timestamp) {
-    return "未开始";
-  }
-
-  return new Intl.DateTimeFormat("zh-CN", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    hour12: false,
-  }).format(new Date(timestamp));
+  return formatDateTimeLabel(timestamp, "未开始");
 }
 
 export function parseJobStatusMeta(status: ParseJobStatus): {

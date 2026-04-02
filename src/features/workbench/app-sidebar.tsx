@@ -6,14 +6,22 @@ import { usePathname } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-import { primaryNavItems } from "./route-definitions";
+import {
+  buildPrimaryNavItems,
+  type NavigationSummary,
+} from "./route-definitions";
 
 function isActive(pathname: string, match: string) {
   return pathname === match || pathname.startsWith(`${match}/`);
 }
 
-export function AppSidebar() {
+export function AppSidebar({
+  summary,
+}: {
+  summary: NavigationSummary;
+}) {
   const pathname = usePathname();
+  const primaryNavItems = buildPrimaryNavItems(summary);
 
   return (
     <aside className="flex w-full shrink-0 flex-col gap-6 rounded-none bg-surface-nav px-4 py-5 text-text-inverse lg:min-h-screen lg:w-[272px] lg:rounded-r-[28px] lg:px-5">

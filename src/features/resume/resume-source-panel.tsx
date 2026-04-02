@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { formatDateTimeLabel } from "@/lib/date-time";
 import { cn } from "@/lib/utils";
 
 type ApiSuccess<T> = {
@@ -73,10 +74,6 @@ async function readApiResponse<T>(response: Response) {
   }
 
   return payload.data;
-}
-
-function formatDateTime(value: string) {
-  return value.replace("T", " ").replace(/\.\d{3}Z$/, "Z");
 }
 
 export function ResumeSourcePanel({
@@ -310,7 +307,7 @@ export function ResumeSourcePanel({
           <div className="mt-4 space-y-2 text-sm text-text-muted">
             <p className="font-semibold text-text-strong">{latestSource.title}</p>
             <p className="font-mono text-xs">{latestSource.id}</p>
-            <p>更新于 {formatDateTime(latestSource.updatedAt)}</p>
+            <p>更新于 {formatDateTimeLabel(latestSource.updatedAt)}</p>
             {latestParseJob?.error_message ? (
               <p className="text-warning">{latestParseJob.error_message}</p>
             ) : null}

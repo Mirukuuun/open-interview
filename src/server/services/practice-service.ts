@@ -9,6 +9,7 @@ import {
   practiceQuestionSchema,
   submitAssessmentSessionRequestSchema,
 } from "@/lib/schemas/practice";
+import type { PracticeDimensionKey } from "@/lib/practice-dimensions";
 import { assessmentRepository } from "@/server/repositories/assessment-repository";
 import { practiceProfileRepository } from "@/server/repositories/practice-profile-repository";
 import { nowUtcIso } from "@/server/repositories/ids";
@@ -57,6 +58,22 @@ function shuffleArray<T>(items: T[]) {
   }
 
   return copiedItems;
+}
+
+function filterPracticeQuestionsByDimension(
+  questions: ReturnType<typeof questionBankService.listPracticePool>,
+  dimension: PracticeDimensionKey | undefined,
+) {
+  if (!dimension) {
+    return questions;
+  }
+
+  return questions.filter((question) =>
+    resolvePracticeDimensionWeights({
+      category: question.category,
+      tags: question.tags,
+    }).some((weight) => weight.key === dimension),
+  );
 }
 
 function toApiAssessmentSession(
@@ -143,8 +160,13 @@ function toApiPracticeProfile() {
 }
 
 export const practiceService = {
-  getPracticePageData() {
-    const practicePool = questionBankService.listPracticePool().map((question) =>
+  getPracticePageData(input?: {
+    dimension?: PracticeDimensionKey;
+  }) {
+    const practicePool = filterPracticeQuestionsByDimension(
+      questionBankService.listPracticePool(),
+      input?.dimension,
+    ).map((question) =>
       practiceQuestionSchema.parse({
         id: question.id,
         question_text: question.questionText,
@@ -163,6 +185,11 @@ export const practiceService = {
         question_count: session.questionCount,
         completed_at: session.completedAt,
         weak_labels: session.weakLabels.slice(0, 3),
+        weak_areas: session.weakAreas.slice(0, 3).map((area) => ({
+          key: area.key,
+          label: area.label,
+          average_score: area.averageScore,
+        })),
       }),
     );
 
@@ -179,10 +206,13 @@ export const practiceService = {
 
   createExamSession(input?: {
     questionCount?: number;
+    dimension?: PracticeDimensionKey;
   }) {
     const questionCount = input?.questionCount ?? 10;
-    const candidatePool = questionBankService
-      .listPracticePool()
+    const candidatePool = filterPracticeQuestionsByDimension(
+      questionBankService.listPracticePool(),
+      input?.dimension,
+    )
       .filter((question) => Boolean(question.canonicalAnswer));
 
     if (candidatePool.length < questionCount) {
@@ -193,6 +223,7 @@ export const practiceService = {
         {
           available_question_count: candidatePool.length,
           required_question_count: questionCount,
+          dimension: input?.dimension,
         },
       );
     }

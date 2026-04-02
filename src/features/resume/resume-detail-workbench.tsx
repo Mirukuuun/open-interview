@@ -8,10 +8,7 @@ import { SectionHeading } from "@/components/workbench/section-heading";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SurfaceCard } from "@/components/ui/surface-card";
-
-function formatDateTime(value: string) {
-  return value.replace("T", " ").replace(/\.\d{3}Z$/, "Z");
-}
+import { formatDateTimeLabel } from "@/lib/date-time";
 
 export function ResumeDetailWorkbench({ detail }: { detail: ResumeDetail }) {
   const firstProject = detail.projects[0];
@@ -90,7 +87,7 @@ export function ResumeDetailWorkbench({ detail }: { detail: ResumeDetail }) {
               解析状态: {detail.sourceDocument.parseStatus}
             </div>
             <div className="rounded-xl border border-border-strong bg-white px-4 py-3">
-              更新时间: {formatDateTime(detail.sourceDocument.updatedAt)}
+              更新时间: {formatDateTimeLabel(detail.sourceDocument.updatedAt)}
             </div>
           </div>
         </SurfaceCard>

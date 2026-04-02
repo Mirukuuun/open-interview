@@ -10,6 +10,7 @@ import { DetailGrid } from "@/components/workbench/detail-grid";
 import { EmptyList } from "@/components/workbench/empty-list";
 import { PageHeader } from "@/components/workbench/page-header";
 import { SectionHeading } from "@/components/workbench/section-heading";
+import { formatDateTimeLabel } from "@/lib/date-time";
 import {
   buildQuestionDetailHref,
   buildQuestionsHref,
@@ -32,10 +33,6 @@ function countActiveFilters(filters: ListQuestionsQuery) {
     filters.difficulty,
     filters.sort !== "updated_at" ? filters.sort : undefined,
   ].filter((value) => value !== undefined).length;
-}
-
-function formatDateTime(value: string) {
-  return value.replace("T", " ").replace(/\.\d{3}Z$/, "Z");
 }
 
 function renderTagList(tags: string[]) {
@@ -265,7 +262,7 @@ export function QuestionBankWorkbench({
                         {item.sourceCount}
                       </td>
                       <td className="border-b border-border-muted px-3 py-4 text-sm text-text-muted">
-                        {formatDateTime(item.updatedAt)}
+                        {formatDateTimeLabel(item.updatedAt)}
                       </td>
                       <td className="border-b border-border-muted px-3 py-4 text-sm">
                         <Link

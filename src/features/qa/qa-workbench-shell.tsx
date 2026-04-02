@@ -4,8 +4,10 @@ import type {
   QaSessionDetail,
   RecentQaSession,
 } from "@/server/services/qa-session-service";
+import { SafeMarkdown } from "@/components/content/safe-markdown";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { formatDateTimeLabel } from "@/lib/date-time";
 import { formatCategoryLabelOrFallback } from "@/lib/taxonomy-display";
 import { cn } from "@/lib/utils";
 
@@ -17,21 +19,6 @@ type QaWorkbenchShellProps = {
   recentSessions: RecentQaSession[];
   activeSession?: QaSessionDetail;
 };
-
-function formatDateTime(value: string) {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value.replace("T", " ").replace(/\.\d{3}Z$/, "Z");
-  }
-
-  return new Intl.DateTimeFormat("zh-CN", {
-    month: "numeric",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
-}
 
 function toneForAnswerMode(answerMode: string | undefined) {
   if (answerMode === "grounded_answered") {
@@ -351,7 +338,7 @@ export function QaWorkbenchShell({
                           {session.latestUserQuery ?? "会话已创建，等待第一条问题。"}
                         </p>
                         <p className="mt-3 text-xs text-text-muted">
-                          {session.turnCount} 轮 · {formatDateTime(session.updatedAt)}
+                          {session.turnCount} 轮 · {formatDateTimeLabel(session.updatedAt)}
                         </p>
                       </Link>
 
@@ -395,7 +382,7 @@ export function QaWorkbenchShell({
                   {turns.length}
                 </span>
                 {" "}
-                轮对话 · 最近更新 {formatDateTime(activeSession.aiSession.updated_at)}
+                轮对话 · 最近更新 {formatDateTimeLabel(activeSession.aiSession.updated_at)}
               </div>
             ) : null}
           </div>
@@ -466,18 +453,20 @@ export function QaWorkbenchShell({
                             turn.role === "user" ? "text-white/75" : "text-text-muted",
                           )}
                         >
-                          {formatDateTime(turn.created_at)}
+                          {formatDateTimeLabel(turn.created_at)}
                         </span>
                       </div>
 
-                      <div
-                        className={cn(
-                          "mt-3 whitespace-pre-wrap text-[15px] leading-7",
-                          turn.role === "user" ? "text-white" : "text-text-strong",
-                        )}
-                      >
-                        {turn.content}
-                      </div>
+                      {turn.role === "assistant" ? (
+                        <SafeMarkdown
+                          className="mt-3"
+                          content={turn.content}
+                        />
+                      ) : (
+                        <div className="mt-3 whitespace-pre-wrap text-[15px] leading-7 text-white">
+                          {turn.content}
+                        </div>
+                      )}
 
                       {renderAssistantExtras(turn)}
                     </div>

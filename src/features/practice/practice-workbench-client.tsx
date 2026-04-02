@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import type { PracticeDimensionKey } from "@/lib/practice-dimensions";
 import type {
   AssessmentItem,
   AssessmentResultSummary,
@@ -29,6 +30,7 @@ import {
 } from "@/lib/taxonomy-display";
 
 import { PracticeProfileSummaryCard } from "./practice-profile-summary-card";
+import { PracticeRecentExamCard } from "./practice-recent-exam-card";
 import { PracticeProfileUpdates } from "./practice-profile-updates";
 import {
   PracticeRadarChart,
@@ -43,6 +45,10 @@ import {
 } from "./practice-view-model";
 
 type PracticeWorkbenchClientProps = {
+  activeDimension: {
+    key: PracticeDimensionKey;
+    label: string;
+  } | null;
   practicePool: PracticeQuestion[];
   recentExams: PracticeRecentExam[];
   practiceProfile: {
@@ -113,14 +119,6 @@ function shuffleArray<T>(items: T[]) {
   return copiedItems;
 }
 
-function formatDateTime(value: string | null | undefined) {
-  if (!value) {
-    return "未完成";
-  }
-
-  return value.replace("T", " ").replace(/\.\d{3}Z$/, "Z");
-}
-
 function buildExamState(
   payload: CreateAssessmentSessionResponseData | SubmitAssessmentSessionResponseData,
 ): ExamState {
@@ -165,34 +163,8 @@ function renderQuestionMeta(question: {
   );
 }
 
-function renderRecentExamCard(exam: PracticeRecentExam) {
-  const scoreText =
-    exam.total_score === null ? "评分失败" : `${exam.total_score}/${exam.max_score}`;
-
-  return (
-    <div
-      className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3"
-      key={exam.id}
-    >
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm font-semibold text-text-strong">{scoreText}</p>
-        <Badge tone={exam.status === "completed" ? "success" : "warning"}>
-          {exam.status}
-        </Badge>
-      </div>
-      <p className="mt-2 text-xs leading-5 text-text-muted">
-        {exam.question_count} 题 · {formatDateTime(exam.completed_at)}
-      </p>
-      <p className="mt-2 text-sm text-text-strong">
-        {exam.weak_labels.length > 0
-          ? `薄弱项：${exam.weak_labels.join(" / ")}`
-          : "暂无薄弱项摘要"}
-      </p>
-    </div>
-  );
-}
-
 export function PracticeWorkbenchClient({
+  activeDimension,
   practicePool,
   recentExams,
   practiceProfile,
@@ -245,6 +217,7 @@ export function PracticeWorkbenchClient({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          ...(activeDimension ? { dimension: activeDimension.key } : {}),
           question_count: 10,
         }),
       });
@@ -300,9 +273,17 @@ export function PracticeWorkbenchClient({
     if (practicePool.length === 0) {
       return (
         <EmptyList
-          title="题库还是空的"
-          description="当前还没有可练习的题目。先去导入资料或手工录题，再回来开始随机练习。"
-          bullets={["去导入页补充面经或知识点", "确认审核通过后题目会进入题库"]}
+          title={activeDimension ? "这个维度下还没有可练习题目" : "题库还是空的"}
+          description={
+            activeDimension
+              ? `当前还没有命中「${activeDimension.label}」的题目。可以退出过滤，或继续补充该维度相关题库。`
+              : "当前还没有可练习的题目。先去导入资料或手工录题，再回来开始随机练习。"
+          }
+          bullets={
+            activeDimension
+              ? ["退出过滤回到全量随机练习", "补充并审核该维度相关题目"]
+              : ["去导入页补充面经或知识点", "确认审核通过后题目会进入题库"]
+          }
         />
       );
     }
@@ -418,10 +399,16 @@ export function PracticeWorkbenchClient({
       return (
         <EmptyList
           title="可评分题目不足 10 道"
-          description="模拟考试只会抽取带标准答案的题目。当前题库的标准答案数量还不够 10 道，暂时无法开始考试。"
+          description={
+            activeDimension
+              ? `定向考试只会抽取命中「${activeDimension.label}」且带标准答案的题目。当前数量还不够 10 道，暂时无法开始考试。`
+              : "模拟考试只会抽取带标准答案的题目。当前题库的标准答案数量还不够 10 道，暂时无法开始考试。"
+          }
           bullets={[
             `当前带标准答案题目数：${answerReadyCount}`,
-            "先补充更多题库答案，再回来进行整套考试",
+            activeDimension
+              ? "退出过滤或继续补充该维度答案，再回来进行整套考试"
+              : "先补充更多题库答案，再回来进行整套考试",
           ]}
         />
       );
@@ -701,8 +688,12 @@ export function PracticeWorkbenchClient({
           </>
         }
         eyebrow="题库训练"
-        description="一边做快速随机刷题，一边把带标准答案的题目组成 10 题考试，输出总分、薄弱项、本场雷达和长期能力画像。"
-        title="随机练习"
+        description={
+          activeDimension
+            ? `当前按「${activeDimension.label}」定向练习；随机练习和模拟考试都会只使用该维度映射到的题目。`
+            : "一边做快速随机刷题，一边把带标准答案的题目组成 10 题考试，输出总分、薄弱项、本场雷达和长期能力画像。"
+        }
+        title={activeDimension ? "定向练习" : "随机练习"}
       />
 
       <DetailGrid
@@ -710,9 +701,26 @@ export function PracticeWorkbenchClient({
           { label: "题库总量", value: `${practicePool.length}` },
           { label: "可评分题", value: `${answerReadyCount}` },
           { label: "最近考试", value: `${recentExams.length}` },
+          {
+            label: "训练范围",
+            value: activeDimension ? activeDimension.label : "全量题库",
+          },
           { label: "当前模式", value: mode === "drill" ? "随机练习" : "模拟考试" },
         ]}
       />
+
+      {activeDimension ? (
+        <SurfaceCard className="space-y-4">
+          <SectionHeading
+            description="退出过滤后会回到全量随机练习与全量考试抽题。"
+            title={`当前定向维度：${activeDimension.label}`}
+          />
+          <div className="flex flex-wrap items-center gap-3">
+            <Badge tone="accent">题池已过滤</Badge>
+            <Button href="/practice">退出定向练习</Button>
+          </div>
+        </SurfaceCard>
+      ) : null}
 
       <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
         <div className="space-y-6">
@@ -728,6 +736,7 @@ export function PracticeWorkbenchClient({
           </SurfaceCard>
 
           <PracticeProfileSummaryCard
+            activeDimensionKey={activeDimension?.key}
             dimensions={profileState.dimensions}
             profile={profileState.profile}
           />
@@ -741,7 +750,13 @@ export function PracticeWorkbenchClient({
               />
             ) : (
               <div className="space-y-3">
-                {recentExams.map((exam) => renderRecentExamCard(exam))}
+                {recentExams.map((exam) => (
+                  <PracticeRecentExamCard
+                    activeDimensionKey={activeDimension?.key}
+                    exam={exam}
+                    key={exam.id}
+                  />
+                ))}
               </div>
             )}
           </SurfaceCard>

@@ -293,6 +293,11 @@ export const assessmentRepository = {
           questionCount: session.questionCount,
           completedAt: session.completedAt,
           weakLabels: (summary?.weak_areas ?? []).map((item) => item.label),
+          weakAreas: (summary?.weak_areas ?? []).map((item) => ({
+            key: item.key,
+            label: item.label,
+            averageScore: item.average_score,
+          })),
         };
       });
   },

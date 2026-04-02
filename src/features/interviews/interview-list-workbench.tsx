@@ -10,6 +10,7 @@ import { DetailGrid } from "@/components/workbench/detail-grid";
 import { EmptyList } from "@/components/workbench/empty-list";
 import { PageHeader } from "@/components/workbench/page-header";
 import { SectionHeading } from "@/components/workbench/section-heading";
+import { formatDateTimeLabel } from "@/lib/date-time";
 import { formatTagLabel } from "@/lib/taxonomy-display";
 import { interviewBrowseService } from "@/server/services/interview-browse-service";
 
@@ -52,8 +53,53 @@ function countActiveFilters(filters: ListInterviewsQuery) {
   return [filters.q, filters.company, filters.tag].filter(Boolean).length;
 }
 
-function formatDateTime(value: string) {
-  return value.replace("T", " ").replace(/\.\d{3}Z$/, "Z");
+function groupInterviewsByCompany(
+  items: ReturnType<typeof interviewBrowseService.listInterviews>["items"],
+) {
+  const groupedItems = new Map<string, typeof items>();
+
+  items.forEach((item) => {
+    const company = item.company ?? "未知公司";
+    const currentItems = groupedItems.get(company) ?? [];
+
+    currentItems.push(item);
+    groupedItems.set(company, currentItems);
+  });
+
+  return Array.from(groupedItems.entries()).map(([company, items]) => ({
+    company,
+    items,
+  }));
+}
+
+function getPromotionStatusMeta(
+  item: ReturnType<typeof interviewBrowseService.listInterviews>["items"][number],
+) {
+  if (item.questionCount === 0) {
+    return {
+      label: "暂无题目",
+      tone: "neutral" as const,
+    };
+  }
+
+  if (item.promotedQuestionCount === 0) {
+    return {
+      label: "待沉淀",
+      tone: "warning" as const,
+    };
+  }
+
+  if (item.promotedQuestionCount < item.questionCount) {
+    return {
+      label: "部分沉淀",
+      tone: "accent" as const,
+    };
+  }
+
+  return {
+    label: "已沉淀",
+    tone: "success" as const,
+  };
 }
 
 function renderTagList(tags: string[]) {
@@ -76,6 +122,7 @@ export function InterviewListWorkbench({
   facets,
   invalidQuery = false,
 }: InterviewListWorkbenchProps) {
+  const groupedInterviews = groupInterviewsByCompany(result.items);
   const rangeStart =
     result.total === 0 ? 0 : (result.page - 1) * result.pageSize + 1;
   const rangeEnd =
@@ -200,64 +247,80 @@ export function InterviewListWorkbench({
           {result.items.length === 0 ? (
             <EmptyList title="没有匹配面经" />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full border-separate border-spacing-0">
-                <thead>
-                  <tr className="text-left">
-                    {[
-                      "公司",
-                      "岗位 / 轮次",
-                      "摘要",
-                      "题目数",
-                      "标签",
-                      "更新时间",
-                    ].map((column) => (
-                      <th
-                        className="border-b border-border-muted px-3 py-3 font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted"
-                        key={column}
-                        scope="col"
-                      >
-                        {column}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {result.items.map((item) => (
-                    <tr className="align-top" key={item.id}>
-                      <td className="border-b border-border-muted px-3 py-4">
-                        <div className="space-y-2">
-                          <Link
-                            className="text-sm font-semibold text-text-strong hover:text-accent"
-                            href={`/interviews/${item.id}`}
-                          >
-                            {item.company ?? "未知公司"}
-                          </Link>
-                          <p className="text-sm text-text-muted">{item.sourceTitle}</p>
+            <div className="space-y-6">
+              {groupedInterviews.map((group) => (
+                <div className="space-y-3" key={group.company}>
+                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border-muted bg-surface-muted px-4 py-4">
+                    <div>
+                      <p className="text-lg font-semibold tracking-[-0.03em] text-text-strong">
+                        {group.company}
+                      </p>
+                      <p className="mt-1 text-sm text-text-muted">
+                        {group.items.length} 条面经
+                      </p>
+                    </div>
+                    <Badge>{group.items.length}</Badge>
+                  </div>
+
+                  <div className="grid gap-3">
+                    {group.items.map((item) => {
+                      const promotionStatus = getPromotionStatusMeta(item);
+
+                      return (
+                        <div
+                          className="rounded-2xl border border-border-muted bg-white px-4 py-4"
+                          key={item.id}
+                        >
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="space-y-2">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <Link
+                                  className="text-sm font-semibold text-text-strong hover:text-accent"
+                                  href={`/interviews/${item.id}`}
+                                >
+                                  {item.role ?? "未知岗位"} / {item.roundInfo ?? "轮次未标注"}
+                                </Link>
+                                <Badge tone={promotionStatus.tone}>
+                                  {promotionStatus.label}
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-text-muted">{item.sourceTitle}</p>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Badge>
+                                题目 {item.questionCount}
+                              </Badge>
+                              <Badge tone="success">
+                                已沉淀 {item.promotedQuestionCount}
+                              </Badge>
+                            </div>
+                          </div>
+
+                          <p className="mt-3 text-sm leading-6 text-text-strong">
+                            {item.summary ?? "还没有面经摘要。"}
+                          </p>
+
+                          <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-text-muted">
+                            <span>更新于 {formatDateTimeLabel(item.updatedAt)}</span>
+                            <span>待处理 {Math.max(0, item.questionCount - item.promotedQuestionCount)} 道</span>
+                          </div>
+
+                          <div className="mt-3 flex flex-wrap items-center gap-3">
+                            {renderTagList(item.tags)}
+                          </div>
+
+                          <div className="mt-4 flex flex-wrap gap-3">
+                            <Button href={`/interviews/${item.id}`} variant="primary">
+                              打开详情
+                            </Button>
+                            <Button href="/questions">查看题库</Button>
+                          </div>
                         </div>
-                      </td>
-                      <td className="border-b border-border-muted px-3 py-4 text-sm text-text-strong">
-                        <div>{item.role ?? "-"}</div>
-                        <div className="mt-1 text-text-muted">
-                          {item.roundInfo ?? "轮次未标注"}
-                        </div>
-                      </td>
-                      <td className="border-b border-border-muted px-3 py-4 text-sm text-text-strong">
-                        {item.summary ?? <span className="text-text-muted">-</span>}
-                      </td>
-                      <td className="border-b border-border-muted px-3 py-4 text-sm font-medium text-text-strong">
-                        {item.questionCount}
-                      </td>
-                      <td className="border-b border-border-muted px-3 py-4 text-sm">
-                        {renderTagList(item.tags)}
-                      </td>
-                      <td className="border-b border-border-muted px-3 py-4 text-sm text-text-muted">
-                        {formatDateTime(item.updatedAt)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 

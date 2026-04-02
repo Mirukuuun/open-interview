@@ -8,12 +8,9 @@ import { SectionHeading } from "@/components/workbench/section-heading";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SurfaceCard } from "@/components/ui/surface-card";
+import { formatDateTimeLabel } from "@/lib/date-time";
 
 import { StartDeepDiveSessionButton } from "./start-deep-dive-session-button";
-
-function formatDateTime(value: string) {
-  return value.replace("T", " ").replace(/\.\d{3}Z$/, "Z");
-}
 
 export function ProjectWorkbench({ project }: { project: ResumeProjectDetail }) {
   const latestSession = project.sessions[0];
@@ -130,7 +127,7 @@ export function ProjectWorkbench({ project }: { project: ResumeProjectDetail }) 
                       <Badge>{session.status}</Badge>
                     </div>
                     <p className="mt-3 text-xs text-text-muted">
-                      更新于 {formatDateTime(session.updated_at)}
+                      更新于 {formatDateTimeLabel(session.updated_at)}
                     </p>
                   </Link>
                 ))}

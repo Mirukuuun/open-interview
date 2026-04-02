@@ -6,6 +6,7 @@ import { SurfaceCard } from "@/components/ui/surface-card";
 import { DetailGrid } from "@/components/workbench/detail-grid";
 import { PageHeader } from "@/components/workbench/page-header";
 import { SectionHeading } from "@/components/workbench/section-heading";
+import { formatDateTimeLabel } from "@/lib/date-time";
 import { formatTagLabel } from "@/lib/taxonomy-display";
 import { interviewBrowseService } from "@/server/services/interview-browse-service";
 
@@ -16,10 +17,6 @@ type InterviewDetailWorkbenchProps = {
     ReturnType<typeof interviewBrowseService.getInterviewDetail>
   >;
 };
-
-function formatDateTime(value: string) {
-  return value.replace("T", " ").replace(/\.\d{3}Z$/, "Z");
-}
 
 function renderTagList(tags: string[]) {
   if (tags.length === 0) {
@@ -43,6 +40,15 @@ export function InterviewDetailWorkbench({
     interview.role ?? "未知岗位",
     interview.roundInfo ?? "未知轮次",
   ];
+  const promotedQuestionCount = interview.questions.filter(
+    (question) =>
+      question.sourceKind === "legacy_question_link" ||
+      question.promotedQuestions.length > 0,
+  ).length;
+  const pendingQuestionCount = Math.max(
+    0,
+    interview.questions.length - promotedQuestionCount,
+  );
 
   return (
     <div className="space-y-6">
@@ -65,8 +71,9 @@ export function InterviewDetailWorkbench({
         items={[
           { label: "来源标题", value: interview.sourceDocument.title },
           { label: "题目数", value: String(interview.questionCount) },
+          { label: "已沉淀", value: String(promotedQuestionCount) },
           { label: "来源类型", value: interview.sourceDocument.kind },
-          { label: "更新时间", value: formatDateTime(interview.updatedAt) },
+          { label: "更新时间", value: formatDateTimeLabel(interview.updatedAt) },
         ]}
       />
 
@@ -81,7 +88,7 @@ export function InterviewDetailWorkbench({
             </div>
           </SurfaceCard>
 
-          <SurfaceCard className="space-y-4">
+          <SurfaceCard className="space-y-4" id="interview-questions">
             <SectionHeading
               title={`关联题目（${interview.questions.length}）`}
             />
@@ -109,6 +116,27 @@ export function InterviewDetailWorkbench({
         </div>
 
         <div className="space-y-6">
+          <SurfaceCard className="space-y-4">
+            <SectionHeading
+              description="沉淀动作在下方题目列表中逐题执行；这里先给出当前完成度与快速入口。"
+              title="沉淀概览"
+            />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-4 text-sm text-text-strong">
+                已沉淀 {promotedQuestionCount} / {interview.questions.length}
+              </div>
+              <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-4 text-sm text-text-strong">
+                待处理 {pendingQuestionCount} 道
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Button href="#interview-questions" variant="primary">
+                继续沉淀题目
+              </Button>
+              <Button href="/questions">打开题库</Button>
+            </div>
+          </SurfaceCard>
+
           <SurfaceCard className="space-y-4" muted>
             <SectionHeading
               title="元信息"
@@ -139,7 +167,7 @@ export function InterviewDetailWorkbench({
               </div>
               <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
                 <span className="font-medium">更新时间:</span>{" "}
-                {formatDateTime(interview.sourceDocument.updatedAt)}
+                {formatDateTimeLabel(interview.sourceDocument.updatedAt)}
               </div>
               {interview.sourceDocument.fileName ? (
                 <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">

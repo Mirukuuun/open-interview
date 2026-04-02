@@ -8,14 +8,11 @@ import { SectionHeading } from "@/components/workbench/section-heading";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SurfaceCard } from "@/components/ui/surface-card";
+import { formatDateTimeLabel } from "@/lib/date-time";
 import { formatCategoryLabelOrFallback } from "@/lib/taxonomy-display";
 
 import { DeepDiveAnswerForm } from "./deep-dive-answer-form";
 import { StartDeepDiveSessionButton } from "./start-deep-dive-session-button";
-
-function formatDateTime(value: string) {
-  return value.replace("T", " ").replace(/\.\d{3}Z$/, "Z");
-}
 
 function renderTrace(
   retrievalLog: ResumeDeepDiveSessionDetail["turns"][number]["retrieval_log"],
@@ -74,6 +71,7 @@ export function ProjectSessionWorkbench({
   const latestAssistantTurn = [...detail.turns]
     .reverse()
     .find((turn) => turn.role === "assistant");
+  const latestCoachHints = latestAssistantTurn?.coach_hints ?? [];
 
   return (
     <div className="space-y-6">
@@ -129,7 +127,7 @@ export function ProjectSessionWorkbench({
                         {turn.role === "assistant" ? "interviewer" : turn.role}
                       </Badge>
                       <span className="font-mono text-xs text-text-muted">
-                        {formatDateTime(turn.created_at)}
+                        {formatDateTimeLabel(turn.created_at)}
                       </span>
                     </div>
                     <div className="mt-3 whitespace-pre-wrap text-sm leading-7 text-text-strong">
@@ -183,6 +181,26 @@ export function ProjectSessionWorkbench({
         </div>
 
         <div className="space-y-6">
+          <SurfaceCard className="space-y-4">
+            <SectionHeading title="当前 coach hints" />
+            {latestCoachHints.length > 0 ? (
+              <div className="space-y-3">
+                {latestCoachHints.map((hint) => (
+                  <div
+                    className="rounded-xl border border-border-muted bg-surface-muted px-4 py-4 text-sm leading-6 text-text-strong"
+                    key={hint}
+                  >
+                    {hint}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-border-strong bg-surface-muted px-4 py-4 text-sm text-text-muted">
+                当前还没有 coach hints。先完成一轮回答，系统会给出表达和补充建议。
+              </div>
+            )}
+          </SurfaceCard>
+
           <SurfaceCard className="space-y-4" muted>
             <SectionHeading title="Project context" />
             <div className="rounded-xl border border-border-strong bg-white px-4 py-4 text-sm leading-6 text-text-muted">
@@ -207,6 +225,26 @@ export function ProjectSessionWorkbench({
                 ))}
               </div>
             ) : null}
+          </SurfaceCard>
+
+          <SurfaceCard className="space-y-4">
+            <SectionHeading title="建议追问库" />
+            {detail.resumeProject.deep_dive_questions.length > 0 ? (
+              <div className="space-y-3">
+                {detail.resumeProject.deep_dive_questions.map((question) => (
+                  <div
+                    className="rounded-xl border border-border-muted bg-surface-muted px-4 py-4 text-sm leading-6 text-text-strong"
+                    key={question}
+                  >
+                    {question}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-border-strong bg-surface-muted px-4 py-4 text-sm text-text-muted">
+                这条项目暂时没有预置追问，先从左侧会话继续深挖。
+              </div>
+            )}
           </SurfaceCard>
 
           <SurfaceCard className="space-y-4">
