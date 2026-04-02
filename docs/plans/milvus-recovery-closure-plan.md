@@ -4,4 +4,4 @@
 [X] task4. 执行运行态收口：为现有 Milvus 容器设置 restart policy、确认 Milvus 健康，并清空 QA foundation backlog。
 [X] task5. 执行同构检查、`db:init`、`typecheck`、`lint`、`build`，验证本次改动不破坏交付链路。
 [X] task6. 在当前分支执行 `commit` 与 `push`，确保 Milvus 收口改动进入远端。
-[X] task7. 回归验证本地与线上 `/qa`、`/api/health`，确认 `vector_backend.status` 收敛到 `ok`；按用户要求不重复触发额外 deploy。
+[ ] task7. 执行 `corepack pnpm deploy:mvp` 并回归验证本地与线上 `/qa`、`/api/health`，确认 `vector_backend.status` 收敛到 `ok`。
