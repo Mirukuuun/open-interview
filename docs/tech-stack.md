@@ -258,7 +258,7 @@ Default implementation mode for bounded build slices:
 - keep one meaningful slice per run
 - require a short change report and known-risk summary after each run
 - treat deployment as part of the coding loop for this repo: after tests and acceptance finish, `commit` and `push` the current branch before running `corepack pnpm deploy:mvp`
-- `deploy:mvp` is the canonical server deploy path: `db:init -> build -> restart open-interview-mvp.service -> reload caddy.service -> smoke`
+- `deploy:mvp` is the canonical server deploy path: `db:init -> reuse current-HEAD .next build when possible (otherwise rebuild .next-runtime.stage) -> restart open-interview-mvp.service -> reload caddy.service -> smoke`
 
 Codex should always read first:
 - `docs/tech-stack.md`

@@ -55,5 +55,6 @@
 ## 交付约定
 
 - 面向当前服务器交付的需求，完成代码与检查后，先在当前分支执行 `commit` 与 `push`，再执行 `corepack pnpm deploy:mvp`
-- `deploy:mvp` 负责 `db:init`、构建 `.next-runtime.stage`、切换到 `.next-runtime`、启动正式服务、reload 代理与公网 smoke 验证
+- `pnpm build` 默认写 `.next`，并记录一份与当前 `HEAD` 对齐的可复用构建元数据，供部署链路判断是否可以直接复用
+- `deploy:mvp` 负责 `db:init`、优先复用当前 `HEAD` 的 `.next` 到 `.next-runtime.stage`（若不可复用则回退到重新构建 `.next-runtime.stage`）、切换到 `.next-runtime`、启动正式服务、reload 代理与公网 smoke 验证
 - 日常 `corepack pnpm build` 默认只更新本地 `.next`，不应再影响正式服务当前使用的 runtime 产物

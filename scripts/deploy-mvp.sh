@@ -104,11 +104,16 @@ ensure_runtime_dist_dropin
 echo "[deploy] apply database migrations"
 corepack pnpm db:init
 
-echo "[deploy] build app into ${RUNTIME_DIST_STAGE_DIR}"
 rm -rf "${RUNTIME_DIST_STAGE_DIR}"
-snapshot_typegen_files
-NEXT_DIST_DIR="${RUNTIME_DIST_STAGE_DIR}" corepack pnpm build
-restore_typegen_files
+
+if node scripts/reuse-build-artifact.mjs ".next" "${RUNTIME_DIST_STAGE_DIR}"; then
+  echo "[deploy] reused existing local build for ${RUNTIME_DIST_STAGE_DIR}"
+else
+  echo "[deploy] build app into ${RUNTIME_DIST_STAGE_DIR}"
+  snapshot_typegen_files
+  NEXT_DIST_DIR="${RUNTIME_DIST_STAGE_DIR}" corepack pnpm build
+  restore_typegen_files
+fi
 
 echo "[deploy] stop ${APP_SERVICE}"
 systemctl stop "${APP_SERVICE}"
