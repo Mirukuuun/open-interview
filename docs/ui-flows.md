@@ -77,7 +77,7 @@ Rules:
 Required elements:
 - app title: `Open Interview`
 - optional global search trigger
-- current provider/system status indicator (optional in MVP)
+- current provider/system status indicator (optional in MVP, but when present it should reflect server-derived runtime state instead of static placeholder copy)
 - theme switch (optional in MVP)
 
 Do not put business-critical actions only in the top bar.

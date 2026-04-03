@@ -66,6 +66,10 @@ Operational health probe.
 
 ### Response highlights
 - `status` stays `ok` for the web service envelope.
+- `data.llm_provider` exposes the current LLM runtime hint:
+  - `configured`
+  - `status = connected | not_configured | timeout | connection_error | response_error`
+  - `message`
 - `data.vector_backend` exposes Milvus foundation state:
   - `enabled`
   - `status = ok | pending | disabled | degraded`

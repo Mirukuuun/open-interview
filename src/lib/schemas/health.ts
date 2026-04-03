@@ -1,5 +1,17 @@
 import { z } from "zod";
 
+export const llmProviderHealthSchema = z.object({
+  configured: z.boolean(),
+  status: z.enum([
+    "connected",
+    "not_configured",
+    "timeout",
+    "connection_error",
+    "response_error",
+  ]),
+  message: z.string().min(1),
+});
+
 const vectorHealthJobSchema = z.object({
   id: z.string().min(1),
   jobType: z.enum(["backfill", "delete_chunk", "rebuild"]),
@@ -36,7 +48,9 @@ export const healthPayloadSchema = z.object({
   status: z.literal("ok"),
   environment: z.enum(["development", "production", "test"]),
   timestamp: z.string().datetime(),
+  llm_provider: llmProviderHealthSchema,
   vector_backend: vectorBackendHealthSchema,
 });
 
 export type HealthPayload = z.infer<typeof healthPayloadSchema>;
+export type LlmProviderHealth = z.infer<typeof llmProviderHealthSchema>;

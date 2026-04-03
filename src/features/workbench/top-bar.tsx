@@ -1,7 +1,36 @@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import type { LlmProviderHealth } from "@/lib/schemas/health";
+import { cn } from "@/lib/utils";
 
-export function TopBar() {
+type TopBarProps = {
+  llmProvider: LlmProviderHealth;
+};
+
+function getLlmProviderTone(status: LlmProviderHealth["status"]) {
+  if (status === "connected") {
+    return {
+      containerClassName: "border border-transparent bg-success-soft text-success",
+      dotClassName: "bg-[color:var(--success)]",
+    };
+  }
+
+  if (status === "not_configured") {
+    return {
+      containerClassName: "border border-border-muted bg-surface-muted text-text-muted",
+      dotClassName: "bg-[color:var(--border-strong)]",
+    };
+  }
+
+  return {
+    containerClassName: "border border-amber-200 bg-amber-50 text-warning",
+    dotClassName: "bg-[color:var(--warning)]",
+  };
+}
+
+export function TopBar({ llmProvider }: TopBarProps) {
+  const tone = getLlmProviderTone(llmProvider.status);
+
   return (
     <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-border-strong bg-background/90 px-4 py-3.5 backdrop-blur sm:px-5 lg:flex-row lg:items-center lg:justify-between">
       <div className="space-y-1">
@@ -25,9 +54,14 @@ export function TopBar() {
             readOnly
           />
         </div>
-        <div className="flex min-h-10 items-center gap-2 self-start rounded-full border border-border-strong bg-white/92 px-3 py-2 text-xs text-text-muted">
-          <span className="h-2 w-2 rounded-full bg-warning" />
-          模型服务未连接
+        <div
+          className={cn(
+            "flex min-h-10 items-center gap-2 self-start rounded-full px-3 py-2 text-xs",
+            tone.containerClassName,
+          )}
+        >
+          <span className={cn("h-2 w-2 rounded-full", tone.dotClassName)} />
+          {llmProvider.message}
         </div>
       </div>
     </header>

@@ -11,19 +11,29 @@ type JsonObjectRequest = {
   input: string;
   maxOutputTokens?: number;
   task?: "parse_interview" | "qa";
+  timeoutMs?: number;
 };
 
 async function resolveProviderConfigs(
-  task: JsonObjectRequest["task"] = "parse_interview",
+  request: Pick<JsonObjectRequest, "task" | "timeoutMs">,
 ): Promise<OpenClawProviderConfig[]> {
   try {
     const configuredProviders = await readOpenClawConfiguredProviders();
-
-    return resolveOpenClawLlmProviderConfigs({
+    const configs = resolveOpenClawLlmProviderConfigs({
       env: process.env,
-      task,
+      task: request.task ?? "parse_interview",
       configuredProviders,
     });
+    const timeoutMs = request.timeoutMs;
+
+    if (timeoutMs === undefined) {
+      return configs;
+    }
+
+    return configs.map((config) => ({
+      ...config,
+      timeoutMs,
+    }));
   } catch (error) {
     throw new OpenClawResponsesClientError(
       "provider_config_error",
@@ -317,7 +327,10 @@ async function createJsonObjectWithProvider(
 
 export const openClawLlmClient = {
   async createJsonObject(request: JsonObjectRequest) {
-    const configs = await resolveProviderConfigs(request.task);
+    const configs = await resolveProviderConfigs({
+      task: request.task,
+      timeoutMs: request.timeoutMs,
+    });
     const errors: Array<{ provider: string; error: string }> = [];
     let lastError: unknown = null;
 
