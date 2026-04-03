@@ -11,7 +11,7 @@ export type PracticeRadarChartDimension = {
 
 type PracticeRadarChartProps = {
   title: string;
-  description: string;
+  description?: string;
   dimensions: PracticeRadarChartDimension[];
   highlightedKeys?: string[];
 };
@@ -68,7 +68,9 @@ export function PracticeRadarChart({
     <SurfaceCard className="space-y-4">
       <div className="space-y-1" id={descriptionId}>
         <h3 className="text-sm font-semibold text-text-strong">{title}</h3>
-        <p className="text-sm leading-6 text-text-muted">{description}</p>
+        {description ? (
+          <p className="text-sm leading-6 text-text-muted">{description}</p>
+        ) : null}
       </div>
 
       <div className="overflow-x-auto">
@@ -181,7 +183,7 @@ export function PracticeRadarChart({
       <div className="grid gap-2 md:grid-cols-2" id={`${descriptionId}-table`}>
         {dimensions.map((dimension) => (
           <div
-            className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3"
+            className="rounded-[18px] border border-border-muted bg-surface-muted px-4 py-3"
             key={dimension.key}
           >
             <div className="flex items-center justify-between gap-3">

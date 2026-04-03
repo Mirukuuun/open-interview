@@ -101,7 +101,6 @@ export function ImportWorkbench({
             <Button href="/questions">打开题库</Button>
           </>
         }
-        description="在单页内完成上传、粘贴或手工录题，然后把解析后的候选结果送进审核队列继续沉淀。"
         highlights={[
           {
             label: "当前重点",

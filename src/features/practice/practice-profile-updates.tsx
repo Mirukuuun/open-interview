@@ -15,10 +15,7 @@ export function PracticeProfileUpdates({ updates }: PracticeProfileUpdatesProps)
 
   return (
     <SurfaceCard className="space-y-4">
-      <SectionHeading
-        description="只列出本次考试实际发生增量更新的维度。"
-        title="画像更新"
-      />
+      <SectionHeading title="画像更新" />
       <div className="grid gap-3 lg:grid-cols-2">
         {updates.map((update) => (
           <SurfaceCard className="space-y-2" key={update.key} muted>

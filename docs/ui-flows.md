@@ -3,7 +3,7 @@
 - doc_type: ui_flows
 - audience: agents / implementers
 - status: active
-- updated_at: 2026-04-02
+- updated_at: 2026-04-03
 - parent_doc: `docs/technical-design.md`
 - canonical_for: route map, page states, component boundaries, UI data dependencies, interaction flows
 
@@ -40,17 +40,12 @@
 
 ```text
 ┌────────────────────────────────────────────────────────────┐
-│ Top bar: project title | global search | theme | status   │
+│ Top bar: project title | global search | status           │
 ├───────────────┬────────────────────────────────────────────┤
 │ Left nav      │ Main content area                         │
-│               │                                            │
-│ Import        │ Route-dependent page                       │
-│ Review Queue  │                                            │
-│ Question Bank │                                            │
-│ Random Practice│                                           │
-│ Interviews    │                                            │
-│ AI Review     │                                            │
-│ Resume        │                                            │
+│ expand/collapse│                                           │
+│ icon + label  │ route-dependent page                       │
+│ or icon only  │                                            │
 └───────────────┴────────────────────────────────────────────┘
 ```
 
@@ -74,6 +69,8 @@ Rules:
 - `Question Bank` is expected to be the default landing page after the system has data.
 - Initial empty product can land on `Import`.
 - `/` should redirect by workspace state: empty bank -> `/import`, existing bank -> `/questions`.
+- Desktop nav should support `expanded` and `collapsed` states; collapsed mode keeps icons, active state, tooltip, and simplified review badge.
+- First visit defaults to expanded; route changes should preserve the user’s last manual choice.
 
 ## 1.3 Top bar contract
 
@@ -434,16 +431,19 @@ Purpose:
 - 10-question mock exam with feedback, exam radar, and long-term practice profile
 
 ### Layout
-Recommended 2-column layout:
+Recommended top-overview + workspace/history layout:
 
 ```text
-┌──────────────────────────┬──────────────────────────────────┐
-│ Left: mode + recent      │ Right: active workspace         │
-│                          │                                  │
-│ Random Practice intro    │ drill question or exam form     │
-│ Practice profile card    │ result summary / dual radar     │
-│ recent exam snapshots    │ weak areas / per-question review│
-└──────────────────────────┴──────────────────────────────────┘
+┌────────────────────────────────────────────────────────────┐
+│ Top overview card                                          │
+│ mode switch | stat strip | long-term profile 2x3           │
+└────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────┬──────────────────────────┐
+│ Left: active workspace           │ Right: recent exams      │
+│ drill question or exam form      │ compact 2-3 history rows │
+│ result summary / radar / review  │ dimension shortcuts      │
+└──────────────────────────────────┴──────────────────────────┘
 ```
 
 ### Modes
@@ -495,6 +495,9 @@ Rules:
 - Do not reveal the reference answer before the user explicitly asks.
 - Mock exam must preserve a stable question snapshot for the whole session.
 - Active dimension filter must be explicit and dismissible within one click.
+- Long-term profile belongs inside the top overview card rather than a separate fixed sidebar.
+- During drill / exam, the top card should compress but still keep the full 6-dimension profile visible in compact form.
+- During active exam answering, the page should collapse to a single-column focus layout and hide the recent-exam side rail.
 - Result page should make weak areas and next-study direction obvious within one screen.
 - Result page must explicitly distinguish `本次考试雷达` and `长期能力画像`; they are not the same widget with different titles.
 - MVP-2 fixed profile dimensions are:

@@ -11,13 +11,13 @@
   --font-sans: "IBM Plex Sans", "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", "SFMono-Regular", monospace;
 
-  --background: #f5f3ff;
-  --surface-strong: #ffffff;
-  --surface-muted: #faf9fe;
+  --background: #f6f4f8;
+  --surface-strong: #fffeff;
+  --surface-muted: #f7f5f9;
   --surface-nav: #1e1b4b;
   --surface-nav-muted: #312e81;
-  --border-strong: #dfdcf8;
-  --border-muted: #ebe9fc;
+  --border-strong: #ddd8e9;
+  --border-muted: #ebe6f1;
   --text-strong: #1e1b4b;
   --text-muted: #5d5b84;
   --text-inverse: #f8fafc;
@@ -63,9 +63,9 @@ body {
   margin: 0;
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(129, 140, 248, 0.2), transparent 28%),
-    radial-gradient(circle at top right, rgba(16, 185, 129, 0.1), transparent 24%),
-    linear-gradient(180deg, #faf8ff 0%, var(--background) 32%, #f7f6ff 100%);
+    radial-gradient(circle at top left, rgba(129, 140, 248, 0.12), transparent 26%),
+    radial-gradient(circle at top right, rgba(16, 185, 129, 0.08), transparent 22%),
+    linear-gradient(180deg, #fbfafc 0%, var(--background) 34%, #f4f2f7 100%);
   color: var(--text-strong);
   font-family: var(--font-sans);
 }
@@ -91,20 +91,49 @@ summary {
     border-color 180ms ease,
     background-color 180ms ease,
     box-shadow 180ms ease,
+    color 180ms ease,
     transform 180ms ease;
 }
 
 .interactive-card:hover {
-  border-color: var(--accent);
-  background-color: color-mix(in srgb, var(--accent-soft) 55%, white);
+  border-color: color-mix(in srgb, var(--accent) 24%, var(--border-strong));
+  background-color: color-mix(in srgb, var(--accent-soft) 28%, white);
 }
 
 .interactive-card:focus-visible {
   outline: none;
   border-color: var(--accent);
   box-shadow:
-    0 0 0 3px color-mix(in srgb, var(--accent-soft) 78%, white),
-    0 1px 0 rgba(99, 102, 241, 0.08);
+    0 0 0 3px color-mix(in srgb, var(--accent-soft) 74%, white),
+    0 1px 0 rgba(99, 102, 241, 0.06);
+}
+
+.sidebar-tooltip {
+  pointer-events: none;
+  position: absolute;
+  left: calc(100% + 0.75rem);
+  top: 50%;
+  z-index: 30;
+  transform: translateY(-50%) translateX(-6px);
+  opacity: 0;
+  white-space: nowrap;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(15, 23, 42, 0.94);
+  padding: 0.45rem 0.7rem;
+  color: white;
+  font-size: 0.75rem;
+  line-height: 1;
+  transition:
+    opacity 200ms ease-out,
+    transform 200ms ease-out;
+}
+
+.group:hover > .sidebar-tooltip,
+.group:focus-visible > .sidebar-tooltip,
+.group:focus-within > .sidebar-tooltip {
+  transform: translateY(-50%) translateX(0);
+  opacity: 1;
 }
 
 .reveal-list > * {

@@ -59,10 +59,7 @@ export function ResumeWorkbench({ workspace }: { workspace: ResumeWorkspace }) {
       />
 
       <SurfaceCard className="space-y-4">
-        <SectionHeading
-          description="这里优先暴露可继续深挖的项目、已提取亮点和当前简历来源，让项目表达训练不再停留在占位态。"
-          title="项目表达训练入口"
-        />
+        <SectionHeading title="项目表达训练入口" />
         {spotlightProjects.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border-strong bg-surface-muted px-4 py-4 text-sm leading-6 text-text-muted">
             还没有可继续深挖的项目。先保存并解析简历，写入结构化项目后，这里会展示可继续训练的重点项目。

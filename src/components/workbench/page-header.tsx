@@ -18,7 +18,6 @@ type PageHeaderProps = {
 export function PageHeader({
   eyebrow = "工作台",
   title,
-  description,
   actions,
   className,
   highlights = [],
@@ -26,24 +25,17 @@ export function PageHeader({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-[32px] border border-border-strong bg-[linear-gradient(135deg,rgba(238,242,255,0.98)_0%,rgba(255,255,255,0.98)_50%,rgba(209,250,229,0.68)_100%)] p-6 shadow-[0_1px_0_rgba(99,102,241,0.06)]",
+        "overflow-hidden rounded-[26px] border border-border-strong bg-[linear-gradient(180deg,rgba(250,248,253,0.98)_0%,rgba(255,255,255,0.97)_100%)] p-5 shadow-[0_1px_0_rgba(15,23,42,0.04)] sm:p-6",
         className,
       )}
     >
-      <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-        <div className="space-y-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge tone="accent">{eyebrow}</Badge>
-          </div>
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-[-0.05em] text-text-strong sm:text-[2.15rem]">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="space-y-3">
+          <Badge tone="accent">{eyebrow}</Badge>
+          <div className="space-y-1">
+            <h1 className="text-[1.65rem] font-semibold tracking-[-0.04em] text-text-strong sm:text-[1.8rem]">
               {title}
             </h1>
-            {description ? (
-              <p className="max-w-3xl text-sm leading-7 text-text-muted sm:text-[15px]">
-                {description}
-              </p>
-            ) : null}
           </div>
         </div>
         {actions ? (
@@ -51,21 +43,21 @@ export function PageHeader({
         ) : null}
       </div>
       {highlights.length > 0 ? (
-        <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-5 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
           {highlights.map((highlight) => (
             <div
-              className="rounded-[24px] border border-white/80 bg-white/84 px-4 py-4 backdrop-blur"
+              className="rounded-[18px] border border-border-muted bg-white/82 px-4 py-3"
               key={`${highlight.label}-${highlight.value}`}
             >
-              <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-text-muted">
-                {highlight.label}
-              </p>
-              <p className="mt-2 text-2xl font-bold tracking-[-0.05em] text-text-strong">
-                {highlight.value}
-              </p>
-              {highlight.meta ? (
-                <p className="mt-2 text-xs leading-5 text-text-muted">{highlight.meta}</p>
-              ) : null}
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-text-muted">
+                  {highlight.label}
+                </p>
+                <p className="text-lg font-semibold tracking-[-0.03em] text-text-strong">
+                  {highlight.value}
+                </p>
+              </div>
+              {highlight.meta ? <p className="mt-1.5 text-xs leading-5 text-text-muted">{highlight.meta}</p> : null}
             </div>
           ))}
         </div>

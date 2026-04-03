@@ -22,25 +22,27 @@ export function PracticeRecentExamCard({
       : Math.min(100, (totalScore / exam.max_score) * 100);
 
   return (
-    <div className="rounded-[24px] border border-border-muted bg-surface-muted px-4 py-4">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-lg font-bold tracking-[-0.04em] text-text-strong">
-          {scoreText}
-        </p>
+    <div className="rounded-[20px] border border-border-muted bg-surface-muted px-4 py-3.5">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-base font-semibold tracking-[-0.03em] text-text-strong">
+            {scoreText}
+          </p>
+          <p className="mt-1 text-xs leading-5 text-text-muted">
+            {exam.question_count} 题 · {formatDateTimeLabel(exam.completed_at)}
+          </p>
+        </div>
         <Badge tone={exam.status === "completed" ? "success" : "warning"}>
-          {exam.status}
+          {exam.status === "completed" ? "完成" : "失败"}
         </Badge>
       </div>
-      <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
+      <div className="mt-3 h-1 overflow-hidden rounded-full bg-white">
         <div
           className="h-full rounded-full bg-accent"
           style={{ width: `${scoreRatio}%` }}
         />
       </div>
       <p className="mt-2 text-xs leading-5 text-text-muted">
-        {exam.question_count} 题 · {formatDateTimeLabel(exam.completed_at)}
-      </p>
-      <p className="mt-2 text-sm text-text-strong">
         {exam.weak_labels.length > 0
           ? `薄弱项：${exam.weak_labels.join(" / ")}`
           : "暂无薄弱项摘要"}
@@ -49,6 +51,7 @@ export function PracticeRecentExamCard({
         <div className="mt-3 flex flex-wrap gap-2">
           {exam.weak_areas.map((area) => (
             <Button
+              className="h-8 rounded-full px-3 text-xs"
               href={`/practice?dimension=${area.key}`}
               key={`${exam.id}-${area.key}`}
               variant={activeDimensionKey === area.key ? "primary" : "secondary"}

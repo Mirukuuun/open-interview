@@ -20,7 +20,6 @@ export function ResumeDetailPlaceholder({
             <Button variant="primary">View extracted projects</Button>
           </>
         }
-        description="This direct-entry resume route reserves a stable place for one structured resume document and its extracted project list."
         routeLabel={`/resume/${resumeId}`}
         title="Resume detail"
       />
@@ -36,10 +35,7 @@ export function ResumeDetailPlaceholder({
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.8fr)]">
         <SurfaceCard className="space-y-5">
-          <SectionHeading
-            description="Parsed resume summary and project list will live here."
-            title="Resume summary"
-          />
+          <SectionHeading title="Resume summary" />
           <div className="rounded-xl border border-dashed border-border-strong bg-surface-muted p-5 text-sm leading-6 text-text-muted">
             Resume metadata, parse status, and extracted projects are intentionally
             deferred to Slice 6.
@@ -47,10 +43,7 @@ export function ResumeDetailPlaceholder({
         </SurfaceCard>
 
         <SurfaceCard className="space-y-5" muted>
-          <SectionHeading
-            description="This rail will keep key resume metadata in view."
-            title="Resume metadata"
-          />
+          <SectionHeading title="Resume metadata" />
           <div className="space-y-3 text-sm text-text-muted">
             <div className="rounded-xl border border-border-strong bg-white px-4 py-3">
               Candidate name placeholder

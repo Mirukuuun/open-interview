@@ -1,46 +1,38 @@
 "use client";
 
+/*
+[POS] /practice 客户端状态编排入口，负责协调顶部总览、练习/考试主舞台和最近考试历史区。
+[IN] 当前激活维度、练习题池、最近考试摘要、长期能力画像。
+[OUT] 发起随机练习、创建/提交模拟考试，并将结果回流到当前页面状态。
+@feature open-interview-practice-feature.md
+@AI_INSTRUCTION 一旦本文件被更新，务必同步更新本注释，以及对应的 L2 文档。
+*/
+
 import { useState } from "react";
-import { LoaderCircle, Target } from "lucide-react";
 
 import type { PracticeDimensionKey } from "@/lib/practice-dimensions";
 import type {
-  AssessmentItem,
-  AssessmentResultSummary,
-  AssessmentResultSummaryV2,
   CreateAssessmentSessionResponseData,
   PracticeProfile,
   PracticeProfileDimension,
   PracticeQuestion,
   PracticeRecentExam,
-  PracticeProfileUpdate,
   SubmitAssessmentSessionResponseData,
 } from "@/lib/schemas/practice";
-import { isAssessmentResultSummaryV2 } from "@/lib/schemas/practice";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { SurfaceCard } from "@/components/ui/surface-card";
-import { Textarea } from "@/components/ui/textarea";
-import { EmptyList } from "@/components/workbench/empty-list";
-import { PageHeader } from "@/components/workbench/page-header";
-import { SectionHeading } from "@/components/workbench/section-heading";
-import {
-  formatCategoryLabelOrFallback,
-  formatTagLabel,
-} from "@/lib/taxonomy-display";
 
-import { PracticeProfileUpdates } from "./practice-profile-updates";
-import { PracticeSidebar } from "./practice-sidebar";
+import { PracticeDrillPanel } from "./practice-drill-panel";
+import { PracticeExamPanel } from "./practice-exam-panel";
+import { PracticeOverviewCard } from "./practice-overview-card";
+import { PracticeRecentExamsPanel } from "./practice-recent-exams-panel";
 import {
-  PracticeRadarChart,
-  type PracticeRadarChartDimension,
-} from "./practice-radar-chart";
+  buildExamState,
+  shuffleArray,
+  type DrillState,
+  type ExamState,
+  type PracticeMode,
+} from "./practice-workbench-state";
 import {
   buildProfileStateFromExamResult,
-  toExamRadarChartDimensions,
-  toLegacyRadarChartDimensions,
-  toProfileRadarChartDimensions,
   type PracticeProfileState,
 } from "./practice-view-model";
 
@@ -71,23 +63,6 @@ type ApiFailure = {
   };
 };
 
-type PracticeMode = "drill" | "exam";
-
-type DrillState = {
-  queue: PracticeQuestion[];
-  currentIndex: number;
-  revealed: boolean;
-};
-
-type ExamState = {
-  sessionId: string;
-  items: AssessmentItem[];
-  answers: Record<string, string>;
-  resultSummary: AssessmentResultSummary | null;
-  totalScore: number | null;
-  maxScore: number;
-};
-
 async function readApiResponse<T>(response: Response) {
   const payload = (await response.json().catch(() => null)) as
     | ApiSuccess<T>
@@ -105,62 +80,22 @@ async function readApiResponse<T>(response: Response) {
   return payload.data;
 }
 
-function shuffleArray<T>(items: T[]) {
-  const copiedItems = [...items];
-
-  for (let index = copiedItems.length - 1; index > 0; index -= 1) {
-    const randomIndex = Math.floor(Math.random() * (index + 1));
-    const currentValue = copiedItems[index];
-
-    copiedItems[index] = copiedItems[randomIndex] as T;
-    copiedItems[randomIndex] = currentValue as T;
+function getOverviewDensity({
+  drillState,
+  examState,
+}: {
+  drillState: DrillState | null;
+  examState: ExamState | null;
+}) {
+  if (examState && !examState.resultSummary) {
+    return "minimal" as const;
   }
 
-  return copiedItems;
-}
+  if (drillState || examState?.resultSummary) {
+    return "compact" as const;
+  }
 
-function buildExamState(
-  payload: CreateAssessmentSessionResponseData | SubmitAssessmentSessionResponseData,
-): ExamState {
-  return {
-    sessionId: payload.assessment_session.id,
-    items: payload.items,
-    answers: Object.fromEntries(
-      payload.items.map((item) => [item.id, item.user_answer ?? ""]),
-    ),
-    resultSummary:
-      "result_summary" in payload ? payload.result_summary ?? null : null,
-    totalScore: payload.assessment_session.total_score ?? null,
-    maxScore: payload.assessment_session.max_score,
-  };
-}
-
-function renderWeakAreaBadges(
-  weakAreas: AssessmentResultSummaryV2["weak_areas"] | AssessmentResultSummary["weak_areas"],
-) {
-  return weakAreas.map((area) => (
-    <Badge key={area.key} tone="warning">
-      {area.label} {area.average_score.toFixed(1)}
-    </Badge>
-  ));
-}
-
-function renderQuestionMeta(question: {
-  category?: string | null;
-  difficulty?: string | null;
-  tags: string[];
-}) {
-  return (
-    <div className="flex flex-wrap gap-2">
-      <Badge tone="accent">
-        {formatCategoryLabelOrFallback(question.category, "未分类")}
-      </Badge>
-      {question.difficulty ? <Badge>{question.difficulty}</Badge> : null}
-      {question.tags.slice(0, 3).map((tag) => (
-        <Badge key={tag}>{formatTagLabel(tag) ?? tag}</Badge>
-      ))}
-    </div>
-  );
+  return "full" as const;
 }
 
 export function PracticeWorkbenchClient({
@@ -182,11 +117,12 @@ export function PracticeWorkbenchClient({
   const answerReadyCount = practicePool.filter(
     (question) => Boolean(question.canonical_answer),
   ).length;
-  const currentDrillQuestion = drillState?.queue[drillState.currentIndex];
   const isExamTaking =
     mode === "exam" && examState !== null && examState.resultSummary === null;
+  const overviewDensity = getOverviewDensity({ drillState, examState });
 
   function startDrill() {
+    setMode("drill");
     setDrillState({
       queue: shuffleArray(practicePool),
       currentIndex: 0,
@@ -206,6 +142,12 @@ export function PracticeWorkbenchClient({
         revealed: false,
       };
     });
+  }
+
+  function handleRevealAnswer() {
+    setDrillState((currentState) =>
+      currentState ? { ...currentState, revealed: true } : currentState,
+    );
   }
 
   async function handleCreateExam() {
@@ -232,6 +174,22 @@ export function PracticeWorkbenchClient({
     } finally {
       setIsCreatingExam(false);
     }
+  }
+
+  function handleExamAnswerChange(itemId: string, value: string) {
+    setExamState((currentState) => {
+      if (!currentState) {
+        return currentState;
+      }
+
+      return {
+        ...currentState,
+        answers: {
+          ...currentState.answers,
+          [itemId]: value,
+        },
+      };
+    });
   }
 
   async function handleSubmitExam() {
@@ -271,529 +229,60 @@ export function PracticeWorkbenchClient({
     }
   }
 
-  function renderDrillPanel() {
-    if (practicePool.length === 0) {
-      return (
-        <EmptyList
-          title={activeDimension ? "这个维度下还没有可练习题目" : "题库还是空的"}
-          description={
-            activeDimension
-              ? `当前还没有命中「${activeDimension.label}」的题目。可以退出过滤，或继续补充该维度相关题库。`
-              : "当前还没有可练习的题目。先去导入资料或手工录题，再回来开始随机练习。"
-          }
-          bullets={
-            activeDimension
-              ? ["退出过滤回到全量随机练习", "补充并审核该维度相关题目"]
-              : ["去导入页补充面经或知识点", "确认审核通过后题目会进入题库"]
-          }
-          icon={Target}
-          action={{ href: "/import", label: "先去补题库" }}
-        />
-      );
-    }
-
-    if (!drillState) {
-      return (
-        <SurfaceCard className="space-y-5">
-          <SectionHeading
-            description="每轮会把当前题库完整洗牌一次；单轮内题目不重复，刷新页面则视为新一轮。"
-            title="开始随机练习"
-          />
-          <div className="flex flex-wrap gap-2">
-            <Badge tone="accent">题池 {practicePool.length}</Badge>
-            <Badge tone="success">可评分 {answerReadyCount}</Badge>
-            <Badge>单轮不重复</Badge>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Button onClick={startDrill} variant="primary">
-              开始练习
-            </Button>
-            <Button href="/questions">查看题库</Button>
-          </div>
-        </SurfaceCard>
-      );
-    }
-
-    if (!currentDrillQuestion) {
-      return (
-        <SurfaceCard className="space-y-4">
-          <SectionHeading
-            description="这一轮题目已经全部刷完。可以立即重新洗牌再来一轮。"
-            title="本轮完成"
-          />
-          <div className="flex flex-wrap gap-3">
-            <Button onClick={startDrill} variant="primary">
-              重新开始
-            </Button>
-            <Button onClick={() => setDrillState(null)}>返回起点</Button>
-          </div>
-        </SurfaceCard>
-      );
-    }
-
-    return (
-      <div className="space-y-5">
-        <div className="rounded-[24px] border border-border-strong bg-[linear-gradient(180deg,rgba(238,242,255,0.78)_0%,rgba(255,255,255,0.98)_100%)] px-5 py-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-text-muted">
-                练习进度
-              </p>
-              <p className="mt-2 text-2xl font-bold tracking-[-0.05em] text-text-strong">
-                第 {drillState.currentIndex + 1} / {drillState.queue.length} 题
-              </p>
-            </div>
-            <Badge tone="accent">
-              {drillState.revealed ? "已揭晓答案" : "正在作答"}
-            </Badge>
-          </div>
-          <div className="mt-4 h-2 overflow-hidden rounded-full bg-white">
-            <div
-              className="h-full rounded-full bg-accent"
-              style={{
-                width: `${((drillState.currentIndex + 1) / drillState.queue.length) * 100}%`,
-              }}
-            />
-          </div>
-        </div>
-
-        <SurfaceCard className="space-y-5">
-          <SectionHeading
-            description="先自己回答，再点击“查看答案”。"
-            title="当前题目"
-          />
-          {renderQuestionMeta(currentDrillQuestion)}
-          <p className="text-lg font-semibold leading-8 text-text-strong">
-            {currentDrillQuestion.question_text}
-          </p>
-          {drillState.revealed ? (
-            <SurfaceCard muted className="space-y-3">
-              <SectionHeading title="参考答案" />
-              <p className="whitespace-pre-wrap text-sm leading-7 text-text-strong">
-                {currentDrillQuestion.canonical_answer ?? "这道题暂时还没有整理好的标准答案。"}
-              </p>
-            </SurfaceCard>
-          ) : (
-            <SurfaceCard muted>
-              <p className="text-sm leading-6 text-text-muted">
-                现在只展示题目本身。你可以先口头回答，或者在纸上记下自己的答题框架。
-              </p>
-            </SurfaceCard>
-          )}
-          <div className="flex flex-wrap gap-3">
-            {!drillState.revealed ? (
-              <Button
-                onClick={() =>
-                  setDrillState((currentState) =>
-                    currentState ? { ...currentState, revealed: true } : currentState,
-                  )
-                }
-                variant="primary"
-              >
-                查看答案
-              </Button>
-            ) : (
-              <Button onClick={handleNextDrillQuestion} variant="primary">
-                下一题
-              </Button>
-            )}
-            <Button onClick={startDrill}>重新洗牌</Button>
-          </div>
-        </SurfaceCard>
-      </div>
-    );
-  }
-
-  function renderExamPanel() {
-    if (answerReadyCount < 10) {
-      return (
-        <EmptyList
-          title="可评分题目不足 10 道"
-          description={
-            activeDimension
-              ? `定向考试只会抽取命中「${activeDimension.label}」且带标准答案的题目。当前数量还不够 10 道，暂时无法开始考试。`
-              : "模拟考试只会抽取带标准答案的题目。当前题库的标准答案数量还不够 10 道，暂时无法开始考试。"
-          }
-          bullets={[
-            `当前带标准答案题目数：${answerReadyCount}`,
-            activeDimension
-              ? "退出过滤或继续补充该维度答案，再回来进行整套考试"
-              : "先补充更多题库答案，再回来进行整套考试",
-          ]}
-        />
-      );
-    }
-
-    if (!examState) {
-      return (
-        <SurfaceCard className="space-y-5">
-          <SectionHeading
-            description="每次固定抽取 10 道不重复题目。提交后系统会给出总分、薄弱项、本次考试雷达和长期能力画像。"
-            title="开始模拟考试"
-          />
-          <div className="flex flex-wrap gap-2">
-            <Badge tone="accent">固定 10 题</Badge>
-            <Badge tone="success">AI 评分 + 兜底规则</Badge>
-            <Badge>题源 {answerReadyCount}</Badge>
-          </div>
-          {examError ? (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-warning">
-              {examError}
-            </div>
-          ) : null}
-          <div className="flex flex-wrap gap-3">
-            <Button
-              disabled={isCreatingExam}
-              onClick={handleCreateExam}
-              variant="primary"
-            >
-              {isCreatingExam ? (
-                <>
-                  <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                  生成中...
-                </>
-              ) : (
-                "开始 10 题考试"
-              )}
-            </Button>
-            <Button href="/questions">先看题库</Button>
-          </div>
-        </SurfaceCard>
-      );
-    }
-
-    if (examState.resultSummary) {
-      const resultSummary = examState.resultSummary;
-      const resultSummaryV2 = isAssessmentResultSummaryV2(resultSummary)
-        ? resultSummary
-        : null;
-      const examRadarDimensions: PracticeRadarChartDimension[] = resultSummaryV2
-        ? toExamRadarChartDimensions(resultSummaryV2)
-        : toLegacyRadarChartDimensions(resultSummary);
-      const profileRadarDimensions: PracticeRadarChartDimension[] = resultSummaryV2
-        ? toProfileRadarChartDimensions(resultSummaryV2)
-        : [];
-      const profileUpdates: PracticeProfileUpdate[] = resultSummaryV2
-        ? resultSummaryV2.profile_updates
-        : [];
-
-      return (
-        <div className="space-y-5">
-          <SurfaceCard className="space-y-4 bg-[linear-gradient(135deg,rgba(238,242,255,0.9)_0%,rgba(255,255,255,0.98)_60%,rgba(209,250,229,0.72)_100%)]">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-text-muted">
-                  Exam Result
-                </p>
-                <p className="mt-2 text-4xl font-bold tracking-[-0.06em] text-text-strong">
-                  {examState.totalScore === null
-                    ? "评分失败"
-                    : `${examState.totalScore}/${examState.maxScore}`}
-                </p>
-              </div>
-              <div className="rounded-[22px] border border-white/80 bg-white/84 px-4 py-3">
-                <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-text-muted">
-                  平均分
-                </p>
-                <p className="mt-2 text-xl font-bold tracking-[-0.04em] text-text-strong">
-                  {examState.totalScore === null
-                    ? "-"
-                    : `${(examState.totalScore / examState.items.length).toFixed(1)}`}
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {renderWeakAreaBadges(resultSummary.weak_areas)}
-            </div>
-          </SurfaceCard>
-
-          <SurfaceCard className="space-y-4">
-            <SectionHeading title="整体反馈" />
-            <p className="whitespace-pre-wrap text-sm leading-7 text-text-strong">
-              {resultSummary.overall_feedback}
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <Button
-                disabled={isCreatingExam}
-                onClick={handleCreateExam}
-                variant="primary"
-              >
-                {isCreatingExam ? (
-                  <>
-                    <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                    生成中...
-                  </>
-                ) : (
-                  "再来一套"
-                )}
-              </Button>
-            </div>
-          </SurfaceCard>
-
-          <PracticeRadarChart
-            description={
-              resultSummaryV2
-                ? "只显示当前试卷实际覆盖到的固定维度，便于你判断这一套题主要暴露了哪些短板。"
-                : "旧考试记录沿用历史雷达口径，仅用于回看当时的维度分布。"
-            }
-            dimensions={examRadarDimensions}
-            title="本次考试雷达"
-          />
-
-          {resultSummaryV2 ? (
-            <>
-              <PracticeRadarChart
-                description="长期能力画像始终展示固定 6 维，本场被更新的维度会高亮显示。"
-                dimensions={profileRadarDimensions}
-                highlightedKeys={profileUpdates.map((update) => update.key)}
-                title="长期能力画像"
-              />
-              <PracticeProfileUpdates updates={profileUpdates} />
-            </>
-          ) : null}
-
-          <div className="space-y-4">
-            <SectionHeading title="逐题反馈" />
-            {examState.items.map((item) => (
-              <SurfaceCard className="space-y-4" key={item.id}>
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="space-y-2">
-                    <p className="text-sm font-semibold text-text-strong">
-                      第 {item.sequence_no} 题
-                    </p>
-                    {renderQuestionMeta(item)}
-                  </div>
-                  <Badge tone="accent">
-                    {item.score ?? 0}/{item.max_score}
-                  </Badge>
-                </div>
-                <p className="text-base font-semibold leading-7 text-text-strong">
-                  {item.question_text}
-                </p>
-                <SurfaceCard muted className="space-y-3">
-                  <SectionHeading title="你的回答" />
-                  <p className="whitespace-pre-wrap text-sm leading-7 text-text-strong">
-                    {item.user_answer?.trim() || "未作答"}
-                  </p>
-                </SurfaceCard>
-                <SurfaceCard muted className="space-y-3">
-                  <SectionHeading title="标准答案" />
-                  <p className="whitespace-pre-wrap text-sm leading-7 text-text-strong">
-                    {item.canonical_answer ?? "暂无标准答案"}
-                  </p>
-                </SurfaceCard>
-                {item.feedback ? (
-                  <div className="grid gap-4 xl:grid-cols-3">
-                    <SurfaceCard muted className="space-y-3">
-                      <SectionHeading title="做得好的点" />
-                      <ul className="space-y-2 text-sm leading-6 text-text-strong">
-                        {item.feedback.strengths.map((strength) => (
-                          <li key={strength}>{strength}</li>
-                        ))}
-                      </ul>
-                    </SurfaceCard>
-                    <SurfaceCard muted className="space-y-3">
-                      <SectionHeading title="缺失要点" />
-                      <ul className="space-y-2 text-sm leading-6 text-text-strong">
-                        {item.feedback.missed_points.map((point) => (
-                          <li key={point}>{point}</li>
-                        ))}
-                      </ul>
-                    </SurfaceCard>
-                    <SurfaceCard muted className="space-y-3">
-                      <SectionHeading title="下一步建议" />
-                      <p className="text-sm leading-6 text-text-strong">
-                        {item.feedback.improvement_advice}
-                      </p>
-                      {item.skill_scores ? (
-                        <div className="flex flex-wrap gap-2">
-                          <Badge>准确性 {item.skill_scores.accuracy}</Badge>
-                          <Badge>覆盖度 {item.skill_scores.coverage}</Badge>
-                          <Badge>表达 {item.skill_scores.clarity}</Badge>
-                        </div>
-                      ) : null}
-                    </SurfaceCard>
-                  </div>
-                ) : null}
-              </SurfaceCard>
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-5">
-        <div className="rounded-[24px] border border-border-strong bg-[linear-gradient(180deg,rgba(238,242,255,0.78)_0%,rgba(255,255,255,0.98)_100%)] px-5 py-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-text-muted">
-                模拟考试
-              </p>
-              <p className="mt-2 text-2xl font-bold tracking-[-0.05em] text-text-strong">
-                {Object.values(examState.answers).filter((answer) => answer.trim().length > 0).length}
-                {" / "}
-                {examState.items.length} 题已作答
-              </p>
-            </div>
-            <Badge tone={isSubmittingExam ? "warning" : "accent"}>
-              {isSubmittingExam ? "评分中" : "作答中"}
-            </Badge>
-          </div>
-          <div className="mt-4 h-2 overflow-hidden rounded-full bg-white">
-            <div
-              className="h-full rounded-full bg-accent"
-              style={{
-                width: `${(Object.values(examState.answers).filter((answer) => answer.trim().length > 0).length / examState.items.length) * 100}%`,
-              }}
-            />
-          </div>
-        </div>
-
-        {isSubmittingExam ? (
-          <SurfaceCard className="space-y-4">
-            <div className="flex items-center gap-2 text-sm font-medium text-text-strong">
-              <LoaderCircle className="h-4 w-4 animate-spin text-accent" />
-              正在评分并生成维度摘要
-            </div>
-            <div className="space-y-3">
-              <Skeleton className="h-4 w-1/3" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-[90%]" />
-            </div>
-          </SurfaceCard>
-        ) : null}
-        {examError ? (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-warning">
-            {examError}
-          </div>
-        ) : null}
-        <SurfaceCard className="space-y-5">
-          <SectionHeading
-            description="建议每题写 4 到 8 句，把结论、关键原理、风险点和落地经验讲清楚。"
-            title="考试作答"
-          />
-          <div className="space-y-4">
-            {examState.items.map((item) => (
-              <SurfaceCard className="space-y-3" key={item.id} muted>
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <SectionHeading title={`第 ${item.sequence_no} 题`} />
-                  {renderQuestionMeta(item)}
-                </div>
-                <p className="text-base font-semibold leading-7 text-text-strong">
-                  {item.question_text}
-                </p>
-                <Textarea
-                  disabled={isSubmittingExam}
-                  onChange={(event) =>
-                    setExamState((currentState) =>
-                      currentState
-                        ? {
-                            ...currentState,
-                            answers: {
-                              ...currentState.answers,
-                              [item.id]: event.target.value,
-                            },
-                          }
-                        : currentState,
-                    )
-                  }
-                  placeholder="写下你的回答。留空也可以提交，但会被视为未作答。"
-                  value={examState.answers[item.id] ?? ""}
-                />
-              </SurfaceCard>
-            ))}
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Button
-              disabled={isSubmittingExam}
-              onClick={handleSubmitExam}
-              variant="primary"
-            >
-              {isSubmittingExam ? (
-                <>
-                  <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                  评分中...
-                </>
-              ) : (
-                "提交并评分"
-              )}
-            </Button>
-            <Button disabled={isCreatingExam} onClick={handleCreateExam}>
-              换一套题
-            </Button>
-          </div>
-        </SurfaceCard>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      <PageHeader
-        actions={
-          <>
-            <Button
-              onClick={() => setMode("drill")}
-              variant={mode === "drill" ? "primary" : "secondary"}
-            >
-              随机练习
-            </Button>
-            <Button
-              onClick={() => setMode("exam")}
-              variant={mode === "exam" ? "primary" : "secondary"}
-            >
-              模拟考试
-            </Button>
-          </>
-        }
-        eyebrow="题库训练"
-        description={
-          activeDimension
-            ? `当前按「${activeDimension.label}」定向练习；随机练习和模拟考试都会只使用该维度映射到的题目。`
-            : "一边做快速随机刷题，一边把带标准答案的题目组成 10 题考试，输出总分、薄弱项、本场雷达和长期能力画像。"
-        }
-        highlights={[
-          {
-            label: "题库总量",
-            value: `${practicePool.length}`,
-            meta: activeDimension ? "当前只统计定向题池" : "全量 active 题目",
-          },
-          {
-            label: "可评分题",
-            value: `${answerReadyCount}`,
-            meta: "带 canonical answer 的题目可进入模拟考试",
-          },
-          {
-            label: "最近考试",
-            value: `${recentExams.length}`,
-            meta: "用于回看近期成绩和薄弱项",
-          },
-          {
-            label: "训练范围",
-            value: activeDimension ? activeDimension.label : "全量题库",
-            meta: mode === "drill" ? "当前模式：随机练习" : "当前模式：模拟考试",
-          },
-        ]}
-        title={activeDimension ? "定向练习" : "随机练习"}
+    <div className="space-y-5">
+      <PracticeOverviewCard
+        activeDimension={activeDimension}
+        answerReadyCount={answerReadyCount}
+        density={overviewDensity}
+        mode={mode}
+        onModeChange={setMode}
+        practicePoolCount={practicePool.length}
+        profileState={profileState}
+        recentExamCount={recentExams.length}
       />
 
       <div
         className={
           isExamTaking
-            ? "space-y-6"
-            : "grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]"
+            ? "grid gap-5"
+            : "grid gap-5 xl:grid-cols-[minmax(0,1.14fr)_320px] xl:items-start"
         }
       >
+        <div id="practice-panel">
+          {mode === "drill" ? (
+            <PracticeDrillPanel
+              activeDimension={activeDimension}
+              answerReadyCount={answerReadyCount}
+              drillState={drillState}
+              onNextQuestion={handleNextDrillQuestion}
+              onReset={() => setDrillState(null)}
+              onRestart={startDrill}
+              onRevealAnswer={handleRevealAnswer}
+              onStart={startDrill}
+              practicePool={practicePool}
+            />
+          ) : (
+            <PracticeExamPanel
+              activeDimension={activeDimension}
+              answerReadyCount={answerReadyCount}
+              examError={examError}
+              examState={examState}
+              isCreatingExam={isCreatingExam}
+              isSubmittingExam={isSubmittingExam}
+              onAnswerChange={handleExamAnswerChange}
+              onCreateExam={handleCreateExam}
+              onSubmitExam={handleSubmitExam}
+            />
+          )}
+        </div>
+
         {!isExamTaking ? (
-          <PracticeSidebar
-            activeDimension={activeDimension}
-            profileState={profileState}
+          <PracticeRecentExamsPanel
+            activeDimensionKey={activeDimension?.key}
             recentExams={recentExams}
           />
         ) : null}
-
-        <div id="practice-panel">{mode === "drill" ? renderDrillPanel() : renderExamPanel()}</div>
       </div>
     </div>
   );

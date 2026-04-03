@@ -14,7 +14,7 @@ export function WorkbenchShell({
       <AppSidebar summary={summary} />
       <div className="min-w-0 flex-1">
         <TopBar />
-        <main className="mx-auto flex min-h-[calc(100vh-81px)] w-full max-w-[1600px] flex-col gap-6 px-5 py-6">
+        <main className="mx-auto flex min-h-[calc(100vh-77px)] w-full max-w-[1680px] flex-col gap-5 px-4 py-5 sm:px-5 sm:py-6">
           {children}
         </main>
       </div>

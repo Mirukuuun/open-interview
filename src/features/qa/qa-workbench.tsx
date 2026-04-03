@@ -54,7 +54,6 @@ export function QaWorkbench({
             </Button>
           </>
         }
-        description="直接发起一轮 grounded 对话，引用、相关题目与检索细节会在回答后按需展开，不抢占首屏。"
         eyebrow="Grounded QA"
         highlights={[
           {
@@ -79,46 +78,12 @@ export function QaWorkbench({
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.85fr)]">
         <div className="space-y-6">
           <SurfaceCard className="space-y-6 bg-[linear-gradient(180deg,rgba(238,242,255,0.88)_0%,rgba(255,255,255,0.98)_62%)]">
-            <SectionHeading
-              description="优先先问问题。只有在你需要的时候，再去展开引用、related questions 和 retrieval trace。"
-              title="开始一轮 grounded 对话"
-            />
-            <div className="grid gap-3 md:grid-cols-3">
-              {[
-                {
-                  label: "回答原则",
-                  value: "先回应，再说明本地支持强弱",
-                },
-                {
-                  label: "默认体验",
-                  value: "聊天首屏，避免调试信息打扰",
-                },
-                {
-                  label: "追溯方式",
-                  value: "回答后展开引用与检索摘要",
-                },
-              ].map((item) => (
-                <div
-                  className="rounded-[22px] border border-white/80 bg-white/84 px-4 py-4"
-                  key={item.label}
-                >
-                  <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-text-muted">
-                    {item.label}
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-text-strong">
-                    {item.value}
-                  </p>
-                </div>
-              ))}
-            </div>
+            <SectionHeading title="开始一轮 grounded 对话" />
             <QaAskForm initialQuery={initialQuery} mode="new" />
           </SurfaceCard>
 
           <SurfaceCard className="space-y-4" muted>
-            <SectionHeading
-              description="题库题目、标准答案和来源摘录会共同参与 recall。命中不足时也会先给你可执行回答，再明确支持程度。"
-              title="当前知识覆盖"
-            />
+            <SectionHeading title="当前知识覆盖" />
             <div className="flex flex-wrap gap-2">
               <Badge tone="accent">question {overview.questionChunkCount}</Badge>
               <Badge tone="success">answer {overview.answerChunkCount}</Badge>
@@ -129,10 +94,7 @@ export function QaWorkbench({
 
         <div className="space-y-6">
           <SurfaceCard className="space-y-4" muted>
-            <SectionHeading
-              description="保留最近会话，便于连续追问和快速回看。"
-              title="最近会话"
-            />
+            <SectionHeading title="最近会话" />
             {recentSessions.length === 0 ? (
               <EmptyList
                 description="你的第一条问题会自动创建会话，并把 grounded 引用收纳在回答下方。"

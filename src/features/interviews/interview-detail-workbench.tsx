@@ -117,10 +117,7 @@ export function InterviewDetailWorkbench({
 
         <div className="space-y-6">
           <SurfaceCard className="space-y-4">
-            <SectionHeading
-              description="沉淀动作在下方题目列表中逐题执行；这里先给出当前完成度与快速入口。"
-              title="沉淀概览"
-            />
+            <SectionHeading title="沉淀概览" />
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-4 text-sm text-text-strong">
                 已沉淀 {promotedQuestionCount} / {interview.questions.length}

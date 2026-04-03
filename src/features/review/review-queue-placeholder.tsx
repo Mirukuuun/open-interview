@@ -16,7 +16,6 @@ export function ReviewQueuePlaceholder() {
             <Button variant="primary">Retry selected</Button>
           </>
         }
-        description="Review Queue is the operational list of parse jobs that need attention. The real table, filters, and retry actions are deferred to Slice 3."
         routeLabel="/review"
         title="Review parse jobs before canonical import"
       />
@@ -32,10 +31,7 @@ export function ReviewQueuePlaceholder() {
 
       <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
         <SurfaceCard className="space-y-5">
-          <SectionHeading
-            description="The queue needs visible operational filters and summary counts once parse jobs exist."
-            title="Queue controls"
-          />
+          <SectionHeading title="Queue controls" />
           <div className="grid gap-3">
             {["Status filter", "Source kind filter", "Keyword filter"].map((label) => (
               <div
@@ -58,10 +54,7 @@ export function ReviewQueuePlaceholder() {
         </SurfaceCard>
 
         <SurfaceCard className="space-y-5">
-          <SectionHeading
-            description="The eventual table should optimize for operational scan speed rather than decorative cards."
-            title="Job list"
-          />
+          <SectionHeading title="Job list" />
           <PlaceholderTable
             columns={[
               "job_id",

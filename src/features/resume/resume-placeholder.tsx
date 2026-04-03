@@ -15,7 +15,6 @@ export function ResumePlaceholder() {
             <Button variant="primary">Upload resume</Button>
           </>
         }
-        description="The resume landing route will bridge file ingestion and extracted project browsing. Slice 0 keeps the route and page structure ready for the later deep-dive flow."
         routeLabel="/resume"
         title="Resume ingestion and extracted projects"
       />

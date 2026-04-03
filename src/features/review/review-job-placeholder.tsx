@@ -19,7 +19,6 @@ export function ReviewJobPlaceholder({ jobId }: ReviewJobPlaceholderProps) {
             <Button variant="primary">Confirm import</Button>
           </>
         }
-        description="This route preserves the three-column review desk contract: source context on the left, editable candidates in the middle, and merge or import preview on the right."
         routeLabel={`/review/${jobId}`}
         title="Review parsed candidates before writing canonical data"
       />
@@ -35,10 +34,7 @@ export function ReviewJobPlaceholder({ jobId }: ReviewJobPlaceholderProps) {
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)_minmax(0,0.95fr)]">
         <SurfaceCard className="space-y-4">
-          <SectionHeading
-            description="The left rail keeps raw source context visible while the reviewer edits parse candidates."
-            title="Source context"
-          />
+          <SectionHeading title="Source context" />
           <EmptyList
             bullets={[
               "Source metadata, summary, and raw text or snippet viewer belong here.",
@@ -51,10 +47,7 @@ export function ReviewJobPlaceholder({ jobId }: ReviewJobPlaceholderProps) {
         </SurfaceCard>
 
         <SurfaceCard className="space-y-4">
-          <SectionHeading
-            description="Every parse candidate stays editable and explicitly marked as create, merge, or skip."
-            title="Candidate decisions"
-          />
+          <SectionHeading title="Candidate decisions" />
           <div className="space-y-3">
             {["Candidate 1", "Candidate 2"].map((candidate) => (
               <div
@@ -72,10 +65,7 @@ export function ReviewJobPlaceholder({ jobId }: ReviewJobPlaceholderProps) {
         </SurfaceCard>
 
         <SurfaceCard className="space-y-4">
-          <SectionHeading
-            description="The right rail previews merge targets or new-question imports and keeps the batch summary visible."
-            title="Import preview"
-          />
+          <SectionHeading title="Import preview" />
           <EmptyList
             bullets={[
               "Show existing canonical question context when merge hints are available.",
