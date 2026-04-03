@@ -135,13 +135,13 @@ export function AppSidebar({
             <Link
               aria-label={collapsed ? item.label : undefined}
               className={cn(
-                "group interactive-card relative block border focus-visible:outline-none",
+                "group relative block border transition-[border-color,background-color,color,box-shadow] duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40",
                 collapsed
                   ? "rounded-[20px] px-0 py-2.5"
                   : "rounded-[22px] px-3 py-3",
                 active
-                  ? "border-indigo-300/28 bg-surface-nav-muted text-white"
-                  : "border-transparent text-slate-300 hover:border-white/10 hover:bg-white/6 hover:text-white",
+                  ? "border-indigo-300/28 bg-surface-nav-muted text-white hover:border-indigo-200/30"
+                  : "border-transparent text-slate-300 hover:border-white/12 hover:bg-white/10 hover:text-white focus-visible:border-white/12 focus-visible:bg-white/10 focus-visible:text-white",
               )}
               href={item.href}
               key={item.href}
@@ -161,11 +161,11 @@ export function AppSidebar({
                 >
                   <div
                     className={cn(
-                      "relative flex shrink-0 items-center justify-center rounded-[16px] border transition-colors",
+                      "relative flex shrink-0 items-center justify-center rounded-[16px] border transition-colors duration-200 ease-out",
                       collapsed ? "h-11 w-11" : "h-10 w-10",
                       active
                         ? "border-white/10 bg-white/12 text-white"
-                        : "border-white/6 bg-white/4 text-slate-300",
+                        : "border-white/6 bg-white/4 text-slate-300 group-hover:border-white/12 group-hover:bg-white/12 group-hover:text-white group-focus-visible:border-white/12 group-focus-visible:bg-white/12 group-focus-visible:text-white",
                     )}
                   >
                     <Icon className="h-5 w-5" />
