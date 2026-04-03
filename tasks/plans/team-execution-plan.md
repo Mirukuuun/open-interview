@@ -3,7 +3,7 @@
 - doc_type: execution_plan
 - audience: agents / implementers
 - status: active
-- updated_at: 2026-03-27
+- updated_at: 2026-04-02
 - canonical_for: team operating mode, role boundaries, backlog slices, execution constraints
 
 > 本文档位于 `tasks/plans/`，属于执行规划留痕，不替代 `docs/technical-design.md` 及其技术子文档。
@@ -175,17 +175,16 @@ Goal:
 Done when:
 - project deep-dive session is usable
 
-## 5. Immediate next action
+## 5. Current execution focus
 
-Next recommended action:
-- commit/push AT-V1-010 acceptance-fix round 2 close-out on `dev/mvp-delivery`
-- redeploy the production service to latest commit for Miruku's continued acceptance
-- then wait for the next acceptance round / screenshots before deciding whether to open a bounded round 3
-- keep follow-up bounded; do not immediately expand into auth / external infra / grading systems
+Current recommended action:
+- 把 Open Interview 视为“主链已落地、持续做 bounded polish / feature follow-up / docs closeout”的项目，而不是停留在 2026-03-25 的 AT-V1-010 阶段。
+- 新的代码改动仍继续走：Lead 定义 bounded slice -> Codex 实现 -> reviewer 验收 -> Lead 收口 docs / deploy / status。
+- 对已完成的大里程碑（尤其 QA 2.0 的 9A / 9B / 9C / 9D、practice、interview-question 解耦）要同步维护 canonical docs，避免 repo 继续按旧 roadmap 说话。
 
 Reason:
-- AT-V1-010 已经通过 reviewer 正式复验（PASS_WITH_NOTES），当前剩余工作只是在 task / plan 收口后把代码推远端并切上线。
-- Miruku 正处于连续人工验收阶段，最有价值的是先交付当前 accepted fixes，再根据下一轮反馈决定是否继续做局部 polish。
+- 当前仓库已经包含大量 2026-03-25 之后的迭代，旧的“下一步只剩 AT-V1-010 close-out”表述已失效。
+- 对这个项目而言，文档与任务状态不同步本身就是一类真实 drift，需要像功能回归一样主动收口。
 
 ## 6. Review protocol
 
@@ -237,3 +236,5 @@ Escalation rule:
 除冗余解释性文本；把 `/import` 手工录入的 category / tags 改成真正的下拉面板式多选 + 面板底部创建 + 持久化复用 + 中文化。
 - 2026-03-25: AT-V1-010 中途因 Codex workspace 失效（`402 deactivated_workspace`）短暂阻塞；恢复可用账号后继续在 bounded 范围内完成实现。
 - 2026-03-25: AT-V1-010 closeout validation 与 reviewer 独立复验均通过（PASS_WITH_NOTES）：validation（`typecheck` / `lint` / `build --webpack`）全绿，`/import` 的 category / tags 已真实变成下拉面板多选并支持面板底部创建与持久化复用，多处 workbench 冗余说明文案进一步减少；非阻塞 note 为 category 当前仍是 legacy 主字段 + `question_categories` 多值表并存的过渡形态，后续如深化 category 语义可再统一读取/展示口径。
+- 2026-03-26 ~ 2026-04-01: QA 2.0 相关 9B / 9C / 9D / 9A 能力已在仓库主干落地，Milvus foundation、hybrid retrieval、grounded answer / rewrite 与 chat-style QA shell 不再只是计划。
+- 2026-03-30 ~ 2026-04-01: 项目继续落地 follow-up 迭代，包括 practice profile / exams、interview-question 与 question bank 解耦、interview question promote / merge、prompt markdown 化与中文化、面经详情页原文 QA 折叠、若干 workbench polish。

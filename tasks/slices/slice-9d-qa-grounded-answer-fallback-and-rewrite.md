@@ -2,8 +2,9 @@
 
 - task_id: oi-slice-9d-qa-grounded-answer-fallback-rewrite
 - owner: execution
-- status: planned
+- status: done
 - priority: high
+- delivery_note: 当前仓库主干已落地本 slice 对应能力；此文件保留为执行留痕，不再表示 future work。
 - goal: 基于稳定的 hybrid retrieval packet，把 QA 回答器升级成真正的 grounded answer chain，并收口 support-level、友好降级和 follow-up rewrite
 
 ## Scope
@@ -31,13 +32,13 @@
 - answer chain 需要适配 SQLite FTS + Milvus hybrid retrieval 输出协议
 
 ## Done when
-- [ ] QA 回答主链不再依赖模板式 synthesizer
-- [ ] answer chain 能消费 query、session history、retrieval packet、citations、support level
-- [ ] follow-up / 省略句场景可先 rewrite 再检索
-- [ ] `answer_mode` 与 friendly fallback 语义可用
-- [ ] 0 citation 场景下普通用户不再看到裸工程错误
-- [ ] validation + smoke complete
-- [ ] reviewer-ready evidence complete
+- [x] QA 回答主链不再依赖模板式 synthesizer
+- [x] answer chain 能消费 query、session history、retrieval packet、citations、support level
+- [x] follow-up / 省略句场景可先 rewrite 再检索
+- [x] `answer_mode` 与 friendly fallback 语义可用
+- [x] 0 citation 场景下普通用户不再看到裸工程错误
+- [x] validation + smoke complete
+- [x] reviewer-ready evidence complete
 
 ## Reviewer focus
 - 当前实现是否真使用了 grounded LLM answer chain，而不是换壳模板

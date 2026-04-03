@@ -3,7 +3,7 @@
 - doc_type: tech_stack
 - audience: agents / implementers
 - status: active
-- updated_at: 2026-03-28
+- updated_at: 2026-04-02
 - parent_doc: `docs/technical-design.md`
 - canonical_for: implementation stack, repo layout, execution defaults, service boundaries
 
@@ -38,12 +38,13 @@ Self-host runtime contract:
 - `caddy.service` terminates TLS and proxies `career.mimiruku.cn` to `127.0.0.1:3106`
 
 ### 1.3 UI layer
-- Tailwind CSS
-- `shadcn/ui`
-- TanStack Table
-- TanStack Query
-- React Hook Form + Zod
-- Zustand (only for local ephemeral UI state)
+- Tailwind CSS 4
+- 自定义 workbench / UI primitives（`src/components/*`、`src/components/ui/*`）
+- `clsx` + `tailwind-merge` 负责 class / variant 组合
+- `@fontsource/ibm-plex-sans` + `@fontsource/ibm-plex-mono`
+- Zod schema 负责 route boundary 与共享数据契约
+
+当前仓库**没有**把 `shadcn/ui`、TanStack Query/Table、React Hook Form、Zustand 固化为 canonical 依赖；如后续引入，需要先更新本文档再视作正式栈。
 
 ### 1.4 Storage / data layer
 - SQLite as the primary business database
@@ -91,10 +92,10 @@ Initial goal:
 - avoid hidden in-request long-running work where possible
 
 ### 1.8 Testing
-- Vitest for unit/service tests
-- React Testing Library for component-level tests where useful
-- lightweight smoke validation for MVP slices
-- Playwright is optional later; not required to unblock early slices
+- Vitest for unit / service / repository-level tests
+- `typecheck` / `lint` / `build` 作为 repo-level validation baseline
+- 面向关键页面与 API 的 lightweight smoke validation
+- 浏览器 E2E / component 测试目前**不是**已固定的 canonical 栈；需要时再单独引入并补文档
 
 ---
 
@@ -120,8 +121,10 @@ open-interview/
       review/
       questions/
       interviews/
+      practice/
       qa/
       resume/
+    prompts/
     server/
       adapters/
         openclaw/
@@ -266,16 +269,14 @@ Codex should always read first:
 
 ---
 
-## 8. Immediate implementation order
+## 8. Current delivery status
 
-1. Slice 0 — project bootstrap
-2. Slice 1 — data layer v1
-3. Slice 2 — import flow
-4. Slice 3 — parse review flow
-5. Slice 4 — question bank / interview views
-6. Slice 5 — lightweight RAG QA
-7. Slice 6 — resume / deep dive
-8. Slice 9B — Milvus 向量检索基础层
-9. Slice 9C — Hybrid retrieval 主链
-10. Slice 9D — Grounded answer / fallback / rewrite
-11. Slice 9A — QA workbench shell 收口
+### 8.1 已落地里程碑
+1. Slice 0 ~ 6 已落地：项目骨架、数据层、import、parse review、question bank / interviews、初版 QA、resume / deep dive。
+2. QA 2.0 相关的 9B / 9C / 9D / 9A 已在当前仓库主干落地：Milvus foundation、hybrid retrieval、grounded answer / rewrite、chat-style workbench shell 均已存在。
+3. 后续已继续落地多轮 follow-up：practice exams + profile、interview-question 解耦与 promote / merge、prompt markdown 化与中文化、interview detail source QA 折叠、若干 workbench polish。
+
+### 8.2 当前 focus
+- 保持 canonical docs 与已交付行为同步
+- 在 bounded slice 模式下继续做 retrieval quality / practice / polish 迭代
+- 把部署、健康检查、验证与 task closeout 继续固化成稳定工作流

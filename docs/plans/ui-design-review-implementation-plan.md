@@ -7,4 +7,4 @@
 [X] task7. 更新相关 L2 文档，完成文档回环
 [X] task8. 执行 `python3 .catpaw/scripts/check_isomorphism.py --check`
 [X] task9. 执行 `corepack pnpm db:init`、`corepack pnpm lint`、`corepack pnpm typecheck`、`corepack pnpm build` 验证交付门槛
-[ ] task10. 执行 `git commit`、`git push`、`corepack pnpm deploy:mvp` 并完成 `/import`、`/qa`、`/api/health` 回归验证
+[X] task10. 执行 `git commit`、`git push`、`corepack pnpm deploy:mvp` 并完成 `/import`、`/qa`、`/api/health` 回归验证

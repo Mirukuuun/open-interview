@@ -3,11 +3,18 @@
 ## 项目概要
 - Open Interview 是一个 local-first 的面试工作台，覆盖导入、解析审核、题库沉淀、随机练习 / 模拟考试、grounded QA 和简历项目深挖。
 - 当前实现以 Next.js App Router + SQLite/Drizzle 为主干，路由层保持轻量，核心业务能力沉在 `src/server/*`。
-- 后续协作默认先走 `.codex` 规范目录中的 `workflows`、`context`、`rules`、`plans`。
+- 后续协作默认先走 `.codex` 规范目录，并先按 `## ROUTER` 判定是否需要进入 `workflows`；其余上下文从 `context`、`rules`、`plans` 按需读取。
 
 ## Workflow 索引
-- `.codex/workflows/coding.md`：代码开发 / 需求开发的标准 workflow。凡是实现功能、修复缺陷、调整接口、补测试、更新文档回环或交付链路的任务，必须先完整阅读并遵循该文档，再进入后续开发。
+- `.codex/workflows/coding.md`：代码开发 / 需求开发的标准 workflow。
 - `.codex/workflows/init.md`：仓库初始化、规范接入、Context 补齐或索引整理的 workflow。
+
+## ROUTER
+| 路由 | 命中场景 | 必读 workflow | 不命中时 | 说明 |
+| --- | --- | --- | --- | --- |
+| Coding Loop | 实现功能、修复缺陷、调整接口、补测试、更新文档回环、交付链路调整 | `.codex/workflows/coding.md` | 其他任务不需要阅读该 workflow | 当前日常协作默认走这条路由。 |
+| Repo Init | 仓库初始化、规范接入、Context 补齐、索引整理 | `.codex/workflows/init.md` | 非初始化任务不需要阅读该 workflow | 仅初始化或规范重建场景使用。 |
+| No Workflow | 纯问答、只读调研、方案讨论、无需落地改动的普通说明性文档修改 | 无 | 不读 `.codex/workflows/*`，直接按需读 `context` / `rules` | 用于非交付型协作。 |
 
 ## Context 索引
 - L1：`.codex/context/open-interview-overview.md`，项目总览、模块导航、L2 索引。
@@ -73,7 +80,8 @@
 
 ## Agent 专用说明
 - 除非用户明确要求其他语言，后续仓库协作默认使用中文回复。
-- 代码开发 / 需求开发默认命中编码开发场景，必须先遵循 `.codex/workflows/coding.md`；执行中再按改动范围读取 `.codex/context/*` 和 `.codex/rules/*`。
+- 后续协作先按 `## ROUTER` 判定任务路由；只有命中对应路由时，才需要阅读对应 workflow。
+- 代码开发 / 需求开发默认命中 `Coding Loop` 路由，必须先遵循 `.codex/workflows/coding.md`；执行中再按改动范围读取 `.codex/context/*` 和 `.codex/rules/*`。
 
 ## 文档与配置提示
 - 修改 API 契约或核心实体前，先核对 `docs/api-schema.md`、`docs/data-model.md` 和 `docs/ui-flows.md`。

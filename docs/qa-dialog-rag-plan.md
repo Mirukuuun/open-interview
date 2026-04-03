@@ -2,8 +2,8 @@
 
 - doc_type: tech_design
 - audience: agents / implementers
-- status: draft
-- updated_at: 2026-03-27
+- status: active
+- updated_at: 2026-04-02
 - parent_doc: `docs/technical-design.md`
 - canonical_for: QA 2.0 产品形态、Milvus-first 向量检索路线、hybrid retrieval 主链、grounded answer 与任务拆分
 
@@ -34,6 +34,10 @@ Miruku 已明确新的方向收口：
 - 但向量检索不再只是“可选增强”或“本地试验件”
 - Milvus 进入正式主链，负责 QA 的语义召回层
 - SQLite 继续承载业务实体、FTS、session、retrieval log 和主数据一致性
+
+补充说明（2026-04-02）：
+- 当前仓库主干里，QA 2.0 baseline 已经落地，不再只是 roadmap：Milvus foundation、hybrid retrieval、history-aware rewrite、grounded answer chain、`/qa` / `/qa/:sessionId` 对话式 shell 都已存在。
+- 因此本文档现在的职责是：维护 **已落地主链的 canonical 解释、边界与后续演进方向**，而不是继续把 9A / 9B / 9C / 9D 当成“尚未开始”的纯计划。
 
 ---
 
@@ -352,48 +356,42 @@ Open Interview 总定位仍是 workbench，不是普通聊天 App。
 
 ---
 
-## 10. 验收标准
+## 10. 当前验收状态（2026-04-02）
 
-P0 完成时，至少满足：
-1. QA retrieval 主链已从“FTS + structured merge”升级为“SQLite FTS + Milvus vector + structured expansion”的 hybrid retrieval
-2. Milvus 已进入正式向量召回主链，而不是仅停留在可选实验路径
-3. retrieval log 能解释 query normalize / filters / FTS hits / Milvus hits / final context
-4. assistant answer 来自真正的 grounded answer chain，而不是模板拼接
-5. citations 仍保留且能自然展开查看
-6. support 不足时，用户看到的是友好降级语义，而不是裸 409 工程错误
-7. workbench-first 产品形态不丢失
+当前仓库已经满足以下 QA 2.0 baseline：
+1. [x] QA retrieval 主链已从“FTS + structured merge”升级为“SQLite FTS + Milvus vector + structured expansion”的 hybrid retrieval
+2. [x] Milvus 已进入正式向量召回主链，而不是仅停留在可选实验路径
+3. [x] retrieval log 能解释 normalize / rewrite / lexical hits / vector hits / final context
+4. [x] assistant answer 已走 grounded answer chain，并保留 `answer_mode` / `support_summary`
+5. [x] citations、related questions、retrieval trace 已收口到 assistant-turn expanders
+6. [x] support 不足时已走 `grounded_answered | weak_support | no_grounded_support` 语义，而不是把“工程错误”直接暴露给普通用户
+7. [x] workbench-first 产品形态仍保留，没有退化成单纯聊天壳
 
 ---
 
-## 11. 推荐任务拆分
+## 11. 已落地里程碑与后续拆分
 
-建议拆成 4 个 bounded slices：
-
+### 已落地里程碑
 1. **Slice 9B — QA Milvus 向量检索基础层**
-   - collection schema / index strategy / metadata 副本边界
-   - embedding persistence / upsert / backfill / sync
-   - Node adapter / health probe / local-dev 启动约定
+   - collection schema / index strategy / metadata 副本边界已落地
+   - embedding persistence / upsert / backfill / sync 已进入主链
+   - health / foundation snapshot / sync job 主链已具备
 
 2. **Slice 9C — QA Hybrid Retrieval 主链**
-   - SQLite FTS + Milvus recall + metadata filters + structured expansion + lightweight rerank
+   - SQLite FTS + Milvus recall + metadata filters + structured expansion + lightweight rerank 已落地
 
 3. **Slice 9D — QA Grounded Answer / Fallback / Rewrite**
-   - grounded answer chain
-   - `answer_mode`
-   - friendly fallback
-   - history-aware query rewrite
+   - grounded answer chain、`answer_mode`、friendly fallback、history-aware query rewrite 已落地
 
 4. **Slice 9A — QA 对话式工作台 Shell**
-   - 统一 `/qa` 与 `/qa/:sessionId`
-   - 让 session / transcript / citations 面板成为稳定主体验
+   - `/qa` 与 `/qa/:sessionId` 已收口为统一对话式 shell
+   - citations / related questions / retrieval trace 以按需展开的 secondary UI 存在
 
-### 推荐执行顺序
-默认推荐：
-- **9B -> 9C -> 9D -> 9A**
-
-说明：
-- retrieval / answer contract 先稳定，会让 shell 的最终收口更少返工
-- 若前端并行能力充足，9A 也可与 9D 后半段并行推进
+### 当前后续 focus
+- retrieval quality eval、support-level 调参、rewrite / fallback 质量观察
+- shell polish 与 grounded 信息呈现细节优化
+- docs / tests / health / task closeout 的持续收口
+- 需要时再围绕 rerank、eval、分析面板开新的 bounded slices
 
 ---
 

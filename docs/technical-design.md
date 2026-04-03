@@ -3,7 +3,7 @@
 - doc_type: technical_design
 - audience: agents / implementers / maintainers
 - status: active
-- updated_at: 2026-03-27
+- updated_at: 2026-04-02
 - canonical_for: 系统级技术架构总览、技术路线、全局模块边界、最新框架图、roadmap、技术子文档索引
 
 ## 0. How to use this doc
@@ -182,20 +182,22 @@ QA / RAG 的完整细节与 slice 拆分见：`docs/qa-dialog-rag-plan.md`
 
 ## 8. 当前 roadmap
 
-### 已经形成基础主干
-- 基础 workbench 路由与数据层
-- import / parse / review / canonicalization 主链的多轮设计与实现推进
-- lightweight QA 基线
+### 已落地主链
+- import / parse / review / canonicalization 主链已经形成稳定 workbench 闭环
+- `/questions`、`/interviews`、`/resume`、`/practice`、`/qa` 五条核心工作台路由都已在仓库中落地
+- QA 2.0 baseline 已落地：SQLite FTS + Milvus hybrid retrieval、history-aware rewrite、grounded answer chain、对话式 session shell
+- interview question 与 question bank 已正式解耦：面经确认默认写入 `interview_question`，后续再按需 promote / merge 到题库
+- practice 已具备 random drill、10 题 mock exam 与长期 practice profile
 
 ### 当前优先主线
-1. Slice 9B — Milvus 向量检索基础层
-2. Slice 9C — Hybrid retrieval 主链
-3. Slice 9D — Grounded answer / fallback / rewrite
-4. Slice 9A — QA workbench shell 收口
+1. 围绕已落地主链做 product polish、稳定性与文档收口，而不是继续把 9A / 9B / 9C / 9D 视作 future work
+2. 持续观察 retrieval quality、support-level 语义与 fallback 体验，补齐 eval / 调参闭环
+3. 继续打磨 interview -> question bank 沉淀、practice 画像、resume deep-dive 之间的协同体验
+4. 补齐健康检查、验证脚本、任务状态与 canonical docs 的同步维护
 
 ### 后续可演进方向
-- 更细粒度 retrieval eval
-- 更强 rerank
+- 更细粒度 retrieval eval 与 rerank
+- 更成熟的 practice analytics / personalized study loop
 - 更成熟的 resume / project deep-dive 闭环
 - 需要时再评估 LangGraph 或更复杂检索编排
 

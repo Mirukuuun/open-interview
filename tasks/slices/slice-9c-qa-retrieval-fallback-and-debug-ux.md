@@ -2,8 +2,9 @@
 
 - task_id: oi-slice-9c-qa-hybrid-retrieval-core
 - owner: execution
-- status: planned
+- status: done
 - priority: high
+- delivery_note: 当前仓库主干已落地本 slice 对应能力；此文件保留为执行留痕，不再表示 future work。
 - goal: 在 SQLite FTS 路线与 Milvus 向量检索基础层之上，落成 QA 的 hybrid retrieval 主链：filter pushdown、FTS recall、Milvus recall、structured expansion、merge/rerank
 
 ## Scope
@@ -32,13 +33,13 @@
 - Milvus recall 命中要与 SQLite-side chunk / citation 边界稳定对齐
 
 ## Done when
-- [ ] query normalize + metadata/filter pushdown 可用
-- [ ] SQLite FTS recall 与 Milvus recall 能稳定并行进入主链
-- [ ] structured expansion 可为 final context 提供补充证据
-- [ ] merge / rerank 规则落盘并在代码中可解释
-- [ ] retrieval packet 已能稳定提供给后续 answer chain
-- [ ] validation + smoke complete
-- [ ] reviewer-ready evidence complete
+- [x] query normalize + metadata/filter pushdown 可用
+- [x] SQLite FTS recall 与 Milvus recall 能稳定并行进入主链
+- [x] structured expansion 可为 final context 提供补充证据
+- [x] merge / rerank 规则落盘并在代码中可解释
+- [x] retrieval packet 已能稳定提供给后续 answer chain
+- [x] validation + smoke complete
+- [x] reviewer-ready evidence complete
 
 ## Reviewer focus
 - 是否真正形成 hybrid retrieval，而不是旧逻辑小修小补

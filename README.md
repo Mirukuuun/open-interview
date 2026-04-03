@@ -50,17 +50,22 @@ Open Interview 要解决的不是“再做一个聊天壳”，而是把面试�
 
 ## 当前项目状态
 
-当前项目已经跑通了基础工作台主干，并完成过多轮面向 import / review / canonicalization / QA 的设计与实现推进。当前 QA / RAG 主线已收口到：
+当前仓库已经不再停留在 MVP 骨架阶段，而是进入了**已跑通主链、持续做收口与打磨**的状态。当前明确可见的主能力包括：
 
-- SQLite 作为业务真相源
-- SQLite FTS 负责 lexical recall
-- Milvus 负责语义向量检索
-- 应用层负责 hybrid retrieval、structured expansion、merge/rerank
-- 回答层走 grounded answer chain，并保留 citations / retrieval trace / answer_mode
+- **导入 / 解析 / 审核 / 入库主链已稳定存在**：`/import`、`/review`、`/review/:jobId` 与对应 API 已形成完整闭环。
+- **Question Bank / Interview / Resume / Practice / QA 五条工作台主线都已落地**，不是只有单一聊天入口。
+- **QA 2.0 主链已落地**：SQLite 作为业务真相源，SQLite FTS + Milvus 组成 hybrid retrieval，回答层使用 grounded answer chain，并保留 citations / retrieval trace / answer_mode / history-aware rewrite。
+- **Interview 与 Question Bank 已正式解耦**：面经审核确认默认写入 `interview_question`，后续再按需 promote / merge 到 `question_item`，不再把两者混成同一实体。
+- **Practice 已进入“随机刷题 + 10 题 mock exam + 长期能力画像”阶段**，不是早期的简单随机问答。
+- **LLM prompt 基础设施已转成 `src/prompts/*.md` + server prompt loader**，中文化与 prompt 维护边界已经收口到固定目录。
+
+当前更像是在做：**基于已落地主链继续 polish、补文档、做质量收口**，而不是还在“准备开始做 QA 2.0”。
 
 更完整的当前方案见：
 - `docs/technical-design.md`
 - `docs/qa-dialog-rag-plan.md`
+- `docs/ui-flows.md`
+- `docs/data-model.md`
 
 ## 本地运行
 

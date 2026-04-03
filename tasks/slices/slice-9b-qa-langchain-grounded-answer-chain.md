@@ -2,8 +2,9 @@
 
 - task_id: oi-slice-9b-qa-milvus-vector-foundation
 - owner: execution
-- status: planned
+- status: done
 - priority: high
+- delivery_note: 当前仓库主干已落地本 slice 对应能力；此文件保留为执行留痕，不再表示 future work。
 - goal: 为 QA 建立 Milvus-first 的向量检索基础层，同时保留 SQLite 作为业务真相源与 retrieval metadata 主存
 
 ## Scope
@@ -33,13 +34,13 @@
 - 必须有清晰的 backfill / delete / re-embed / rebuild 策略
 
 ## Done when
-- [ ] retrieval chunk 来源与 schema 已定版
-- [ ] SQLite-side sync state / embedding state 已定版
-- [ ] Milvus collection / index / metadata 设计已落盘
-- [ ] chunk -> embedding -> Milvus upsert 主链可实现
-- [ ] 历史数据 backfill / resync 方案明确
-- [ ] 当前宿主机的 local-dev / Docker / health 风险有结论
-- [ ] reviewer-ready evidence complete
+- [x] retrieval chunk 来源与 schema 已定版
+- [x] SQLite-side sync state / embedding state 已定版
+- [x] Milvus collection / index / metadata 设计已落盘
+- [x] chunk -> embedding -> Milvus upsert 主链可实现
+- [x] 历史数据 backfill / resync 方案明确
+- [x] 当前宿主机的 local-dev / Docker / health 风险有结论
+- [x] reviewer-ready evidence complete
 
 ## Reviewer focus
 - 是否真的形成了可落地的 Milvus-first 向量检索底座，而不是停留在概念层

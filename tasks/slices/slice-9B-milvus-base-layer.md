@@ -2,8 +2,9 @@
 
 - task_id: AT-V1-021-9B
 - owner: execution
-- status: todo
+- status: done
 - goal: 实现 QA Milvus 向量检索的基础层。
+- superseded_note: 这是较早期的 9B 留痕文件；当前已以仓库主干实际实现为准，相关能力已落地。
 - ask:
   1. 设计 Milvus collection schema 和索引策略，明确 metadata 副本边界。
   2. 实现 embedding 的持久化、upsert、backfill 和 sync 机制。
