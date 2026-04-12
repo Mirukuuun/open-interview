@@ -1,11 +1,13 @@
 # Plans Directory
 
-`.codex/plans/` 负责维护 Plan 规范说明；从 `2026-03-29` 起，任务执行记录统一写入 `docs/plans/`。
+`.codex/plans/` 负责维护 Plan 规范说明；从 `2026-03-29` 起，任务执行记录统一写入 `docs/plans/`。从 `2026-04-12` 起，`docs/plans/` 引入 `active/`、`closed/`、`archived/` 三个状态子目录，顶层索引见 [`docs/plans/README.md`](../../docs/plans/README.md)。
 
 ## 存放位置
 
-- 每次任务都必须创建或更新 `docs/plans/[task]-plan.md`
-- `docs/plans/` 不存在时，先创建目录
+- 每次任务都必须在 `docs/plans/active/[task]-plan.md` 创建或更新 Plan 文档
+- `docs/plans/active/` 不存在时，先创建目录
+- 任务结束、全部 `[X]` 勾选后，把 Plan `git mv` 到 `docs/plans/closed/`
+- 不再对当前协作提供参考价值时，再从 `closed/` 迁入 `docs/plans/archived/`
 - `.codex/plans/` 中已有历史 Plan 可保留，但新任务不要继续写入这里
 
 ## 文件名建议

@@ -38,7 +38,7 @@
 - `.codex/rules/server-boundaries.md`：`src/server`、数据库、检索、适配器以及 service / repository 的边界约束。
 
 ## Plans 索引
-- `.codex/plans/README.md`：计划目录约定。每次任务都必须在 `docs/plans/[task]-plan.md` 维护执行计划，并在执行过程中持续更新完成状态。
+- `.codex/plans/README.md`：计划目录约定。每次任务都必须在 `docs/plans/active/[task]-plan.md` 维护执行计划，并在执行过程中持续更新完成状态；收尾后迁入 `docs/plans/closed/`，顶层索引见 `docs/plans/README.md`。
 
 ## 项目结构与模块组织
 - `src/app/` 放置 Next.js App Router 页面和 API 路由处理器 `route.ts`。路由层保持精简，业务逻辑下沉到服务层。
@@ -52,6 +52,7 @@
 - `corepack pnpm db:init`：应用 SQLite migrations，并创建 `storage/open-interview.sqlite`；可通过 `OPEN_INTERVIEW_DB_PATH` 或 `DATABASE_URL` 覆盖路径。
 - `corepack pnpm lint`：运行仓库 ESLint 配置。
 - `corepack pnpm typecheck`：执行 TypeScript 严格类型检查，不输出构建产物。
+- `corepack pnpm test`：Vitest 全量运行（等价于 `vitest run`）。单文件运行用 `npx vitest run tests/foo.test.ts`。
 - `corepack pnpm build`：验证生产构建可用，并为当前 `HEAD` 记录可复用的本地 `.next` 构建元数据。
 - `corepack pnpm deploy:mvp`：执行服务器部署脚本，默认完成 `db:init`、优先复用当前 `HEAD` 的本地 `.next` 构建（否则回退到 `.next-runtime.stage` 重 build）、重启 `open-interview-mvp.service`、reload `caddy.service` 并验证 `career.mimiruku.cn`。
 - `corepack pnpm db:generate`：在 schema 变更后生成 Drizzle migration 草稿；提交前需要人工检查 SQL。
@@ -69,9 +70,11 @@
 - 输入输出校验放在 `src/lib/schemas/` 的 Zod 边界层；客户端组件不要直接承载数据库或服务逻辑。
 
 ## 测试指南
-- 当前仓库尚未提交正式自动化测试；当前合并门槛是 `db:init`、`typecheck`、`lint` 和 `build` 全部通过。
-- 对高风险改动，优先补充 `scripts/` 下的 smoke 脚本，或在变更说明中写清手工 HTTP 验证范围。
-- 若新增自动化测试，请放在 `tests/` 下，并使用 `*.test.ts` 或 `*.test.tsx` 命名。规划中的测试栈是 Vitest 和 React Testing Library。
+- 合并门槛仍然是 `db:init`、`typecheck`、`lint` 和 `build` 四项全部通过；`corepack pnpm test` 推荐在触达已有测试覆盖的链路时一并跑通，但未强制。
+- 当前 `tests/` 下使用 Vitest 驱动，已覆盖的链路包括：`parse-source` / `parse-job-async`（导入解析）、`practice-service`（随机练习 / 模拟考试）、`qa-rag` / `prompt-markdown`（QA grounded answer 与提示词）、`llm-provider-health` / `openclaw-provider-config`（LLM 适配器）、`interview-question-decoupling` / `single-answer-question-bank` / `taxonomy-display`（题库与面经契约）、`build-artifact`（部署产物）。
+- 尚未覆盖的高风险区域：review queue / 审核确认、vector sync（milvus / qa 同步 job）、`src/app/api/*` 路由层；触达这些模块时优先补测试，或在变更说明中写清手工 HTTP / smoke 验证范围。
+- 新增自动化测试放在 `tests/` 下，使用 `*.test.ts` 或 `*.test.tsx` 命名；计划中追加 React Testing Library 覆盖客户端组件。
+- 高风险但暂不适合单测的改动，优先复用或补充 `scripts/` 下的 smoke 脚本（当前有 `scripts/smoke-7e-long-document.mjs`）。
 
 ## 提交与 Pull Request 规范
 - 提交信息遵循现有 Conventional Commits 风格，如 `feat: ...`、`fix: ...`、`docs: ...`。

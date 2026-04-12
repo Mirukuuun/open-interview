@@ -21,8 +21,8 @@
 
 ## Plan 记录
 
-1. 完成需求澄清后，每次任务开始前，都必须在 `docs/plans/[task]-plan.md` 创建或更新对应 Plan 文档；不再以“是否复杂”作为是否建 Plan 的判断条件。
-2. 若 `docs/plans/` 不存在，先创建目录，再写入本次任务的 Plan 文档。
+1. 完成需求澄清后，每次任务开始前，都必须在 `docs/plans/active/[task]-plan.md` 创建或更新对应 Plan 文档；不再以“是否复杂”作为是否建 Plan 的判断条件。
+2. 若 `docs/plans/active/` 不存在，先创建目录，再写入本次任务的 Plan 文档；任务全部勾选为 `[X]` 后，将 Plan `git mv` 到 `docs/plans/closed/`。
 3. Plan 文档用于维护本次任务涉及的所有计划项、执行项和补充项，任务项统一使用以下格式逐行记录：
 
 ```text
@@ -41,7 +41,7 @@
 ## 标准流程
 
 1. 先明确用户需求、目标范围、约束条件与预期交付物；若存在模糊不清之处，先向用户提问澄清。
-2. 在需求边界明确后，创建 / 更新 `docs/plans/[task]-plan.md`。
+2. 在需求边界明确后，创建 / 更新 `docs/plans/active/[task]-plan.md`。
 3. 按“前置读取”完成文档与上下文读取。
 4. 按 L1 -> L2 -> L3 导航定位目标模块和代码入口。
 5. 修改代码时遵守：
@@ -84,4 +84,4 @@
 - L2 文档只维护 `Manifest / Data Flow / Business Rules`。
 - 不在 L2 中复制实现细节或源码片段。
 - 当 L3 行为变化时，优先更新 L2，再补 L1 索引。
-- Plan 文档属于执行记录，统一维护在 `docs/plans/`，用于追溯任务状态与断点续做。
+- Plan 文档属于执行记录，按状态分目录维护在 `docs/plans/{active,closed,archived}/`，用于追溯任务状态与断点续做；顶层索引见 `docs/plans/README.md`。
