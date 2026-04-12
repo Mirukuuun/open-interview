@@ -52,8 +52,8 @@
 - `corepack pnpm db:init`：应用 SQLite migrations，并创建 `storage/open-interview.sqlite`；可通过 `OPEN_INTERVIEW_DB_PATH` 或 `DATABASE_URL` 覆盖路径。
 - `corepack pnpm lint`：运行仓库 ESLint 配置。
 - `corepack pnpm typecheck`：执行 TypeScript 严格类型检查，不输出构建产物。
-- `corepack pnpm build`：验证生产构建可用。
-- `corepack pnpm deploy:mvp`：执行服务器部署脚本，默认完成 `db:init`、`build`、重启 `open-interview-mvp.service`、reload `caddy.service` 并验证 `career.mimiruku.cn`。
+- `corepack pnpm build`：验证生产构建可用，并为当前 `HEAD` 记录可复用的本地 `.next` 构建元数据。
+- `corepack pnpm deploy:mvp`：执行服务器部署脚本，默认完成 `db:init`、优先复用当前 `HEAD` 的本地 `.next` 构建（否则回退到 `.next-runtime.stage` 重 build）、重启 `open-interview-mvp.service`、reload `caddy.service` 并验证 `career.mimiruku.cn`。
 - `corepack pnpm db:generate`：在 schema 变更后生成 Drizzle migration 草稿；提交前需要人工检查 SQL。
 
 ## 部署约定
@@ -82,6 +82,11 @@
 - 除非用户明确要求其他语言，后续仓库协作默认使用中文回复。
 - 后续协作先按 `## ROUTER` 判定任务路由；只有命中对应路由时，才需要阅读对应 workflow。
 - 代码开发 / 需求开发默认命中 `Coding Loop` 路由，必须先遵循 `.codex/workflows/coding.md`；执行中再按改动范围读取 `.codex/context/*` 和 `.codex/rules/*`。
+- 开始任何任务前，先明确用户需求，并判断当前属于「询问」还是「执行」。
+- 若用户是在询问现状、原因、含义、方案、风险、评审结论或可行性，默认按「询问」处理；此时只提供答案、分析、建议或备选方案，不得擅自修改文件、运行交付链路、提交、推送或部署。
+- 若用户明确要求落地修改、执行命令、补测试、提交或部署，才按「执行」处理；执行范围必须严格限制在用户明确授权的边界内。
+- 若需求边界不清、同时存在「询问」与「执行」两种解读，先向用户澄清，禁止基于猜测扩展任务范围。
+- 可以主动向用户提供建议、风险提示或可选方案，但“提供建议”不等于“获得执行授权”；除非用户明确同意，否则不能把建议直接落地。
 
 ## 文档与配置提示
 - 修改 API 契约或核心实体前，先核对 `docs/api-schema.md`、`docs/data-model.md` 和 `docs/ui-flows.md`。
