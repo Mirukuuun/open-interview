@@ -21,6 +21,7 @@ import {
   buildQaRetrievalSummary,
   classifyQaSupportLevel,
   detectQaMetadataFilters,
+  filterQuestionsByDirectRelevance,
 } from "@/server/retrieval/qa-retrieval-support";
 import { milvusVectorBackend } from "@/server/vector/milvus-backend";
 import type { QaMilvusFoundationSnapshot } from "@/server/vector/qa-milvus-foundation";
@@ -667,7 +668,10 @@ export async function retrieveHybridQaContext(input: {
     })
     .slice(0, Math.max(input.topK * 2, 10))
     .map((candidate) => candidate.id);
-  const questions = applyQuestionFilters(
+  const rawHits = collectCandidateMapHits(candidateMap);
+  const lexicalHitCount = rawHits.filter((hit) => hit.reason === "fts").length;
+  const vectorHitCount = rawHits.filter((hit) => hit.reason === "vector").length;
+  const rankedQuestions = applyQuestionFilters(
     topQuestionIds
       .map((questionId) => questionBrowseRepository.findById(questionId))
       .filter(
@@ -677,14 +681,18 @@ export async function retrieveHybridQaContext(input: {
           question !== undefined,
       ),
     metadataFilters,
-  ).slice(0, input.topK);
+  );
+  const questions =
+    lexicalHitCount === 0
+      ? filterQuestionsByDirectRelevance(input.effectiveQuery, rankedQuestions).slice(
+          0,
+          input.topK,
+        )
+      : rankedQuestions.slice(0, input.topK);
   const citations = questions.slice(0, 4).map(buildCitation);
   const relatedQuestions = buildRelatedQuestions(questions);
   const sourceSupportHits = buildSourceSupportHits(questions, candidateMap);
-  const rawHits = collectCandidateMapHits(candidateMap);
   const hits = limitUniqueHits([...rawHits, ...sourceSupportHits], Math.max(input.topK * 4, 16));
-  const lexicalHitCount = rawHits.filter((hit) => hit.reason === "fts").length;
-  const vectorHitCount = rawHits.filter((hit) => hit.reason === "vector").length;
   const answerMode = classifyQaSupportLevel({
     citationCount: citations.length,
     questionCount: questions.length,

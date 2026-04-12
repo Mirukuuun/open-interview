@@ -5,6 +5,7 @@ import { rewriteQaQuery } from "../src/server/retrieval/qa-rewrite-chain";
 import {
   buildQaRetrievalSummary,
   classifyQaSupportLevel,
+  filterQuestionsByDirectRelevance,
   questionMatchesQaFilters,
 } from "../src/server/retrieval/qa-retrieval-support";
 import { openClawLlmClient } from "../src/server/adapters/openclaw/llm-client";
@@ -73,6 +74,33 @@ describe("qa retrieval support", () => {
       }),
     ).toContain("已应用 history-aware rewrite");
   });
+
+  it("drops weakly related vector-only questions when the query signal is narrow", () => {
+    const filteredQuestions = filterQuestionsByDirectRelevance("我问你的事持久性", [
+      {
+        questionText: "事务的四大特性是什么？",
+        canonicalAnswer:
+          "ACID包括原子性、一致性、隔离性、持久性。持久性由 redo log 保证。",
+        category: "database",
+        tags: ["mysql"],
+      },
+      {
+        questionText: "慢查询怎么解决？",
+        canonicalAnswer: "可以先开启慢查询日志，再结合 explain 和索引优化处理。",
+        category: "database",
+        tags: ["mysql"],
+      },
+      {
+        questionText: "介绍一下混合持久化方式",
+        canonicalAnswer: "混合持久化结合了 RDB 和 AOF。",
+        category: null,
+        tags: ["redis"],
+      },
+    ]);
+
+    expect(filteredQuestions).toHaveLength(1);
+    expect(filteredQuestions[0]?.questionText).toBe("事务的四大特性是什么？");
+  });
 });
 
 describe("qa grounded answer chain", () => {
@@ -104,6 +132,24 @@ describe("qa grounded answer chain", () => {
     expect(result.effectiveQuery).toBe("Redis 分布式锁这题怎么答？");
   });
 
+  it("heuristically rewrites chinese correction follow-ups into standalone queries", async () => {
+    const createJsonObjectSpy = vi.spyOn(openClawLlmClient, "createJsonObject");
+
+    const result = await rewriteQaQuery({
+      query: "我问你的事持久性",
+      sessionHistory: [
+        {
+          role: "user",
+          content: "mysql中事务的一致性怎么理解？",
+        },
+      ],
+    });
+
+    expect(createJsonObjectSpy).not.toHaveBeenCalled();
+    expect(result.rewriteApplied).toBe(true);
+    expect(result.effectiveQuery).toBe("mysql中事务的持久性怎么理解？");
+  });
+
   it("returns a general fallback answer when local grounding is absent", async () => {
     vi.spyOn(openClawLlmClient, "createJsonObject").mockRejectedValue(
       new Error("provider unavailable"),
@@ -121,6 +167,46 @@ describe("qa grounded answer chain", () => {
     expect(result.answerMode).toBe("no_grounded_support");
     expect(result.answer).toContain("1 分钟版本");
     expect(result.supportSummary).toContain("本地题库暂未检索到直接依据");
+  });
+
+  it("keeps weak local support as a supplement during fallback instead of dumping context", async () => {
+    vi.spyOn(openClawLlmClient, "createJsonObject").mockRejectedValue(
+      new Error("provider unavailable"),
+    );
+
+    const result = await answerGroundedQa({
+      query: "我问你的事持久性",
+      effectiveQuery: "mysql中事务的持久性怎么理解？",
+      supportLevel: "weak_support",
+      sessionHistory: [
+        {
+          role: "user",
+          content: "mysql中事务的一致性怎么理解？",
+        },
+      ],
+      citations: [
+        {
+          owner_type: "question_item",
+          owner_id: "q_mysql_tx_acid",
+          label: "事务的四大特性是什么？",
+          href: "/questions/q_mysql_tx_acid",
+        },
+      ],
+      questionContexts: [
+        {
+          questionText: "事务的四大特性是什么？",
+          canonicalAnswer:
+            "ACID包括原子性、一致性、隔离性、持久性。持久性由 redo log 保证。",
+          personalAnswer: null,
+          sourceSnippet: null,
+        },
+      ],
+    });
+
+    expect(result.answerMode).toBe("weak_support");
+    expect(result.answer).toContain("事务的持久性指的是");
+    expect(result.answer).toContain("本地材料里的线索");
+    expect(result.answer).not.toContain("结合当前本地材料，可以先这样回答：");
   });
 
   it("keeps grounded answer mode while building support summary from local citations", async () => {

@@ -157,8 +157,82 @@ function buildMotivationAnswer(query: string) {
   ].join("\n");
 }
 
+function buildTransactionAcidAnswer(query: string) {
+  if (!/事务|acid/u.test(query)) {
+    return null;
+  }
+
+  if (/持久性/u.test(query)) {
+    return [
+      "可以先这样回答：",
+      "",
+      "事务的持久性指的是：事务一旦提交，它对数据的修改就不能因为宕机、重启或故障恢复而丢失。",
+      "",
+      "在 MySQL / InnoDB 里，通常会结合 redo log 来保证这件事。你可以把它理解成：提交成功之后，哪怕数据页还没来得及完全刷盘，系统也有足够的信息在恢复时把这次已提交的修改重新做出来。",
+      "",
+      "如果面试官继续追问，你可以再补三点：",
+      "1. 持久性关注的是“提交之后会不会丢”。",
+      "2. 它和一致性不是一回事，一致性更强调事务前后业务规则是否仍然成立。",
+      "3. 持久性不等于立刻所有数据页都落盘，而是指系统崩溃后仍然能恢复出已提交结果。",
+    ].join("\n");
+  }
+
+  if (/一致性/u.test(query)) {
+    return [
+      "可以先这样回答：",
+      "",
+      "事务的一致性指的是：事务执行前后，数据都必须处在合法、正确的状态，不能破坏业务约束和数据规则。",
+      "",
+      "比如转账场景里，扣款和加款要么一起成功，要么一起失败；如果只扣款不加款，数据就不一致了。",
+      "",
+      "面试里可以顺手区分一下：",
+      "1. 原子性强调的是“要么全做，要么全不做”。",
+      "2. 一致性强调的是“做完之后结果仍然正确”。",
+      "3. 隔离性和持久性是在并发和故障场景下帮助一致性最终成立的手段。",
+    ].join("\n");
+  }
+
+  if (/原子性/u.test(query)) {
+    return [
+      "可以先这样回答：",
+      "",
+      "事务的原子性指的是：一个事务里的操作必须作为一个整体执行，要么全部成功，要么全部失败，不允许只做一半。",
+      "",
+      "在 MySQL / InnoDB 里，常见理解是通过 undo log 等回滚能力，在事务失败时把已经做过的修改撤回去。",
+    ].join("\n");
+  }
+
+  if (/隔离性/u.test(query)) {
+    return [
+      "可以先这样回答：",
+      "",
+      "事务的隔离性指的是：并发执行的多个事务之间不要相互干扰，一个事务中间态不应该被其他事务随意看到。",
+      "",
+      "面试里通常会顺着讲到脏读、不可重复读、幻读，以及 MySQL 里如何通过锁和 MVCC 去实现不同隔离级别。",
+    ].join("\n");
+  }
+
+  if (/四大特性|acid/u.test(query)) {
+    return [
+      "事务的四大特性就是 ACID：",
+      "",
+      "1. 原子性：要么全做，要么全不做。",
+      "2. 一致性：事务前后数据都要保持正确状态。",
+      "3. 隔离性：并发事务之间不要相互干扰。",
+      "4. 持久性：事务提交后结果不能因为故障丢失。",
+    ].join("\n");
+  }
+
+  return null;
+}
+
 function buildGenericAnswer(query: string) {
   const normalizedQuery = compactWhitespace(query);
+  const transactionAcidAnswer = buildTransactionAcidAnswer(normalizedQuery);
+
+  if (transactionAcidAnswer) {
+    return transactionAcidAnswer;
+  }
 
   if (/自我介绍|介绍一下自己|介绍你自己|做个自我介绍/u.test(normalizedQuery)) {
     return buildSelfIntroductionAnswer();
@@ -188,8 +262,24 @@ function buildGenericAnswer(query: string) {
   ].join("\n");
 }
 
+function buildSupplementalLocalHint(
+  questionContexts: Array<{
+    questionText: string;
+    canonicalAnswer: string | null;
+    personalAnswer: string | null;
+    sourceSnippet: string | null;
+  }>,
+) {
+  const summary = questionContexts
+    .map((context) => pickBestContextSummary(context))
+    .find((value) => value.length > 0);
+
+  return summary ? compactWhitespace(summary) : null;
+}
+
 function buildDeterministicFallback(input: {
   query: string;
+  effectiveQuery: string;
   supportLevel: QaAnswerMode;
   citations: QaCitation[];
   questionContexts: Array<{
@@ -200,18 +290,18 @@ function buildDeterministicFallback(input: {
   }>;
 }) {
   const groundedOutline = buildGroundedOutline(input.questionContexts);
-  const generalAnswer = buildGenericAnswer(input.query);
+  const supplementalLocalHint = buildSupplementalLocalHint(input.questionContexts);
+  const generalAnswer = buildGenericAnswer(input.effectiveQuery);
   const answer =
-    groundedOutline && input.supportLevel !== "no_grounded_support"
-      ? [
-          groundedOutline,
-          input.supportLevel === "weak_support"
-            ? "\n如果你要把这段讲得更完整，建议再补上你的真实经历、结果数据或关键取舍。"
-            : "",
-        ]
-          .filter(Boolean)
-          .join("\n")
-      : generalAnswer;
+    groundedOutline && input.supportLevel === "grounded_answered"
+      ? groundedOutline
+      : input.supportLevel === "weak_support" && supplementalLocalHint
+        ? [
+            generalAnswer,
+            "",
+            `如果你想顺手补一条本地材料里的线索，可以补：${supplementalLocalHint}`,
+          ].join("\n")
+        : generalAnswer;
 
   return {
     answer,
@@ -287,6 +377,7 @@ export async function answerGroundedQa(input: {
   } catch {
     return buildDeterministicFallback({
       query: input.query,
+      effectiveQuery: input.effectiveQuery,
       supportLevel: input.supportLevel,
       citations: input.citations,
       questionContexts: input.questionContexts,

@@ -13,6 +13,18 @@ function compactWhitespace(value: string) {
   return value.replace(/\s+/g, " ").trim();
 }
 
+const qaRelevanceNoisePatterns = [
+  /我真正想问的是/gu,
+  /我想问的是/gu,
+  /我问(?:你)?的?(?:是|事)?/gu,
+  /我说的是/gu,
+  /我讲的是/gu,
+  /重点(?:是|在)/gu,
+  /这个问题|这个题|这道题|这题/gu,
+  /怎么理解|怎么回答|怎么讲|怎么说|怎么看|是什么意思|是什么|有哪几种|有哪些|介绍一下|说一下|讲一下|聊一下/gu,
+  /一下/gu,
+];
+
 function listDistinctValues(sqlQuery: string) {
   return (
     sqlite.prepare(sqlQuery).all() as Array<{
@@ -138,6 +150,135 @@ export function applyQuestionFilters<TQuestion extends Parameters<
   }
 
   return questions.filter((question) => questionMatchesQaFilters(question, filters));
+}
+
+function normalizeQaDirectRelevanceQuery(query: string) {
+  let normalizedQuery = compactWhitespace(query).toLowerCase();
+
+  for (const pattern of qaRelevanceNoisePatterns) {
+    normalizedQuery = normalizedQuery.replace(pattern, " ");
+  }
+
+  return compactWhitespace(
+    normalizedQuery.replace(/[，。！？!?、；：“”"'（）()\[\]{}<>《》]/gu, " "),
+  );
+}
+
+function collectAsciiTerms(value: string) {
+  return Array.from(new Set(value.match(/[a-z0-9][a-z0-9+._-]{1,}/g) ?? []));
+}
+
+function collectChineseTerms(value: string) {
+  const segments = value.match(/[\u4e00-\u9fff]{2,}/gu) ?? [];
+  const exactTerms = new Set<string>();
+  const bigrams = new Set<string>();
+
+  for (const segment of segments) {
+    exactTerms.add(segment);
+
+    if (segment.length === 2) {
+      bigrams.add(segment);
+      continue;
+    }
+
+    for (let index = 0; index < segment.length - 1; index += 1) {
+      bigrams.add(segment.slice(index, index + 2));
+    }
+  }
+
+  return {
+    exactTerms: Array.from(exactTerms),
+    bigrams: Array.from(bigrams),
+  };
+}
+
+function normalizeQaCandidateText(value: string) {
+  return compactWhitespace(value).toLowerCase();
+}
+
+export function scoreQaQuestionDirectRelevance(
+  query: string,
+  question: {
+    questionText: string;
+    canonicalAnswer: string | null;
+    category?: string | null;
+    tags?: string[];
+  },
+) {
+  const normalizedQuery = normalizeQaDirectRelevanceQuery(query);
+
+  if (normalizedQuery.length === 0) {
+    return 0;
+  }
+
+  const asciiTerms = collectAsciiTerms(normalizedQuery);
+  const chineseTerms = collectChineseTerms(normalizedQuery);
+  const haystack = normalizeQaCandidateText(
+    [
+      question.questionText,
+      question.canonicalAnswer ?? "",
+      question.category ?? "",
+      ...(question.tags ?? []),
+    ].join(" "),
+  );
+  let score = 0;
+  let matchedTermCount = 0;
+
+  for (const term of asciiTerms) {
+    if (haystack.includes(term)) {
+      score += 2.4;
+      matchedTermCount += 1;
+    }
+  }
+
+  for (const term of chineseTerms.exactTerms) {
+    if (haystack.includes(term)) {
+      score += term.length >= 4 ? 3.2 : 2.2;
+      matchedTermCount += 1;
+    }
+  }
+
+  let matchedBigramCount = 0;
+
+  for (const bigram of chineseTerms.bigrams) {
+    if (haystack.includes(bigram)) {
+      matchedBigramCount += 1;
+    }
+  }
+
+  if (matchedTermCount === 0 && matchedBigramCount === 0) {
+    return 0;
+  }
+
+  return score + matchedBigramCount * 0.6;
+}
+
+export function filterQuestionsByDirectRelevance<TQuestion extends {
+  questionText: string;
+  canonicalAnswer: string | null;
+  category?: string | null;
+  tags?: string[];
+}>(
+  query: string,
+  questions: TQuestion[],
+) {
+  const scoredQuestions = questions
+    .map((question) => ({
+      question,
+      score: scoreQaQuestionDirectRelevance(query, question),
+    }))
+    .sort((left, right) => right.score - left.score);
+  const topScore = scoredQuestions[0]?.score ?? 0;
+
+  if (topScore < 1.2) {
+    return [];
+  }
+
+  const threshold = Math.max(1.2, topScore * 0.65);
+
+  return scoredQuestions
+    .filter((item) => item.score >= threshold)
+    .map((item) => item.question);
 }
 
 export function classifyQaSupportLevel(input: {

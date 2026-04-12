@@ -23,12 +23,102 @@ const rewriteResultSchema = z.object({
   reason: z.string().min(1).optional(),
 });
 
+const transactionAcidDimensions = [
+  "原子性",
+  "一致性",
+  "隔离性",
+  "持久性",
+] as const;
+
 function compactWhitespace(value: string) {
   return value.replace(/\s+/g, " ").trim();
 }
 
 function normalizeQaQuery(value: string) {
   return compactWhitespace(value);
+}
+
+function trimTrailingQuestionMarks(value: string) {
+  return value.replace(/[？?]+$/gu, "").trim();
+}
+
+function getLatestUserQuery(
+  sessionHistory: Array<{
+    role: "user" | "assistant";
+    content: string;
+  }>,
+) {
+  return [...sessionHistory]
+    .reverse()
+    .find((turn) => turn.role === "user")
+    ?.content.trim();
+}
+
+function extractCorrectionFocus(query: string) {
+  const normalizedQuery = compactWhitespace(query);
+  const correctionPatterns = [
+    /(?:我真正想问的是|我想问的是|我问(?:你)?的?(?:是|事)?|我说的是|我讲的是|重点是)\s*([^，。！？!?]+)/u,
+    /(?:不是|别讲)\s*[^，。！？!?]+\s*(?:，|,)?\s*(?:是|说|讲|问)\s*([^，。！？!?]+)/u,
+    /^(?:就|只|单独|主要)\s*(?:说|讲|问)?\s*([^，。！？!?]+)/u,
+  ];
+
+  for (const pattern of correctionPatterns) {
+    const matchedValue = pattern.exec(normalizedQuery)?.[1];
+
+    if (matchedValue) {
+      const focus = compactWhitespace(matchedValue);
+
+      if (focus.length > 0) {
+        return focus;
+      }
+    }
+  }
+
+  return null;
+}
+
+function mergeCorrectionIntoPreviousQuery(previousQuery: string, focus: string) {
+  const normalizedPreviousQuery = trimTrailingQuestionMarks(previousQuery);
+  const normalizedFocus = trimTrailingQuestionMarks(focus);
+  const matchedDimension = transactionAcidDimensions.find((dimension) =>
+    normalizedPreviousQuery.includes(dimension),
+  );
+  const targetDimension = transactionAcidDimensions.find(
+    (dimension) => dimension === normalizedFocus,
+  );
+
+  if (matchedDimension && targetDimension) {
+    return normalizedPreviousQuery.replace(matchedDimension, targetDimension).concat("？");
+  }
+
+  return `${normalizedPreviousQuery}，重点想问 ${normalizedFocus}。`;
+}
+
+function buildHeuristicRewrite(input: {
+  query: string;
+  sessionHistory: Array<{
+    role: "user" | "assistant";
+    content: string;
+  }>;
+}) {
+  const latestUserQuery = getLatestUserQuery(input.sessionHistory);
+  const correctionFocus = extractCorrectionFocus(input.query);
+
+  if (!latestUserQuery || !correctionFocus) {
+    return null;
+  }
+
+  const normalizedLatestUserQuery = normalizeQaQuery(latestUserQuery);
+  const normalizedQuery = normalizeQaQuery(input.query);
+
+  if (
+    normalizedLatestUserQuery.length === 0 ||
+    normalizedLatestUserQuery === normalizedQuery
+  ) {
+    return null;
+  }
+
+  return mergeCorrectionIntoPreviousQuery(normalizedLatestUserQuery, correctionFocus);
 }
 
 function shouldRewriteQuery(query: string, historyLength: number) {
@@ -76,6 +166,20 @@ export async function rewriteQaQuery(input: {
   }>;
 }) {
   const normalizedQuery = normalizeQaQuery(input.query);
+  const heuristicRewrite = buildHeuristicRewrite({
+    query: normalizedQuery,
+    sessionHistory: input.sessionHistory,
+  });
+
+  if (heuristicRewrite && heuristicRewrite !== normalizedQuery) {
+    return {
+      normalizedQuery,
+      rewriteApplied: true,
+      rewrittenQuery: heuristicRewrite,
+      effectiveQuery: heuristicRewrite,
+      rewriteReason: "Heuristic correction rewrite applied.",
+    };
+  }
 
   if (!shouldRewriteQuery(normalizedQuery, input.sessionHistory.length)) {
     return {

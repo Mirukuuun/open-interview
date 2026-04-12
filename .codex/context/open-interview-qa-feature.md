@@ -13,10 +13,10 @@
 
 ## Data Flow
 
-1. 用户提交问题后，session service 先基于近期会话做 history-aware rewrite。
+1. 用户提交问题后，session service 先基于近期会话做 history-aware rewrite；若用户只是用“我问的是 X / 重点是 X”这类纠正式追问，service 需要优先把问题改写回独立可检索的完整问句。
 2. QA retrieval 维护 SQLite chunk 真相表，并通过 foundation service 收口 embedding-state / Milvus sync-state；embedding provider 配置独立于常规 LLM provider。
-3. Hybrid retrieval 同时执行 SQLite lexical recall、Milvus vector recall、structured expansion 和轻量 merge/rerank。
-4. answer chain 始终产出 `answer`，并按 grounding 强弱区分 `answer_mode` 与 `support_summary`；当本地依据较弱或缺失时，回答会降级为“通用回答 + 明确说明 support”而不是直接拒答。
+3. Hybrid retrieval 同时执行 SQLite lexical recall、Milvus vector recall、structured expansion 和轻量 merge/rerank；当 query 主要落在 vector-only 召回上时，需要额外按当前问题做直接相关性裁剪，避免把同领域但不回答当前问题的材料一并塞进 answer context。
+4. answer chain 始终产出 `answer`，并按 grounding 强弱区分 `answer_mode` 与 `support_summary`；当本地依据较弱或缺失时，回答会降级为“通用回答 + 明确说明 support”而不是直接拒答，同时只把真正相关的本地材料当作补充线索，不强行主导回答。
 5. `/qa` landing 默认直接展示 composer 与最近会话，`/qa/:sessionId` 继续以 chat bot 模式展示 session rail、transcript 与 composer；assistant answer 以安全 markdown 渲染正文，引用、related questions 和 retrieval trace 收纳在 assistant turn 的折叠区，首屏文案保持简短。
 6. 完整 retrieval trace 继续持久化到 session turn / retrieval log，供调试和审阅回看。
 
@@ -25,6 +25,7 @@
 - QA 默认是聊天式问答页，而不是指标 / 调试工作台首屏。
 - `/qa` 首页需要把提问动作和最近会话放在首屏，不再优先展示分块统计类 KPI。
 - QA 仍然优先 grounded answer，但 `no_grounded_support` 只表示“缺少本地依据”，不表示“拒绝回答”。
+- QA answer 必须先围绕用户当前问题作答；本地材料只有在直接相关时才作为证据或补充，不能因为检索命中就硬塞进正文。
 - assistant turn 需要显式区分 `grounded_answered`、`weak_support` 和 `no_grounded_support`，但这些信息默认以次级元信息呈现。
 - 引用、related questions 和 retrieval trace 必须可追溯，但无需默认完整暴露给用户。
 - 左侧 session rail 需要支持新建、切换、删除会话。
