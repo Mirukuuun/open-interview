@@ -13,13 +13,10 @@ DOC_ROOT = ROOT / ".codex"
 CONTEXT_DIR = DOC_ROOT / "context"
 
 REQUIRED_FILES = [
-    DOC_ROOT / "workflows" / "init.md",
-    DOC_ROOT / "workflows" / "coding.md",
     DOC_ROOT / "rules" / "README.md",
     DOC_ROOT / "rules" / "documentation-loop.md",
     DOC_ROOT / "rules" / "typescript-nextjs.md",
     DOC_ROOT / "rules" / "server-boundaries.md",
-    DOC_ROOT / "plans" / "README.md",
     CONTEXT_DIR / "open-interview-overview.md",
     CONTEXT_DIR / "open-interview-architecture.md",
     CONTEXT_DIR / "open-interview-domain.md",

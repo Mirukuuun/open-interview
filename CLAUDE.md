@@ -21,7 +21,7 @@ corepack pnpm deploy:mvp       # 部署：db:init → build → 重启服务 →
 
 ## 核心约定（摘要）
 
-- **Workflow 入口**：代码开发任务必须先读 `.codex/workflows/coding.md`，按改动范围读取 `.codex/context/*` 和 `.codex/rules/*`。
+- **Workflow 入口**：任务路由和开发流程由全局 CC skills（task-router → dev-workflow）驱动，项目级 context 和 rules 按需读取。
 - **合并门槛**：`db:init` + `typecheck` + `lint` + `build` 全部通过。
 - **代码风格**：2 空格、分号、双引号；组件/类型 PascalCase，文件 kebab-case；用 `@/` 别名导入。
 - **测试**：放 `tests/*.test.ts`，使用 Vitest；vitest.config.ts 已配置 `@` alias 和 node 环境。
@@ -30,4 +30,4 @@ corepack pnpm deploy:mvp       # 部署：db:init → build → 重启服务 →
 
 ## 详细规范
 
-所有架构说明、Context 索引、Rules 索引、Plans 约定、部署细节、Agent 专用说明等，统一参考 [`AGENTS.md`](./AGENTS.md)。
+所有架构说明、Context 索引、Rules 索引、文档约定、部署细节、Agent 专用说明等，统一参考 [`AGENTS.md`](./AGENTS.md)。
