@@ -46,7 +46,7 @@ export const assessmentItems = sqliteTable(
       .references(() => assessmentSessions.id, { onDelete: "cascade" }),
     questionItemId: text("question_item_id")
       .notNull()
-      .references(() => questionItems.id),
+      .references(() => questionItems.id, { onDelete: "cascade" }),
     sequenceNo: integer("sequence_no").notNull(),
     questionTextSnapshot: text("question_text_snapshot").notNull(),
     canonicalAnswerSnapshot: text("canonical_answer_snapshot"),

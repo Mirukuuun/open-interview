@@ -9,6 +9,24 @@ import { ResumeServiceError } from "@/server/services/resume-service";
 import { PracticeServiceError } from "@/server/services/practice-service";
 import { InterviewQuestionServiceError } from "@/server/services/interview-question-service";
 
+function sanitizeDetails(details: unknown): unknown {
+  if (details == null) return undefined;
+  if (typeof details !== "object") return undefined;
+
+  const raw = details as Record<string, unknown>;
+  const safe: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(raw)) {
+    if (typeof value === "string") {
+      safe[key] = value.replace(/\/[\w./-]+/g, "[path]");
+    } else {
+      safe[key] = value;
+    }
+  }
+
+  return safe;
+}
+
 export function toServiceErrorResponse(
   error: unknown,
   fallbackMessage: string,
@@ -23,7 +41,7 @@ export function toServiceErrorResponse(
     error instanceof ResumeDeepDiveServiceError
   ) {
     return NextResponse.json(
-      apiError(error.code, error.message, error.details),
+      apiError(error.code, error.message, sanitizeDetails(error.details)),
       { status: error.statusCode },
     );
   }

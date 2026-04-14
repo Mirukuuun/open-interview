@@ -1,5 +1,4 @@
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import type { LlmProviderHealth } from "@/lib/schemas/health";
 import { cn } from "@/lib/utils";
 
@@ -45,15 +44,7 @@ export function TopBar({ llmProvider }: TopBarProps) {
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 lg:w-[520px] lg:flex-row lg:items-center">
-        <div className="flex-1">
-          <Input
-            aria-label="全局搜索"
-            className="bg-white/90"
-            placeholder="全局搜索（题目、面经、会话）"
-            readOnly
-          />
-        </div>
+      <div className="flex items-center gap-3">
         <div
           className={cn(
             "flex min-h-10 items-center gap-2 self-start rounded-full px-3 py-2 text-xs",

@@ -160,7 +160,6 @@ export const sourceDocumentListItemSchema = z.object({
   title: z.string().min(1),
   file_name: z.string().min(1).nullable().optional(),
   mime_type: z.string().min(1).nullable().optional(),
-  file_path: z.string().min(1).nullable().optional(),
   source_url: z.string().min(1).nullable().optional(),
   parse_status: sourceDocumentParseStatusSchema,
   created_at: z.string().datetime(),
@@ -187,7 +186,6 @@ const uploadSourceResponseDocumentSchema = z.object({
   kind: ingestableSourceDocumentKindSchema,
   file_name: z.string().min(1),
   mime_type: z.string().min(1),
-  file_path: z.string().min(1),
   parse_status: sourceDocumentParseStatusSchema,
 });
 

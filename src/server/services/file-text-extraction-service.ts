@@ -133,9 +133,15 @@ function listZipEntries(buffer: Buffer) {
   return entries;
 }
 
+const MAX_UNCOMPRESSED_ENTRY_BYTES = 256 * 1024 * 1024; // 256 MB
+
 function readZipEntry(buffer: Buffer, entry: ZipEntry) {
   if ((entry.flags & 0x0001) !== 0) {
     throw new Error(`zip_entry_encrypted:${entry.name}`);
+  }
+
+  if (entry.uncompressedSize > MAX_UNCOMPRESSED_ENTRY_BYTES) {
+    throw new Error(`zip_entry_too_large:${entry.name}`);
   }
 
   if (readUInt32Le(buffer, entry.localHeaderOffset) !== 0x0403_4b50) {
@@ -152,7 +158,7 @@ function readZipEntry(buffer: Buffer, entry: ZipEntry) {
     case 0:
       return compressedBytes;
     case 8:
-      return inflateRawSync(compressedBytes);
+      return inflateRawSync(compressedBytes, { maxOutputLength: MAX_UNCOMPRESSED_ENTRY_BYTES });
     default:
       throw new Error(`unsupported_zip_compression:${entry.compressionMethod}`);
   }

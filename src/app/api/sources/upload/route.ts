@@ -11,6 +11,8 @@ import { importService } from "@/server/services/import-service";
 
 export const runtime = "nodejs";
 
+const MAX_UPLOAD_BYTES = 50 * 1024 * 1024; // 50 MB
+
 function buildUploadNextStep(result: {
   parseJob: {
     id: string;
@@ -74,6 +76,13 @@ export async function POST(request: Request) {
     );
   }
 
+  if (fileField.size > MAX_UPLOAD_BYTES) {
+    return NextResponse.json(
+      apiError("file_too_large", `Upload exceeds the ${MAX_UPLOAD_BYTES / 1024 / 1024} MB limit.`),
+      { status: 413 },
+    );
+  }
+
   const parseResult = createUploadSourceRequestSchema.safeParse({
     title: formData.get("title") ?? undefined,
     kind: formData.get("kind") ?? undefined,
@@ -109,7 +118,6 @@ export async function POST(request: Request) {
         kind: submission.sourceDocument.kind,
         file_name: submission.sourceDocument.fileName,
         mime_type: submission.sourceDocument.mimeType,
-        file_path: submission.sourceDocument.filePath,
         parse_status: submission.sourceDocument.parseStatus,
       },
       submit_mode: parseResult.data.submit_mode,

@@ -13,7 +13,6 @@ function toSourceListItem(sourceDocument: {
   title: string;
   fileName: string | null;
   mimeType: string | null;
-  filePath: string | null;
   sourceUrl: string | null;
   parseStatus:
     | "not_started"
@@ -31,7 +30,6 @@ function toSourceListItem(sourceDocument: {
     title: sourceDocument.title,
     file_name: sourceDocument.fileName,
     mime_type: sourceDocument.mimeType,
-    file_path: sourceDocument.filePath,
     source_url: sourceDocument.sourceUrl,
     parse_status: sourceDocument.parseStatus,
     created_at: sourceDocument.createdAt,

@@ -728,6 +728,28 @@ export const parseReviewService = {
       };
     })();
   },
+
+  recoverStalledJobs() {
+    const stalledRunning = parseJobRepository.listAll({ status: "running" });
+    for (const job of stalledRunning) {
+      parseJobRepository.update(job.id, {
+        status: "pending",
+        startedAt: null,
+        finishedAt: null,
+      });
+      sourceDocumentRepository.updateParseStatus(job.sourceDocumentId, "pending");
+    }
+
+    const pending = parseJobRepository.listAll({ status: "pending" });
+    for (const job of pending) {
+      scheduleParseJobExecution(job.id);
+    }
+
+    const recovered = stalledRunning.length + pending.length;
+    if (recovered > 0) {
+      console.info(`Recovered ${recovered} stalled parse job(s).`);
+    }
+  },
 };
 
 export type { ReviewJobDetail, ReviewMergeTarget, ReviewQueueData };
