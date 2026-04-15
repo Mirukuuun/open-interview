@@ -1,0 +1,7 @@
+{
+  "workstream_type": "feature",
+  "workstream_id": "001-webui-refactor",
+  "git_branch": "feature/001-webui-refactor",
+  "docs_dir": "docs/001-webui-refactor/",
+  "complexity": "L2"
+}

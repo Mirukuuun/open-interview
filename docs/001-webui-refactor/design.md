@@ -368,3 +368,6 @@ Phase 2 按优先级逐页重构。每页在 Phase 2 启动时独立补一份**�
 - `/qa` 对话气泡的具体形态（单列 vs 左右分列 / 是否显示引用 snippet inline）
 - 空态插图（当前无插图，Phase 2 是否引入 lucide-based 简笔 illustration）
 - 主题切换器按钮是 icon-only 还是带标签
+
+<!-- handoff: H0 · status: complete · timestamp: 2026-04-15 · source: brainstorming-direct -->
+
