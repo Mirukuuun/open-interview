@@ -61,7 +61,6 @@ export function InterviewDetailWorkbench({
             </Button>
           </>
         }
-        routeLabel={`/interviews/${interview.id}`}
         title={titleParts.join(" / ")}
       />
 

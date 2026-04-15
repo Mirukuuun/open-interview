@@ -21,7 +21,6 @@ export function ProjectPlaceholder({ projectId }: ProjectPlaceholderProps) {
             <Button variant="primary">Start deep-dive session</Button>
           </>
         }
-        routeLabel={`/resume/projects/${projectId}`}
         title="Resume project detail"
       />
 

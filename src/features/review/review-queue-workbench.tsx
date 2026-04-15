@@ -233,7 +233,6 @@ export function ReviewQueueWorkbench({
             </Button>
           </>
         }
-        routeLabel="/review"
         title="审核队列"
       />
 

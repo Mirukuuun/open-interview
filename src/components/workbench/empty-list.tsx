@@ -31,7 +31,7 @@ export function EmptyList({
         ) : null}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <Badge>空状态</Badge>
+            <Badge>待开始</Badge>
           </div>
           <h3 className="mt-3 text-lg font-semibold tracking-[-0.03em] text-text-strong">
             {title}

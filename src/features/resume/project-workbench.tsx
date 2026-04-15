@@ -29,7 +29,6 @@ export function ProjectWorkbench({ project }: { project: ResumeProjectDetail }) 
             <StartDeepDiveSessionButton projectId={project.id} />
           </>
         }
-        routeLabel={`/resume/projects/${project.id}`}
         title={project.name}
       />
 

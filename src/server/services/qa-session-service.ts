@@ -1,5 +1,3 @@
-import { count, eq } from "drizzle-orm";
-
 import type {
   AskQaSessionRequest,
   QaAnswerMode,
@@ -15,12 +13,12 @@ import {
   retrievalFinalContextSchema,
   retrievalHitSchema,
 } from "@/lib/schemas/retrieval";
-import { db, sqlite } from "@/server/db/client";
-import { questionItems } from "@/server/db/schema";
+import { sqlite } from "@/server/db/client";
 import { questionBrowseRepository } from "@/server/repositories/question-browse-repository";
 import {
   chunkRepository,
   qaSessionRepository,
+  questionRepository,
   retrievalLogRepository,
 } from "@/server/repositories";
 import { retrieveHybridQaContext } from "@/server/retrieval/hybrid-qa-retrieval";
@@ -42,24 +40,9 @@ import { qaMilvusFoundationService } from "@/server/vector/qa-milvus-foundation"
  * @AI_INSTRUCTION 一旦本文件被更新，务必同步更新本注释，以及对应的 L2 feature 文档。
  */
 
-export class QaSessionServiceError extends Error {
-  code: string;
-  statusCode: number;
-  details?: unknown;
+import { BaseServiceError } from "@/server/api/base-service-error";
 
-  constructor(
-    code: string,
-    message: string,
-    statusCode = 400,
-    details?: unknown,
-  ) {
-    super(message);
-    this.name = "QaSessionServiceError";
-    this.code = code;
-    this.statusCode = statusCode;
-    this.details = details;
-  }
-}
+export class QaSessionServiceError extends BaseServiceError {}
 
 function toApiSession(
   session: NonNullable<ReturnType<typeof qaSessionRepository.findById>>,
@@ -177,13 +160,7 @@ export const qaSessionService = {
   },
 
   getWorkspaceOverview() {
-    const activeQuestionCount = Number(
-      db
-        .select({ count: count() })
-        .from(questionItems)
-        .where(eq(questionItems.reviewStatus, "active"))
-        .all()[0]?.count ?? 0,
-    );
+    const activeQuestionCount = questionRepository.countActive();
     const chunkCounts = chunkRepository.countByChunkType();
 
     return {

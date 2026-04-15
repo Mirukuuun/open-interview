@@ -14,7 +14,7 @@ export function SurfaceCard({
   return (
     <div
       className={cn(
-        "rounded-[24px] border p-5 shadow-[0_1px_0_rgba(15,23,42,0.04)]",
+        "rounded-[var(--radius-lg)] border p-5 shadow-[0_1px_0_rgba(15,23,42,0.04)]",
         muted
           ? "border-border-muted bg-surface-muted"
           : "border-border-strong bg-surface-strong",

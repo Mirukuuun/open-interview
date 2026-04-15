@@ -15,24 +15,9 @@ import { resumeService } from "@/server/services/resume-service";
 import { parseStoredRetrievalLog } from "@/server/services/session-artifacts";
 import { sqlite } from "@/server/db/client";
 
-export class ResumeDeepDiveServiceError extends Error {
-  code: string;
-  statusCode: number;
-  details?: unknown;
+import { BaseServiceError } from "@/server/api/base-service-error";
 
-  constructor(
-    code: string,
-    message: string,
-    statusCode = 400,
-    details?: unknown,
-  ) {
-    super(message);
-    this.name = "ResumeDeepDiveServiceError";
-    this.code = code;
-    this.statusCode = statusCode;
-    this.details = details;
-  }
-}
+export class ResumeDeepDiveServiceError extends BaseServiceError {}
 
 function toApiSession(
   session: NonNullable<ReturnType<typeof qaSessionRepository.findById>>,

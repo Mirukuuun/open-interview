@@ -16,7 +16,6 @@ export function ReviewQueuePlaceholder() {
             <Button variant="primary">Retry selected</Button>
           </>
         }
-        routeLabel="/review"
         title="Review parse jobs before canonical import"
       />
 

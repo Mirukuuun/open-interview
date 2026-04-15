@@ -20,7 +20,6 @@ export function ResumeDetailPlaceholder({
             <Button variant="primary">View extracted projects</Button>
           </>
         }
-        routeLabel={`/resume/${resumeId}`}
         title="Resume detail"
       />
 

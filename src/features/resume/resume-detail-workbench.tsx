@@ -26,7 +26,6 @@ export function ResumeDetailWorkbench({ detail }: { detail: ResumeDetail }) {
             ) : null}
           </>
         }
-        routeLabel={`/resume/${detail.resumeDocument.id}`}
         title={detail.resumeDocument.candidate_name ?? "结构化简历"}
       />
 

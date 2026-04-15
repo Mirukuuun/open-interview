@@ -14,24 +14,9 @@ import {
  * @AI_INSTRUCTION 一旦本文件被更新，务必同步更新本注释，以及对应的 L2 feature 文档。
  */
 
-export class InterviewQuestionServiceError extends Error {
-  code: string;
-  statusCode: number;
-  details?: unknown;
+import { BaseServiceError } from "@/server/api/base-service-error";
 
-  constructor(
-    code: string,
-    message: string,
-    statusCode = 400,
-    details?: unknown,
-  ) {
-    super(message);
-    this.name = "InterviewQuestionServiceError";
-    this.code = code;
-    this.statusCode = statusCode;
-    this.details = details;
-  }
-}
+export class InterviewQuestionServiceError extends BaseServiceError {}
 
 function trimNullable(value: string | null | undefined) {
   if (value === undefined || value === null) {

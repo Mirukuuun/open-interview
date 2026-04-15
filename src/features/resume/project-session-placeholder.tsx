@@ -22,7 +22,6 @@ export function ProjectSessionPlaceholder({
             <Button variant="primary">Submit answer</Button>
           </>
         }
-        routeLabel={`/resume/projects/${projectId}/session/${sessionId}`}
         title="Project deep-dive session"
       />
 

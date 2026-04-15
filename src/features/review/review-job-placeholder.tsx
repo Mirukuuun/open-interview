@@ -19,7 +19,6 @@ export function ReviewJobPlaceholder({ jobId }: ReviewJobPlaceholderProps) {
             <Button variant="primary">Confirm import</Button>
           </>
         }
-        routeLabel={`/review/${jobId}`}
         title="Review parsed candidates before writing canonical data"
       />
 

@@ -368,6 +368,15 @@ export const questionRepository = {
     return getQuestionTagRows(questionItemId);
   },
 
+  countActive(): number {
+    const row = db
+      .select({ count: count() })
+      .from(questionItems)
+      .where(eq(questionItems.reviewStatus, "active"))
+      .all()[0];
+    return Number(row?.count ?? 0);
+  },
+
   listAnswerVariants(questionItemId: string) {
     return db
       .select()

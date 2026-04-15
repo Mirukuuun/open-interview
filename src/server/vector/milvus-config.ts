@@ -61,7 +61,7 @@ export function getMilvusConfig(): MilvusConfig {
   return {
     enabled: process.env.MILVUS_ENABLED === "1",
     baseUrl: configuredBaseUrl.replace(/\/+$/u, ""),
-    token: trimNullable(process.env.MILVUS_TOKEN) ?? "root:Milvus",
+    token: trimNullable(process.env.MILVUS_TOKEN) ?? "",
     databaseName: trimNullable(process.env.MILVUS_DB_NAME) ?? "default",
     collectionName:
       trimNullable(process.env.MILVUS_COLLECTION_QA) ?? defaultMilvusCollectionName,

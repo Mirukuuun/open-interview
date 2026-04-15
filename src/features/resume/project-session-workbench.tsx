@@ -85,7 +85,6 @@ export function ProjectSessionWorkbench({
             />
           </>
         }
-        routeLabel={`/resume/projects/${detail.resumeProject.id}/session/${detail.aiSession.id}`}
         title={detail.aiSession.title ?? `${detail.resumeProject.name} 深挖`}
       />
 

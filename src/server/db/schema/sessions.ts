@@ -10,6 +10,7 @@ import {
   sessionTurnRoles,
   updatedAtColumn,
 } from "@/server/db/schema/_common";
+import { resumeProjects } from "@/server/db/schema/resumes";
 import { retrievalLogs } from "@/server/db/schema/retrieval";
 
 export const aiSessions = sqliteTable(
@@ -18,7 +19,10 @@ export const aiSessions = sqliteTable(
     id: idColumn(),
     sessionType: text("session_type", { enum: aiSessionTypes }).notNull(),
     status: text("status", { enum: aiSessionStatuses }).notNull().default("active"),
-    relatedResumeProjectId: text("related_resume_project_id"),
+    relatedResumeProjectId: text("related_resume_project_id").references(
+      () => resumeProjects.id,
+      { onDelete: "set null" },
+    ),
     provider: text("provider", { enum: parseJobProviders })
       .notNull()
       .default("openclaw"),

@@ -156,7 +156,6 @@ export function InterviewListWorkbench({
             </Button>
           </>
         }
-        routeLabel="/interviews"
         title="面经"
       />
 

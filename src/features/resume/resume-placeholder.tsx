@@ -15,7 +15,6 @@ export function ResumePlaceholder() {
             <Button variant="primary">Upload resume</Button>
           </>
         }
-        routeLabel="/resume"
         title="Resume ingestion and extracted projects"
       />
 

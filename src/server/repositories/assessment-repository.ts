@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import {
@@ -164,6 +164,26 @@ export const assessmentRepository = {
         skillScores: parseJsonObject(item.skillScoresJson, assessmentSkillScoresSchema),
       })),
     };
+  },
+
+  tryClaimForScoring(sessionId: string): boolean {
+    const timestamp = nowUtcIso();
+    const result = db
+      .update(assessmentSessions)
+      .set({
+        status: "scoring",
+        submittedAt: timestamp,
+        updatedAt: timestamp,
+      })
+      .where(
+        and(
+          eq(assessmentSessions.id, sessionId),
+          eq(assessmentSessions.status, "active"),
+        ),
+      )
+      .run();
+
+    return result.changes > 0;
   },
 
   markScoring(sessionId: string) {

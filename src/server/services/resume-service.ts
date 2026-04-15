@@ -16,24 +16,9 @@ import {
   sourceDocumentRepository,
 } from "@/server/repositories";
 
-export class ResumeServiceError extends Error {
-  code: string;
-  statusCode: number;
-  details?: unknown;
+import { BaseServiceError } from "@/server/api/base-service-error";
 
-  constructor(
-    code: string,
-    message: string,
-    statusCode = 400,
-    details?: unknown,
-  ) {
-    super(message);
-    this.name = "ResumeServiceError";
-    this.code = code;
-    this.statusCode = statusCode;
-    this.details = details;
-  }
-}
+export class ResumeServiceError extends BaseServiceError {}
 
 function trimNullable(value: string | null | undefined) {
   if (value === undefined || value === null) {

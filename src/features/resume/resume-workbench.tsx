@@ -39,7 +39,6 @@ export function ResumeWorkbench({ workspace }: { workspace: ResumeWorkspace }) {
             ) : null}
           </>
         }
-        routeLabel="/resume"
         title="简历 / 项目"
       />
 

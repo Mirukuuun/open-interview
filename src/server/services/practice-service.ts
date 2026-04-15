@@ -33,24 +33,9 @@ import { z } from "zod";
  * @AI_INSTRUCTION 一旦本文件被更新，务必同步更新本注释，以及对应的 L2 文档。
  */
 
-export class PracticeServiceError extends Error {
-  code: string;
-  statusCode: number;
-  details?: unknown;
+import { BaseServiceError } from "@/server/api/base-service-error";
 
-  constructor(
-    code: string,
-    message: string,
-    statusCode = 400,
-    details?: unknown,
-  ) {
-    super(message);
-    this.name = "PracticeServiceError";
-    this.code = code;
-    this.statusCode = statusCode;
-    this.details = details;
-  }
-}
+export class PracticeServiceError extends BaseServiceError {}
 
 function shuffleArray<T>(items: T[]) {
   const copiedItems = [...items];
@@ -319,6 +304,14 @@ export const practiceService = {
       return toApiAssessmentDetail(session);
     }
 
+    if (session.status === "scoring") {
+      throw new PracticeServiceError(
+        "invalid_state",
+        "该考试正在评分中，请勿重复提交。",
+        409,
+      );
+    }
+
     const payload = submitAssessmentSessionRequestSchema.parse(input);
     const itemIdSet = new Set(session.items.map((item) => item.id));
     const answerIds = new Set(payload.answers.map((answer) => answer.assessment_item_id));
@@ -335,6 +328,15 @@ export const practiceService = {
       );
     }
 
+    const claimed = assessmentRepository.tryClaimForScoring(sessionId);
+    if (!claimed) {
+      throw new PracticeServiceError(
+        "invalid_state",
+        "该考试已被提交或正在评分中。",
+        409,
+      );
+    }
+
     assessmentRepository.saveAnswers(
       sessionId,
       payload.answers.map((answer) => ({
@@ -342,7 +344,7 @@ export const practiceService = {
         userAnswer: answer.user_answer,
       })),
     );
-    const scoringSession = assessmentRepository.markScoring(sessionId);
+    const scoringSession = assessmentRepository.findById(sessionId);
 
     if (!scoringSession) {
       throw new PracticeServiceError(

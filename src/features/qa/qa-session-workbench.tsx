@@ -146,7 +146,6 @@ export function QaSessionWorkbench({ detail }: QaSessionWorkbenchProps) {
             ) : null}
           </>
         }
-        routeLabel={`/qa/${detail.aiSession.id}`}
         title={detail.aiSession.title ?? "QA 会话"}
       />
 

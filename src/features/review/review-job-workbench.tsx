@@ -343,7 +343,6 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
             </Button>
           </>
         }
-        routeLabel={`/review/${jobSummary.id}`}
         title="审核解析结果"
       />
 

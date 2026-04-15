@@ -4,8 +4,6 @@ import { cn } from "@/lib/utils";
 type PageHeaderProps = {
   eyebrow?: string;
   title: string;
-  description?: string;
-  routeLabel?: string;
   actions?: React.ReactNode;
   className?: string;
   highlights?: Array<{

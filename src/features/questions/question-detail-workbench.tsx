@@ -84,7 +84,6 @@ export function QuestionDetailWorkbench({
             )}
           </>
         }
-        routeLabel={`/questions/${question.id}`}
         title={question.questionText}
       />
 

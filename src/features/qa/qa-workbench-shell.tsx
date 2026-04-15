@@ -330,7 +330,7 @@ export function QaWorkbenchShell({
                   >
                     <div className="flex items-start gap-2">
                       <Link
-                        className="min-w-0 flex-1 rounded-2xl focus-visible:outline-none"
+                        className="min-w-0 flex-1 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
                         href={`/qa/${session.id}`}
                       >
                         <div className="flex flex-wrap items-center gap-2">

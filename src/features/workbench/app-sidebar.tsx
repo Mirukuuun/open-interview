@@ -126,12 +126,18 @@ export function AppSidebar({
         ) : null}
       </div>
 
-      <nav className="space-y-2">
-        {primaryNavItems.map((item) => {
+      <nav className="flex gap-2 overflow-x-auto lg:flex-col lg:gap-0 lg:space-y-2 lg:overflow-x-visible">
+        {primaryNavItems.map((item, index) => {
+          const prevItem = primaryNavItems[index - 1];
+          const showDivider = prevItem && prevItem.group !== item.group;
           const active = isActive(pathname, item.match);
           const Icon = item.icon;
 
           return (
+            <div key={item.href} className="shrink-0 lg:shrink">
+            {showDivider ? (
+              <div className="my-2 hidden border-t border-white/10 lg:block" />
+            ) : null}
             <Link
               aria-label={collapsed ? item.label : undefined}
               className={cn(
@@ -144,7 +150,6 @@ export function AppSidebar({
                   : "border-transparent text-slate-300 hover:border-white/12 hover:bg-white/10 hover:text-white focus-visible:border-white/12 focus-visible:bg-white/10 focus-visible:text-white",
               )}
               href={item.href}
-              key={item.href}
               title={collapsed ? item.label : undefined}
             >
               <div
@@ -197,6 +202,7 @@ export function AppSidebar({
               </div>
               {collapsed ? <span className="sidebar-tooltip">{item.label}</span> : null}
             </Link>
+            </div>
           );
         })}
       </nav>

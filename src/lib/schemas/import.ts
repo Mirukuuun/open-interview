@@ -88,7 +88,7 @@ export const createTextSourceRequestSchema = z.object({
   raw_text: z.string().trim().min(1),
   source_url: z.preprocess(
     coerceNullableString,
-    z.string().min(1).nullable().optional(),
+    z.string().url().nullable().optional(),
   ),
 });
 
@@ -108,7 +108,7 @@ export const createUploadSourceRequestSchema = z.object({
   kind: ingestableSourceDocumentKindSchema,
   source_url: z.preprocess(
     coerceNullableString,
-    z.string().min(1).nullable().optional(),
+    z.string().url().nullable().optional(),
   ),
   submit_mode: z.preprocess(
     (value) => (typeof value === "string" ? value : undefined),

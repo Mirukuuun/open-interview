@@ -88,7 +88,6 @@ export function QuestionBankWorkbench({
             </Button>
           </>
         }
-        routeLabel="/questions"
         title="题库"
       />
 
