@@ -38,3 +38,6 @@ etcd/
 milvus/
 minio/
 volumes/
+
+# superpowers brainstorm mockups
+.superpowers/
