@@ -56,7 +56,7 @@
 
 ## 任务清单
 
-- [ ] **T1.1** · Tokens 层完全重写 + 废弃 CSS 清理 → [tasks/T1.1-tokens-globalcss-rewrite.md](tasks/T1.1-tokens-globalcss-rewrite.md)
+- [x] **T1.1** · Tokens 层完全重写 + 废弃 CSS 清理 → [tasks/T1.1-tokens-globalcss-rewrite.md](tasks/T1.1-tokens-globalcss-rewrite.md)
 - [ ] **T1.2** · 字体依赖切换（移除 IBM Plex / 新增 Inter） → [tasks/T1.2-fonts-swap.md](tasks/T1.2-fonts-swap.md)
 - [ ] **T1.3** · 深色模式基础设施（theme-toggle 组件 + 三态切换 + localStorage 记忆） → [tasks/T1.3-dark-mode-infra.md](tasks/T1.3-dark-mode-infra.md)
 - [ ] **T1.4** · Button 组件重写（5 variant × 4 size，全部 1px border 几何对齐） → [tasks/T1.4-button-rewrite.md](tasks/T1.4-button-rewrite.md)
