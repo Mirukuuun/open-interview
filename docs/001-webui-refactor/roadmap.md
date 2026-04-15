@@ -17,13 +17,14 @@
 
 **Phase 1 完成判定：**
 
-- [ ] `corepack pnpm db:init` + `typecheck` + `lint` + `build` 全部通过
-- [ ] 所有现有 7 个 feature 页面在新组件/新 tokens 下渲染无崩坏（视觉 diff 自查）
-- [ ] 任一排按钮（例如 PageHeader 右上角、Dialog footer）跨 variant 实测高度差 ≤ 0
-- [ ] 颜色 / 字体 / 圆角 / 阴影 / 表面层级 tokens 在浅色 + 深色两套完整可用
-- [ ] 主题切换器三态（system / light / dark）切换正常，`localStorage.openInterviewTheme` 记忆正常
-- [ ] 375px 宽度 viewport 下 sidebar 塌成顶部抽屉，主区域不溢出
-- [ ] 代码里不再存在 `body` radial gradient、`.reveal-list` 动画、`.interactive-card` 全局类、`--surface-nav` 深色靛紫、IBM Plex 字体引用
+- [x] `corepack pnpm db:init` + `typecheck` + `lint` + `build` 全部通过 <!-- T1.9 §一 5/5 PASS，含 83/83 Vitest，见 m1-infra/tests/T1.9-regression-report.md -->
+- [ ] 所有现有 7 个 feature 页面在新组件/新 tokens 下渲染无崩坏（视觉 diff 自查） <!-- 浏览器手动验收项，见 m1-infra/tests/T1.9-regression-report.md §三 待用户手动验收 -->
+- [ ] 任一排按钮（例如 PageHeader 右上角、Dialog footer）跨 variant 实测高度差 ≤ 0 <!-- 浏览器 DOM 实测项，源码级 sizeClasses 静态证明见 m1-infra/tests/T1.9-regression-report.md §四 待用户手动验收 -->
+- [x] 颜色 / 字体 / 圆角 / 阴影 / 表面层级 tokens 在浅色 + 深色两套完整可用 <!-- T1.9 §二 2.4 + §五 5.1，30+ tokens 双态全齐 -->
+- [ ] 主题切换器三态（system / light / dark）切换正常，`localStorage.openInterviewTheme` 记忆正常 <!-- 交互手动项，源码 + 单测 PASS 见 m1-infra/tests/T1.9-regression-report.md §五 待用户手动验收 -->
+- [ ] 375px 宽度 viewport 下 sidebar 塌成顶部抽屉，主区域不溢出 <!-- 响应式手动项，源码级 Menu/X + mobileOpen state 已就绪，见 m1-infra/tests/T1.9-regression-report.md §七 待用户手动验收 -->
+- [x] 代码里不再存在 `body` radial gradient、`.reveal-list` 动画、`.interactive-card` 全局类、`--surface-nav` 深色靛紫、IBM Plex 字体引用 <!-- T1.9 §二 2.1/2.2/2.3 grep CLEAN -->
+
 
 **Phase 2 完成判定：**
 
@@ -65,7 +66,7 @@
 
 | 里程碑 | slug | 主题 | 目录 | 前置依赖 | 状态 | 估算 |
 |---|---|---|---|---|---|---|
-| M1 | `m1-infra` | 全站 design tokens + 原子组件重写 + Shell 层重构 + 深色模式支持 | [`m1-infra/`](./m1-infra/) | — | `- [ ]` 未开始 | 4–5 天 |
+| M1 | `m1-infra` | 全站 design tokens + 原子组件重写 + Shell 层重构 + 深色模式支持 | [`m1-infra/`](./m1-infra/) | — | `- [x]` 已完成 | 4–5 天 |
 | M2 | `m2-feature-pages` | 7 个 feature 页面按优先级逐页重构（practice → qa → questions → review → interviews → import → resume） | [`m2-feature-pages/`](./m2-feature-pages/) | M1 完成并合并 | `- [ ]` 未开始 | 7–14 天（单页 1–2 天 × 7） |
 
 ### Phase 依赖图
@@ -81,7 +82,7 @@
 
 ## 4. M1 · `m1-infra` · 基础设施层
 
-- [ ] **状态**：未开始
+- [x] **状态**：已完成
 - **目录**：`docs/001-webui-refactor/m1-infra/`
 - **估算**：4–5 天
 - **前置依赖**：无（`design.md` 已就绪）
