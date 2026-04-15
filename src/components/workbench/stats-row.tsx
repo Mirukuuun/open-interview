@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-type DetailGridProps = {
+type StatsRowProps = {
   items: Array<{
     label: string;
     value: string;
@@ -9,18 +9,18 @@ type DetailGridProps = {
   className?: string;
 };
 
-export function DetailGrid({ items, className }: DetailGridProps) {
+export function StatsRow({ items, className }: StatsRowProps) {
   return (
-    <dl className={cn("grid gap-2 sm:grid-cols-2 xl:grid-cols-4", className)}>
+    <dl className={cn("grid gap-3 sm:grid-cols-2 xl:grid-cols-4", className)}>
       {items.map((item) => (
         <div
-          className="rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-3 py-2"
-          key={`${item.label}-${item.value}-${item.meta ?? ""}`}
+          className="rounded-[var(--radius-lg)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-4 py-3"
+          key={`${item.label}-${item.value}`}
         >
           <dt className="text-[11px] font-medium text-[color:var(--color-muted-foreground)]">
             {item.label}
           </dt>
-          <dd className="mt-1 text-sm font-medium text-[color:var(--color-foreground)]">
+          <dd className="mt-1 text-[15px] font-semibold text-[color:var(--color-foreground)]">
             {item.value}
           </dd>
           {item.meta ? (

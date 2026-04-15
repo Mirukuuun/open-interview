@@ -14,11 +14,15 @@ export function FormField({
   children,
 }: Readonly<FormFieldProps>) {
   return (
-    <label className={cn("block space-y-2", className)}>
-      <span className="text-sm font-medium text-text-strong">{label}</span>
+    <label className={cn("block space-y-1.5", className)}>
+      <span className="text-[13px] font-medium text-[color:var(--color-foreground)]">
+        {label}
+      </span>
       {children}
       {description ? (
-        <p className="text-xs leading-5 text-text-muted">{description}</p>
+        <p className="text-xs leading-5 text-[color:var(--color-muted-foreground)]">
+          {description}
+        </p>
       ) : null}
     </label>
   );

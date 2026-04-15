@@ -8,13 +8,19 @@ type SectionHeadingProps = {
 
 export function SectionHeading({
   title,
+  description,
   className,
 }: SectionHeadingProps) {
   return (
     <div className={cn("space-y-1", className)}>
-      <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-text-strong">
+      <h2 className="text-[14px] font-semibold text-[color:var(--color-foreground)]">
         {title}
       </h2>
+      {description ? (
+        <p className="text-[13px] text-[color:var(--color-muted-foreground)]">
+          {description}
+        </p>
+      ) : null}
     </div>
   );
 }

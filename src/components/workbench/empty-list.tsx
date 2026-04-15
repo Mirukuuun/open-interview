@@ -1,6 +1,5 @@
 import type { LucideIcon } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 type EmptyListProps = {
@@ -22,40 +21,33 @@ export function EmptyList({
   action,
 }: EmptyListProps) {
   return (
-    <div className="rounded-[28px] border border-dashed border-border-strong bg-surface-muted p-5">
-      <div className="flex flex-wrap items-start gap-4">
-        {Icon ? (
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-accent/10 bg-accent-soft text-accent">
-            <Icon className="h-6 w-6" />
-          </div>
-        ) : null}
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <Badge>待开始</Badge>
-          </div>
-          <h3 className="mt-3 text-lg font-semibold tracking-[-0.03em] text-text-strong">
-            {title}
-          </h3>
-          {description ? (
-            <p className="mt-2 max-w-2xl text-sm leading-7 text-text-muted">
-              {description}
-            </p>
-          ) : null}
+    <div className="rounded-[var(--radius-lg)] border border-dashed border-[color:var(--color-border)] bg-[color:var(--color-surface-muted)] p-6 text-center">
+      {Icon ? (
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-[var(--radius-lg)] border border-[color:var(--color-border)] bg-[color:var(--color-brand-soft)] text-[color:var(--color-brand)]">
+          <Icon className="h-6 w-6" />
         </div>
-      </div>
+      ) : null}
+      <h3 className="mt-4 text-base font-semibold text-[color:var(--color-foreground)]">
+        {title}
+      </h3>
+      {description ? (
+        <p className="mx-auto mt-2 max-w-xl text-[13px] leading-[1.6] text-[color:var(--color-muted-foreground)]">
+          {description}
+        </p>
+      ) : null}
       {bullets.length > 0 ? (
-        <ul className="reveal-list mt-5 space-y-2 text-sm text-text-strong">
+        <ul className="mx-auto mt-4 max-w-xl space-y-2 text-left text-[13px] text-[color:var(--color-foreground)]">
           {bullets.map((bullet) => (
             <li className="flex gap-2" key={bullet}>
-              <span className="mt-2 h-1.5 w-1.5 rounded-full bg-accent" />
+              <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[color:var(--color-brand)]" />
               <span className="leading-6">{bullet}</span>
             </li>
           ))}
         </ul>
       ) : null}
       {action ? (
-        <div className="mt-5">
-          <Button href={action.href} variant="primary">
+        <div className="mt-6">
+          <Button href={action.href} size="xl" variant="primary">
             {action.label}
           </Button>
         </div>
