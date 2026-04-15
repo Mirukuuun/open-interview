@@ -14,11 +14,11 @@ export async function WorkbenchShell({
   ]);
 
   return (
-    <div className="min-h-screen bg-background lg:flex">
+    <div className="flex min-h-screen flex-col bg-[color:var(--color-background)] lg:flex-row">
       <AppSidebar summary={summary} />
-      <div className="min-w-0 flex-1">
+      <div className="flex min-w-0 flex-1 flex-col">
         <TopBar llmProvider={llmProvider} />
-        <main className="mx-auto flex min-h-[calc(100vh-77px)] w-full max-w-[1680px] flex-col gap-5 px-4 py-5 sm:px-5 sm:py-6">
+        <main className="mx-auto flex w-full max-w-[1680px] flex-1 flex-col gap-4 px-4 py-4 sm:px-5">
           {children}
         </main>
       </div>

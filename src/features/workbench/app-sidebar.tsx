@@ -1,11 +1,13 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Menu, X } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 import {
@@ -50,6 +52,7 @@ export function AppSidebar({
     getSidebarCollapsedSnapshot,
     () => false,
   );
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   function toggleCollapsed() {
     const nextValue = !collapsed;
@@ -62,53 +65,49 @@ export function AppSidebar({
   }
 
   return (
-    <aside
-      className={cn(
-        "flex w-full shrink-0 flex-col gap-6 rounded-none bg-surface-nav px-4 py-5 text-text-inverse lg:min-h-screen lg:rounded-r-[28px] lg:transition-[width,padding] lg:duration-200 lg:ease-out",
-        collapsed ? "lg:w-[72px] lg:px-3" : "lg:w-[272px] lg:px-4",
-      )}
-    >
-      <div className="space-y-4 border-b border-white/10 pb-5">
+    <>
+      <button
+        aria-label={mobileOpen ? "关闭导航" : "打开导航"}
+        className="fixed left-3 top-3 z-40 inline-flex h-9 w-9 items-center justify-center rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] text-[color:var(--color-foreground)] transition-colors duration-150 ease-out hover:bg-[color:var(--color-surface-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-brand)] focus-visible:ring-offset-2 lg:hidden"
+        onClick={() => setMobileOpen((prev) => !prev)}
+        type="button"
+      >
+        {mobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+      </button>
+
+      {mobileOpen ? (
         <div
-          className={cn(
-            "flex items-center gap-3",
-            collapsed ? "justify-center" : "justify-between",
-          )}
-        >
-          <div
-            className={cn(
-              "flex min-w-0 items-center gap-3",
-              collapsed ? "justify-center" : null,
-            )}
+          aria-hidden="true"
+          className="fixed inset-0 z-30 bg-black/40 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      ) : null}
+
+      <aside
+        className={cn(
+          "fixed inset-x-0 top-0 z-30 flex flex-col gap-4 bg-[color:var(--color-surface-muted)] px-4 py-4 text-[color:var(--color-foreground)] transition-transform duration-200 ease-out lg:static lg:inset-auto lg:min-h-screen lg:translate-y-0 lg:border-r lg:border-[color:var(--color-border)] lg:transition-[width,padding] lg:duration-200 lg:ease-out",
+          mobileOpen ? "translate-y-0" : "-translate-y-full lg:translate-y-0",
+          collapsed ? "lg:w-[72px] lg:px-2" : "lg:w-[248px] lg:px-3",
+        )}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <Link
+            className="flex min-w-0 items-center gap-2"
+            href="/"
+            onClick={() => setMobileOpen(false)}
           >
-            <div className="flex h-11 w-11 items-center justify-center rounded-[18px] border border-white/12 bg-[linear-gradient(135deg,rgba(129,140,248,0.34),rgba(255,255,255,0.08))] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]">
-              {collapsed ? (
-                <span className="text-sm font-semibold tracking-[0.08em] text-white">
-                  OI
-                </span>
-              ) : (
-                <div className="grid grid-cols-2 gap-1">
-                  <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
-                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-300/90" />
-                  <span className="h-2.5 w-2.5 rounded-full bg-indigo-200/90" />
-                  <span className="h-2.5 w-2.5 rounded-full bg-white/55" />
-                </div>
-              )}
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[color:var(--color-brand)] text-[11px] font-semibold text-white">
+              OI
             </div>
             {!collapsed ? (
-              <div className="min-w-0 space-y-0.5">
-                <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-white/55">
-                  Open Interview
-                </p>
-                <h1 className="truncate text-base font-semibold tracking-[-0.03em] text-white">
-                  专业陪练台
-                </h1>
-              </div>
+              <span className="truncate text-[13px] font-semibold text-[color:var(--color-foreground)]">
+                Open Interview
+              </span>
             ) : null}
-          </div>
+          </Link>
           <button
             aria-label={collapsed ? "展开导航" : "收起导航"}
-            className="hidden h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/6 text-white/80 transition-colors hover:bg-white/12 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/45 lg:inline-flex"
+            className="hidden h-7 w-7 items-center justify-center rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] text-[color:var(--color-muted-foreground)] transition-colors duration-150 ease-out hover:bg-[color:var(--color-surface-subtle)] hover:text-[color:var(--color-foreground)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-brand)] focus-visible:ring-offset-2 lg:inline-flex"
             onClick={toggleCollapsed}
             type="button"
           >
@@ -119,93 +118,61 @@ export function AppSidebar({
             )}
           </button>
         </div>
-        {!collapsed ? (
-          <div>
-            <p className="text-sm font-medium text-white/72">工作台导航</p>
-          </div>
-        ) : null}
-      </div>
 
-      <nav className="flex gap-2 overflow-x-auto lg:flex-col lg:gap-0 lg:space-y-2 lg:overflow-x-visible">
-        {primaryNavItems.map((item, index) => {
-          const prevItem = primaryNavItems[index - 1];
-          const showDivider = prevItem && prevItem.group !== item.group;
-          const active = isActive(pathname, item.match);
-          const Icon = item.icon;
+        <Separator />
 
-          return (
-            <div key={item.href} className="shrink-0 lg:shrink">
-            {showDivider ? (
-              <div className="my-2 hidden border-t border-white/10 lg:block" />
-            ) : null}
-            <Link
-              aria-label={collapsed ? item.label : undefined}
-              className={cn(
-                "group relative block border transition-[border-color,background-color,color,box-shadow] duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40",
-                collapsed
-                  ? "rounded-[20px] px-0 py-2.5"
-                  : "rounded-[22px] px-3 py-3",
-                active
-                  ? "border-indigo-300/28 bg-surface-nav-muted text-white hover:border-indigo-200/30"
-                  : "border-transparent text-slate-300 hover:border-white/12 hover:bg-white/10 hover:text-white focus-visible:border-white/12 focus-visible:bg-white/10 focus-visible:text-white",
-              )}
-              href={item.href}
-              title={collapsed ? item.label : undefined}
-            >
-              <div
+        <nav className="flex flex-col gap-1">
+          {primaryNavItems.map((item, index) => {
+            const prevItem = primaryNavItems[index - 1];
+            const showGroupSeparator =
+              prevItem && prevItem.group !== item.group;
+            const active = isActive(pathname, item.match);
+            const Icon = item.icon;
+
+            const navLink = (
+              <Link
+                aria-label={collapsed ? item.label : undefined}
                 className={cn(
-                  "flex min-w-0 items-center",
-                  collapsed ? "justify-center" : "justify-between gap-3",
+                  "group flex w-full items-center gap-2.5 rounded-[var(--radius-md)] px-2 py-2 text-[13px] font-medium transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-brand)] focus-visible:ring-offset-2",
+                  collapsed ? "justify-center px-0" : "",
+                  active
+                    ? "bg-[color:var(--color-brand-soft)] text-[color:var(--color-brand)]"
+                    : "text-[color:var(--color-muted-foreground)] hover:bg-[color:var(--color-surface-subtle)] hover:text-[color:var(--color-foreground)] active:bg-[color:var(--color-surface-subtle)]",
                 )}
+                href={item.href}
+                onClick={() => setMobileOpen(false)}
               >
-                <div
-                  className={cn(
-                    "flex min-w-0 items-center gap-3",
-                    collapsed ? "justify-center" : null,
-                  )}
-                >
-                  <div
-                    className={cn(
-                      "relative flex shrink-0 items-center justify-center rounded-[16px] border transition-colors duration-200 ease-out",
-                      collapsed ? "h-11 w-11" : "h-10 w-10",
-                      active
-                        ? "border-white/10 bg-white/12 text-white"
-                        : "border-white/6 bg-white/4 text-slate-300 group-hover:border-white/12 group-hover:bg-white/12 group-hover:text-white group-focus-visible:border-white/12 group-focus-visible:bg-white/12 group-focus-visible:text-white",
-                    )}
-                  >
-                    <Icon className="h-5 w-5" />
-                    {collapsed && item.badge ? (
-                      <>
-                        <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-emerald-300" />
-                        <span className="sr-only">{`${item.label} ${item.badge}`}</span>
-                      </>
+                <Icon className="h-4 w-4 shrink-0" />
+                {!collapsed ? (
+                  <>
+                    <span className="flex-1 truncate text-left">
+                      {item.label}
+                    </span>
+                    {item.badge ? (
+                      <Badge tone="brand" variant="soft">
+                        {item.badge}
+                      </Badge>
                     ) : null}
-                  </div>
-                  {!collapsed ? (
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="truncate text-sm font-semibold">
-                          {item.label}
-                        </span>
-                        {active ? (
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
-                        ) : null}
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-                {!collapsed && item.badge ? (
-                  <Badge className="bg-white/10 text-white" tone="neutral">
-                    {item.badge}
-                  </Badge>
+                  </>
                 ) : null}
+              </Link>
+            );
+
+            return (
+              <div key={item.href}>
+                {showGroupSeparator ? <Separator className="my-2" /> : null}
+                {collapsed ? (
+                  <Tooltip content={item.label} side="right">
+                    {navLink}
+                  </Tooltip>
+                ) : (
+                  navLink
+                )}
               </div>
-              {collapsed ? <span className="sidebar-tooltip">{item.label}</span> : null}
-            </Link>
-            </div>
-          );
-        })}
-      </nav>
-    </aside>
+            );
+          })}
+        </nav>
+      </aside>
+    </>
   );
 }
