@@ -1,55 +1,110 @@
 @import "@fontsource/jetbrains-mono/400.css";
 @import "@fontsource/jetbrains-mono/500.css";
 @import "@fontsource/jetbrains-mono/700.css";
-@import "@fontsource/ibm-plex-sans/400.css";
-@import "@fontsource/ibm-plex-sans/500.css";
-@import "@fontsource/ibm-plex-sans/600.css";
-@import "@fontsource/ibm-plex-sans/700.css";
 @import "tailwindcss";
 
-:root {
-  --font-sans: "IBM Plex Sans", "Segoe UI", sans-serif;
-  --font-mono: "JetBrains Mono", "SFMono-Regular", monospace;
+@custom-variant dark (&:where(.dark, .dark *));
 
-  --background: #f6f4f8;
-  --surface-strong: #fffeff;
-  --surface-muted: #f7f5f9;
-  --surface-nav: #1e1b4b;
-  --surface-nav-muted: #312e81;
-  --border-strong: #ddd8e9;
-  --border-muted: #ebe6f1;
-  --text-strong: #1e1b4b;
-  --text-muted: #5d5b84;
-  --text-inverse: #f8fafc;
-  --accent: #6366f1;
-  --accent-secondary: #818cf8;
-  --accent-soft: #eef2ff;
-  --success: #10b981;
-  --success-soft: #d1fae5;
-  --warning: #f59e0b;
-  --radius-sm: 14px;
-  --radius-md: 18px;
-  --radius-lg: 24px;
-  --radius-xl: 28px;
+:root {
+  /* typography */
+  --font-sans: "Inter", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* neutrals (zinc 9 档语义别名) */
+  --color-background: #fafafa;
+  --color-foreground: #09090b;
+  --color-border: #e4e4e7;
+  --color-muted-foreground: #71717a;
+
+  /* surfaces */
+  --color-surface: #ffffff;
+  --color-surface-muted: #fafafa;
+  --color-surface-subtle: #f4f4f5;
+
+  /* functional colors */
+  --color-brand: #2563eb;
+  --color-brand-soft: #eff6ff;
+  --color-success: #059669;
+  --color-success-soft: #ecfdf5;
+  --color-warning: #d97706;
+  --color-warning-soft: #fffbeb;
+  --color-destructive: #dc2626;
+  --color-destructive-soft: #fef2f2;
+  --color-info: #0284c7;
+  --color-info-soft: #f0f9ff;
+
+  /* radii */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-full: 999px;
+
+  /* shadows (overlay-only) */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.12);
+
+  /* motion */
+  --duration-base: 150ms;
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+}
+
+.dark {
+  --color-background: #09090b;
+  --color-foreground: #fafafa;
+  --color-border: #27272a;
+  --color-muted-foreground: #a1a1aa;
+
+  --color-surface: #18181b;
+  --color-surface-muted: #09090b;
+  --color-surface-subtle: #27272a;
+
+  --color-brand: #3b82f6;
+  --color-brand-soft: rgba(59, 130, 246, 0.12);
+  --color-success: #10b981;
+  --color-success-soft: rgba(16, 185, 129, 0.14);
+  --color-warning: #f59e0b;
+  --color-warning-soft: rgba(245, 158, 11, 0.14);
+  --color-destructive: #ef4444;
+  --color-destructive-soft: rgba(239, 68, 68, 0.14);
+  --color-info: #38bdf8;
+  --color-info-soft: rgba(56, 189, 248, 0.14);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-surface-strong: var(--surface-strong);
-  --color-surface-muted: var(--surface-muted);
-  --color-surface-nav: var(--surface-nav);
-  --color-surface-nav-muted: var(--surface-nav-muted);
-  --color-border-strong: var(--border-strong);
-  --color-border-muted: var(--border-muted);
-  --color-text-strong: var(--text-strong);
-  --color-text-muted: var(--text-muted);
-  --color-text-inverse: var(--text-inverse);
-  --color-accent: var(--accent);
-  --color-accent-secondary: var(--accent-secondary);
-  --color-accent-soft: var(--accent-soft);
-  --color-success: var(--success);
-  --color-success-soft: var(--success-soft);
-  --color-warning: var(--warning);
+  --color-background: var(--color-background);
+  --color-foreground: var(--color-foreground);
+  --color-border: var(--color-border);
+  --color-muted-foreground: var(--color-muted-foreground);
+
+  --color-surface: var(--color-surface);
+  --color-surface-muted: var(--color-surface-muted);
+  --color-surface-subtle: var(--color-surface-subtle);
+
+  --color-brand: var(--color-brand);
+  --color-brand-soft: var(--color-brand-soft);
+  --color-success: var(--color-success);
+  --color-success-soft: var(--color-success-soft);
+  --color-warning: var(--color-warning);
+  --color-warning-soft: var(--color-warning-soft);
+  --color-destructive: var(--color-destructive);
+  --color-destructive-soft: var(--color-destructive-soft);
+  --color-info: var(--color-info);
+  --color-info-soft: var(--color-info-soft);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-full: var(--radius-full);
+
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
 }
@@ -59,18 +114,15 @@
 }
 
 html {
-  background-color: var(--background);
-  color-scheme: light;
+  background-color: var(--color-background);
+  color-scheme: light dark;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  background:
-    radial-gradient(circle at top left, rgba(129, 140, 248, 0.12), transparent 26%),
-    radial-gradient(circle at top right, rgba(16, 185, 129, 0.08), transparent 22%),
-    linear-gradient(180deg, #fbfafc 0%, var(--background) 34%, #f4f2f7 100%);
-  color: var(--text-strong);
+  background-color: var(--color-background);
+  color: var(--color-foreground);
   font-family: var(--font-sans);
 }
 
@@ -86,121 +138,14 @@ summary {
 }
 
 ::selection {
-  background-color: rgba(99, 102, 241, 0.22);
-}
-
-.interactive-card {
-  cursor: pointer;
-  transition:
-    border-color 180ms ease,
-    background-color 180ms ease,
-    box-shadow 180ms ease,
-    color 180ms ease,
-    transform 180ms ease;
-}
-
-.interactive-card:hover {
-  border-color: color-mix(in srgb, var(--accent) 24%, var(--border-strong));
-  background-color: color-mix(in srgb, var(--accent-soft) 28%, white);
-}
-
-.interactive-card:focus-visible {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow:
-    0 0 0 3px color-mix(in srgb, var(--accent-soft) 74%, white),
-    0 1px 0 rgba(99, 102, 241, 0.06);
-}
-
-.sidebar-tooltip {
-  pointer-events: none;
-  position: absolute;
-  left: calc(100% + 0.75rem);
-  top: 50%;
-  z-index: 30;
-  transform: translateY(-50%) translateX(-6px);
-  opacity: 0;
-  white-space: nowrap;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(15, 23, 42, 0.94);
-  padding: 0.45rem 0.7rem;
-  color: white;
-  font-size: 0.75rem;
-  line-height: 1;
-  transition:
-    opacity 200ms ease-out,
-    transform 200ms ease-out;
-}
-
-.group:hover > .sidebar-tooltip,
-.group:focus-visible > .sidebar-tooltip,
-.group:focus-within > .sidebar-tooltip {
-  transform: translateY(-50%) translateX(0);
-  opacity: 1;
-}
-
-.reveal-list > * {
-  animation: fade-in-up 260ms ease-out both;
-}
-
-.reveal-list > *:nth-child(1) {
-  animation-delay: 40ms;
-}
-
-.reveal-list > *:nth-child(2) {
-  animation-delay: 80ms;
-}
-
-.reveal-list > *:nth-child(3) {
-  animation-delay: 120ms;
-}
-
-.reveal-list > *:nth-child(4) {
-  animation-delay: 160ms;
-}
-
-.reveal-list > *:nth-child(5) {
-  animation-delay: 200ms;
-}
-
-.reveal-list > *:nth-child(6) {
-  animation-delay: 240ms;
-}
-
-@keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  background-color: var(--color-brand-soft);
+  color: var(--color-foreground);
 }
 
 @keyframes skeleton-pulse {
   0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.42;
-  }
-}
-
-@keyframes radar-draw {
-  from {
-    stroke-dashoffset: 1;
-    opacity: 0.2;
-  }
-
-  to {
-    stroke-dashoffset: 0;
-    opacity: 1;
-  }
+  100% { opacity: 1; }
+  50%  { opacity: 0.42; }
 }
 
 @media (prefers-reduced-motion: reduce) {
