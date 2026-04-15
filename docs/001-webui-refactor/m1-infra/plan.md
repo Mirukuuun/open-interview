@@ -58,11 +58,11 @@
 
 - [x] **T1.1** · Tokens 层完全重写 + 废弃 CSS 清理 → [tasks/T1.1-tokens-globalcss-rewrite.md](tasks/T1.1-tokens-globalcss-rewrite.md)
 - [x] **T1.2** · 字体依赖切换（移除 IBM Plex / 新增 Inter） → [tasks/T1.2-fonts-swap.md](tasks/T1.2-fonts-swap.md)
-- [ ] **T1.3** · 深色模式基础设施（theme-toggle 组件 + 三态切换 + localStorage 记忆） → [tasks/T1.3-dark-mode-infra.md](tasks/T1.3-dark-mode-infra.md)
+- [x] **T1.3** · 深色模式基础设施（theme-toggle 组件 + 三态切换 + localStorage 记忆） → [tasks/T1.3-dark-mode-infra.md](tasks/T1.3-dark-mode-infra.md)
 - [x] **T1.4** · Button 组件重写（5 variant × 4 size，全部 1px border 几何对齐） → [tasks/T1.4-button-rewrite.md](tasks/T1.4-button-rewrite.md)
 - [x] **T1.5** · 其他原子 UI 重写（badge / input / select / textarea / skeleton） → [tasks/T1.5-atomic-ui-rewrite.md](tasks/T1.5-atomic-ui-rewrite.md)
 - [x] **T1.6** · Card 拆分 + 新增组件（tooltip / dialog / separator） → [tasks/T1.6-card-and-new-ui.md](tasks/T1.6-card-and-new-ui.md)
-- [ ] **T1.7** · 工作台原子组件重写（page-header / section-heading / empty-list / detail-grid / form-field / placeholder-table） → [tasks/T1.7-workbench-atoms-rewrite.md](tasks/T1.7-workbench-atoms-rewrite.md)
+- [x] **T1.7** · 工作台原子组件重写（page-header / section-heading / empty-list / detail-grid / form-field / placeholder-table） → [tasks/T1.7-workbench-atoms-rewrite.md](tasks/T1.7-workbench-atoms-rewrite.md)
 - [ ] **T1.8** · Shell 层重构（app-sidebar / top-bar / shell / workbench layout / root layout 主题类） → [tasks/T1.8-shell-refactor.md](tasks/T1.8-shell-refactor.md)
 - [ ] **T1.9** · 跨组件回归验证（typecheck + lint + build + 视觉 diff 自查 + 375px 自查 + 深色模式自查） → [tasks/T1.9-regression-verification.md](tasks/T1.9-regression-verification.md)
 - [ ] **T1.10** · Buffer（执行时 bug 修复记录 + 回归测试） → [tasks/T1.10-buffer.md](tasks/T1.10-buffer.md)
