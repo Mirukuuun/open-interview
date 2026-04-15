@@ -66,7 +66,7 @@
 - [x] **T1.8** · Shell 层重构（app-sidebar / top-bar / shell / workbench layout / root layout 主题类） → [tasks/T1.8-shell-refactor.md](tasks/T1.8-shell-refactor.md)
 - [x] **T1.9** · 跨组件回归验证（typecheck + lint + build + 视觉 diff 自查 + 375px 自查 + 深色模式自查） → [tasks/T1.9-regression-verification.md](tasks/T1.9-regression-verification.md)
 - [x] **T1.10** · Buffer（执行时 bug 修复记录 + 回归测试） → [tasks/T1.10-buffer.md](tasks/T1.10-buffer.md)
-- [ ] **T1.11** · 文档交付（M1 完成报告 + 组件 API 变更清单 + design-system 入口索引） → [tasks/T1.11-delivery-docs.md](tasks/T1.11-delivery-docs.md)
+- [x] **T1.11** · 文档交付（M1 完成报告 + 组件 API 变更清单 + design-system 入口索引） → [tasks/T1.11-delivery-docs.md](tasks/T1.11-delivery-docs.md)
 
 ## 依赖图
 
