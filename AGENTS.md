@@ -60,6 +60,7 @@ docs/
 - `.codex/rules/documentation-loop.md`：L1 / L2 / L3 导航、`@feature` 和结构化注释要求；触达文档或核心业务文件前优先阅读。
 - `.codex/rules/typescript-nextjs.md`：TypeScript、Next.js App Router、`src/app`、`src/features`、`src/components` 的实现约束。
 - `.codex/rules/server-boundaries.md`：`src/server`、数据库、检索、适配器以及 service / repository 的边界约束。
+- `docs/reference/design-system.md`：canonical UI 设计系统（tokens / 按钮 / 原子组件 / 深色模式 / 反模式），所有 UI 改动前必读。
 
 ## 项目结构与模块组织
 
