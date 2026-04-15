@@ -64,8 +64,8 @@
 - [x] **T1.6** · Card 拆分 + 新增组件（tooltip / dialog / separator） → [tasks/T1.6-card-and-new-ui.md](tasks/T1.6-card-and-new-ui.md)
 - [x] **T1.7** · 工作台原子组件重写（page-header / section-heading / empty-list / detail-grid / form-field / placeholder-table） → [tasks/T1.7-workbench-atoms-rewrite.md](tasks/T1.7-workbench-atoms-rewrite.md)
 - [x] **T1.8** · Shell 层重构（app-sidebar / top-bar / shell / workbench layout / root layout 主题类） → [tasks/T1.8-shell-refactor.md](tasks/T1.8-shell-refactor.md)
-- [ ] **T1.9** · 跨组件回归验证（typecheck + lint + build + 视觉 diff 自查 + 375px 自查 + 深色模式自查） → [tasks/T1.9-regression-verification.md](tasks/T1.9-regression-verification.md)
-- [ ] **T1.10** · Buffer（执行时 bug 修复记录 + 回归测试） → [tasks/T1.10-buffer.md](tasks/T1.10-buffer.md)
+- [x] **T1.9** · 跨组件回归验证（typecheck + lint + build + 视觉 diff 自查 + 375px 自查 + 深色模式自查） → [tasks/T1.9-regression-verification.md](tasks/T1.9-regression-verification.md)
+- [x] **T1.10** · Buffer（执行时 bug 修复记录 + 回归测试） → [tasks/T1.10-buffer.md](tasks/T1.10-buffer.md)
 - [ ] **T1.11** · 文档交付（M1 完成报告 + 组件 API 变更清单 + design-system 入口索引） → [tasks/T1.11-delivery-docs.md](tasks/T1.11-delivery-docs.md)
 
 ## 依赖图
