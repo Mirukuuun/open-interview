@@ -64,14 +64,14 @@ export function ReviewImportPreview({
           <Badge tone="accent">面经题预览</Badge>
           <Badge>{activeCandidate.action === "keep" ? "保留" : "跳过"}</Badge>
         </div>
-        <div className="rounded-xl border border-border-muted bg-surface-muted p-4">
-          <p className="text-sm font-semibold text-text-strong">
+        <div className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted p-4">
+          <p className="text-sm font-semibold text-[color:var(--color-foreground)]">
             {activeCandidate.questionText || "未填写题目"}
           </p>
-          <p className="mt-3 text-sm leading-6 text-text-muted">
+          <p className="mt-3 text-sm leading-6 text-[color:var(--color-muted-foreground)]">
             分类: {formatCategoryLabel(activeCandidate.category) ?? "未设置"}
           </p>
-          <p className="mt-2 text-sm leading-6 text-text-muted">
+          <p className="mt-2 text-sm leading-6 text-[color:var(--color-muted-foreground)]">
             标签: {formatLocalizedTagSummary(parseTags(activeCandidate.tags))}
           </p>
         </div>
@@ -79,8 +79,8 @@ export function ReviewImportPreview({
           <Textarea readOnly value={activeCandidate.answer} />
         </FormField>
         {activeMergeTarget ? (
-          <div className="rounded-xl border border-border-muted bg-surface-muted p-4 text-sm leading-6 text-text-muted">
-            <p className="font-semibold text-text-strong">题库建议</p>
+          <div className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted p-4 text-sm leading-6 text-[color:var(--color-muted-foreground)]">
+            <p className="font-semibold text-[color:var(--color-foreground)]">题库建议</p>
             <p className="mt-2">{activeMergeTarget.questionText}</p>
             <p className="mt-2">
               这只是推荐题库题；确认审核后不会自动入题库，后续需在面经详情页手动沉淀。
@@ -103,15 +103,15 @@ export function ReviewImportPreview({
           <Badge>{activeMergeTarget.reviewStatus}</Badge>
         </div>
         <div className="space-y-1">
-          <p className="text-sm font-semibold text-text-strong">
+          <p className="text-sm font-semibold text-[color:var(--color-foreground)]">
             {activeMergeTarget.questionText}
           </p>
-          <p className="font-mono text-xs text-text-muted">{activeMergeTarget.id}</p>
-          <p className="text-xs leading-5 text-text-muted">
+          <p className="font-mono text-xs text-[color:var(--color-muted-foreground)]">{activeMergeTarget.id}</p>
+          <p className="text-xs leading-5 text-[color:var(--color-muted-foreground)]">
             这是现有 canonical 题目的正式 ID；当前正式主键前缀就是 q_。
           </p>
         </div>
-        <div className="rounded-xl border border-border-muted bg-surface-muted p-4 text-sm text-text-muted">
+        <div className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted p-4 text-sm text-[color:var(--color-muted-foreground)]">
           <p>分类: {formatCategoryLabel(activeMergeTarget.category) ?? "未设置"}</p>
           <p className="mt-2">来源数: {activeMergeTarget.sourceCount}</p>
           <p className="mt-2">标签: {formatLocalizedTagSummary(activeMergeTarget.tags)}</p>
@@ -132,14 +132,14 @@ export function ReviewImportPreview({
       <div className="flex flex-wrap items-center gap-2">
         <Badge tone="accent">新建预览</Badge>
       </div>
-      <div className="rounded-xl border border-border-muted bg-surface-muted p-4">
-        <p className="text-sm font-semibold text-text-strong">
+      <div className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted p-4">
+        <p className="text-sm font-semibold text-[color:var(--color-foreground)]">
           {activeCandidate.questionText || "未填写题目"}
         </p>
-        <p className="mt-3 text-sm leading-6 text-text-muted">
+        <p className="mt-3 text-sm leading-6 text-[color:var(--color-muted-foreground)]">
           分类: {formatCategoryLabel(activeCandidate.category) ?? "未设置"}
         </p>
-        <p className="mt-2 text-sm leading-6 text-text-muted">
+        <p className="mt-2 text-sm leading-6 text-[color:var(--color-muted-foreground)]">
           标签: {formatLocalizedTagSummary(parseTags(activeCandidate.tags))}
         </p>
       </div>

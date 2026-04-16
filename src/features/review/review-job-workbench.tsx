@@ -364,8 +364,8 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
               : "border-amber-200 bg-amber-50",
           )}
         >
-          <p className="text-sm font-semibold text-text-strong">{feedback.title}</p>
-          <p className="mt-2 text-sm leading-6 text-text-muted">{feedback.body}</p>
+          <p className="text-sm font-semibold text-[color:var(--color-foreground)]">{feedback.title}</p>
+          <p className="mt-2 text-sm leading-6 text-[color:var(--color-muted-foreground)]">{feedback.body}</p>
         </div>
       ) : null}
 
@@ -384,13 +384,13 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
             </div>
 
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-text-strong">
+              <p className="text-sm font-semibold text-[color:var(--color-foreground)]">
                 {detail.sourceDocument.title}
               </p>
-              <p className="font-mono text-xs text-text-muted">
+              <p className="font-mono text-xs text-[color:var(--color-muted-foreground)]">
                 {detail.sourceDocument.id}
               </p>
-              <p className="text-xs text-text-muted">
+              <p className="text-xs text-[color:var(--color-muted-foreground)]">
                 创建于 {formatTimestamp(detail.sourceDocument.createdAt)}，最近更新时间{" "}
                 {formatTimestamp(detail.sourceDocument.updatedAt)}
               </p>
@@ -494,8 +494,8 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
                   className={cn(
                     "rounded-xl border p-4 transition-colors",
                     activeCandidateIndex === index
-                      ? "border-accent bg-accent-soft"
-                      : "border-border-muted bg-surface-muted",
+                      ? "border-[color:var(--color-brand)] bg-[color:var(--color-brand-soft)]"
+                      : "border-[color:var(--color-border)] bg-surface-muted",
                   )}
                   key={`${index}-${question.targetQuestionId}-${question.questionText}`}
                   onClick={() => setActiveCandidateIndex(index)}
@@ -506,11 +506,11 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
                         <Badge tone="accent">候选 {index + 1}</Badge>
                         <Badge>{actionLabel(question.action)}</Badge>
                       </div>
-                      <p className="text-sm font-semibold text-text-strong">
+                      <p className="text-sm font-semibold text-[color:var(--color-foreground)]">
                         {question.questionText || "未填写题目"}
                       </p>
                     </div>
-                    <span className="text-xs text-text-muted">
+                    <span className="text-xs text-[color:var(--color-muted-foreground)]">
                       置信度 {question.confidence?.toFixed(2) ?? "无"}
                     </span>
                   </div>
@@ -518,7 +518,7 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
                   {!(
                     activeCandidateIndex === index
                   ) ? (
-                    <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-text-muted">
+                    <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-[color:var(--color-muted-foreground)]">
                       <span>
                         分类: {formatCategoryLabel(question.category) ?? "未设置"}
                       </span>
@@ -681,46 +681,46 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
         <div className={`grid gap-3 ${isInterviewSource ? "sm:grid-cols-2" : "sm:grid-cols-3"}`}>
           {isInterviewSource ? (
             <>
-              <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
-                <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">
+              <div className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted px-4 py-3">
+                <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-[color:var(--color-muted-foreground)]">
                   保留
                 </div>
-                <div className="mt-1 text-sm font-semibold text-text-strong">
+                <div className="mt-1 text-sm font-semibold text-[color:var(--color-foreground)]">
                   {visibleSummary.keep}
                 </div>
               </div>
-              <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
-                <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">
+              <div className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted px-4 py-3">
+                <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-[color:var(--color-muted-foreground)]">
                   跳过
                 </div>
-                <div className="mt-1 text-sm font-semibold text-text-strong">
+                <div className="mt-1 text-sm font-semibold text-[color:var(--color-foreground)]">
                   {visibleSummary.skip}
                 </div>
               </div>
             </>
           ) : (
             <>
-              <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
-                <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">
+              <div className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted px-4 py-3">
+                <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-[color:var(--color-muted-foreground)]">
                   新建
                 </div>
-                <div className="mt-1 text-sm font-semibold text-text-strong">
+                <div className="mt-1 text-sm font-semibold text-[color:var(--color-foreground)]">
                   {visibleSummary.create}
                 </div>
               </div>
-              <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
-                <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">
+              <div className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted px-4 py-3">
+                <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-[color:var(--color-muted-foreground)]">
                   合并
                 </div>
-                <div className="mt-1 text-sm font-semibold text-text-strong">
+                <div className="mt-1 text-sm font-semibold text-[color:var(--color-foreground)]">
                   {visibleSummary.merge}
                 </div>
               </div>
-              <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
-                <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">
+              <div className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted px-4 py-3">
+                <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-[color:var(--color-muted-foreground)]">
                   跳过
                 </div>
-                <div className="mt-1 text-sm font-semibold text-text-strong">
+                <div className="mt-1 text-sm font-semibold text-[color:var(--color-foreground)]">
                   {visibleSummary.skip}
                 </div>
               </div>
@@ -729,8 +729,8 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
         </div>
 
         {detail.result?.warnings && detail.result.warnings.length > 0 ? (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-text-muted">
-            <p className="font-semibold text-text-strong">解析提示</p>
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-[color:var(--color-muted-foreground)]">
+            <p className="font-semibold text-[color:var(--color-foreground)]">解析提示</p>
             <ul className="mt-2 space-y-1">
               {detail.result.warnings.map((warning) => (
                 <li key={warning}>{warning}</li>
@@ -740,7 +740,7 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
         ) : null}
 
         {disabledConfirmReason ? (
-          <div className="rounded-xl border border-border-muted bg-surface-muted p-4 text-sm leading-6 text-text-muted">
+          <div className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted p-4 text-sm leading-6 text-[color:var(--color-muted-foreground)]">
             {disabledConfirmReason}
           </div>
         ) : null}
@@ -768,7 +768,7 @@ export function ReviewJobWorkbench({ detail }: ReviewJobWorkbenchProps) {
           </Button>
         </div>
 
-        <div className="rounded-xl border border-border-muted bg-surface-muted p-4 text-sm text-text-muted">
+        <div className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted p-4 text-sm text-[color:var(--color-muted-foreground)]">
           <p>创建时间: {formatTimestamp(jobSummary.created_at)}</p>
           <p className="mt-2">开始时间: {formatTimestamp(jobSummary.started_at)}</p>
           <p className="mt-2">完成时间: {formatTimestamp(jobSummary.finished_at)}</p>

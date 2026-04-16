@@ -50,11 +50,11 @@ export function ReviewJobPlaceholder({ jobId }: ReviewJobPlaceholderProps) {
           <div className="space-y-3">
             {["Candidate 1", "Candidate 2"].map((candidate) => (
               <div
-                className="rounded-xl border border-border-muted bg-surface-muted p-4"
+                className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted p-4"
                 key={candidate}
               >
-                <p className="text-sm font-semibold text-text-strong">{candidate}</p>
-                <p className="mt-2 text-sm leading-6 text-text-muted">
+                <p className="text-sm font-semibold text-[color:var(--color-foreground)]">{candidate}</p>
+                <p className="mt-2 text-sm leading-6 text-[color:var(--color-muted-foreground)]">
                   Editable fields for question text, canonical answer, category,
                   tags, confidence, and merge target will render here.
                 </p>

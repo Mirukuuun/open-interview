@@ -34,7 +34,7 @@ export function ReviewQueuePlaceholder() {
           <div className="grid gap-3">
             {["Status filter", "Source kind filter", "Keyword filter"].map((label) => (
               <div
-                className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3 text-sm text-text-muted"
+                className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted px-4 py-3 text-sm text-[color:var(--color-muted-foreground)]"
                 key={label}
               >
                 {label} placeholder

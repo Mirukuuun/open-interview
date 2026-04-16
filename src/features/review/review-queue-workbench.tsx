@@ -254,8 +254,8 @@ export function ReviewQueueWorkbench({
               : "border-amber-200 bg-amber-50",
           )}
         >
-          <p className="text-sm font-semibold text-text-strong">{feedback.title}</p>
-          <p className="mt-2 text-sm leading-6 text-text-muted">{feedback.body}</p>
+          <p className="text-sm font-semibold text-[color:var(--color-foreground)]">{feedback.title}</p>
+          <p className="mt-2 text-sm leading-6 text-[color:var(--color-muted-foreground)]">{feedback.body}</p>
         </div>
       ) : null}
 
@@ -263,7 +263,7 @@ export function ReviewQueueWorkbench({
         <SectionHeading title="筛选" />
         <div className="grid gap-4 lg:grid-cols-[1fr_180px_180px_auto]">
           <label className="space-y-2">
-            <span className="text-sm font-medium text-text-strong">关键词</span>
+            <span className="text-sm font-medium text-[color:var(--color-foreground)]">关键词</span>
             <Input
               onChange={(event) =>
                 setFilters((current) => ({
@@ -277,7 +277,7 @@ export function ReviewQueueWorkbench({
           </label>
 
           <label className="space-y-2">
-            <span className="text-sm font-medium text-text-strong">状态</span>
+            <span className="text-sm font-medium text-[color:var(--color-foreground)]">状态</span>
             <Select
               onChange={(event) =>
                 setFilters((current) => ({
@@ -297,7 +297,7 @@ export function ReviewQueueWorkbench({
           </label>
 
           <label className="space-y-2">
-            <span className="text-sm font-medium text-text-strong">来源类型</span>
+            <span className="text-sm font-medium text-[color:var(--color-foreground)]">来源类型</span>
             <Select
               onChange={(event) =>
                 setFilters((current) => ({
@@ -343,7 +343,7 @@ export function ReviewQueueWorkbench({
 
               return (
                 <div
-                  className="rounded-xl border border-border-muted bg-surface-muted p-4"
+                  className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted p-4"
                   key={sourceDocument.id}
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
@@ -353,15 +353,15 @@ export function ReviewQueueWorkbench({
                         <Badge tone={parseStatus.tone}>{parseStatus.label}</Badge>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-sm font-semibold text-text-strong">
+                        <p className="text-sm font-semibold text-[color:var(--color-foreground)]">
                           {sourceDocument.title}
                         </p>
-                        <p className="font-mono text-xs text-text-muted">
+                        <p className="font-mono text-xs text-[color:var(--color-muted-foreground)]">
                           {sourceDocument.id}
                         </p>
                       </div>
                     </div>
-                    <p className="text-xs text-text-muted">
+                    <p className="text-xs text-[color:var(--color-muted-foreground)]">
                       {formatTimestamp(sourceDocument.createdAt)}
                     </p>
                   </div>
@@ -395,7 +395,7 @@ export function ReviewQueueWorkbench({
         {visibleJobs.length === 0 ? (
           <EmptyList title="没有可见任务" />
         ) : (
-          <div className="overflow-hidden rounded-xl border border-border-strong">
+          <div className="overflow-hidden rounded-xl border border-[color:var(--color-border)]">
             <table className="min-w-full border-collapse text-left text-sm">
               <caption className="sr-only">
                 解析任务列表，包含任务来源、类型、状态、时间、候选题数量和操作入口。
@@ -405,7 +405,7 @@ export function ReviewQueueWorkbench({
                   {["任务", "来源", "类型", "状态", "时间", "候选题", "操作"].map(
                     (column) => (
                       <th
-                        className="border-b border-border-strong px-4 py-3 font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted"
+                        className="border-b border-[color:var(--color-border)] px-4 py-3 font-mono text-[11px] uppercase tracking-[0.08em] text-[color:var(--color-muted-foreground)]"
                         key={column}
                       >
                         {column}
@@ -422,20 +422,20 @@ export function ReviewQueueWorkbench({
 
                   return (
                     <tr
-                      className="border-b border-border-muted last:border-b-0"
+                      className="border-b border-[color:var(--color-border)] last:border-b-0"
                       key={job.id}
                     >
                       <td className="px-4 py-4 align-top">
                         <div className="space-y-1">
-                          <p className="font-mono text-xs text-text-strong">{job.id}</p>
-                          <p className="font-mono text-[11px] text-text-muted">
+                          <p className="font-mono text-xs text-[color:var(--color-foreground)]">{job.id}</p>
+                          <p className="font-mono text-[11px] text-[color:var(--color-muted-foreground)]">
                             src {job.source_document_id}
                           </p>
                         </div>
                       </td>
-                      <td className="px-4 py-4 align-top text-text-muted">
+                      <td className="px-4 py-4 align-top text-[color:var(--color-muted-foreground)]">
                         <div className="space-y-2">
-                          <p className="text-sm font-semibold text-text-strong">
+                          <p className="text-sm font-semibold text-[color:var(--color-foreground)]">
                             {job.source_title}
                           </p>
                           <div className="flex flex-wrap items-center gap-2">
@@ -446,13 +446,13 @@ export function ReviewQueueWorkbench({
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-4 align-top text-text-muted">
+                      <td className="px-4 py-4 align-top text-[color:var(--color-muted-foreground)]">
                         {jobTypeLabel(job.job_type)}
                       </td>
                       <td className="px-4 py-4 align-top">
                         <div className="space-y-2">
                           <Badge tone={jobStatus.tone}>{jobStatus.label}</Badge>
-                          <p className="text-xs text-text-muted">
+                          <p className="text-xs text-[color:var(--color-muted-foreground)]">
                             第 {job.attempt_count} 次
                           </p>
                           {job.error_message ? (
@@ -462,16 +462,16 @@ export function ReviewQueueWorkbench({
                           ) : null}
                         </div>
                       </td>
-                      <td className="px-4 py-4 align-top text-text-muted">
+                      <td className="px-4 py-4 align-top text-[color:var(--color-muted-foreground)]">
                         <div>{formatTimestamp(job.created_at)}</div>
-                        <div className="mt-1 text-xs text-text-muted">
+                        <div className="mt-1 text-xs text-[color:var(--color-muted-foreground)]">
                           更新:{" "}
                           {job.finished_at
                             ? formatTimestamp(job.finished_at)
                             : formatTimestamp(job.updated_at)}
                         </div>
                       </td>
-                      <td className="px-4 py-4 align-top text-text-muted">
+                      <td className="px-4 py-4 align-top text-[color:var(--color-muted-foreground)]">
                         {job.candidate_question_count}
                       </td>
                       <td className="px-4 py-4 align-top">

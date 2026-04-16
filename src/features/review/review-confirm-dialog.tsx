@@ -32,12 +32,12 @@ export function ReviewConfirmDialog({
         aria-describedby="confirm-import-description"
         aria-labelledby="confirm-import-title"
         aria-modal="true"
-        className="w-full max-w-lg rounded-2xl border border-border-strong bg-white p-6 shadow-xl"
+        className="w-full max-w-lg rounded-2xl border border-[color:var(--color-border)] bg-white p-6 shadow-xl"
         role="dialog"
       >
         <div className="space-y-3">
           <p
-            className="text-base font-semibold text-text-strong"
+            className="text-base font-semibold text-[color:var(--color-foreground)]"
             id="confirm-import-title"
           >
             {isInterviewSource
@@ -45,14 +45,14 @@ export function ReviewConfirmDialog({
               : "确认把当前审核结果写入 canonical 题库？"}
           </p>
           <p
-            className="text-sm leading-6 text-text-muted"
+            className="text-sm leading-6 text-[color:var(--color-muted-foreground)]"
             id="confirm-import-description"
           >
             {isInterviewSource
               ? "确认后会把当前候选题写入面经题，并在面经详情页提供题库关联与手动沉淀入口。"
               : "确认后会提交当前候选题处理结果，并刷新页面到最新已确认状态。"}
           </p>
-          <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3 text-sm text-text-muted">
+          <div className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted px-4 py-3 text-sm text-[color:var(--color-muted-foreground)]">
             {isInterviewSource ? (
               <>
                 <p>保留 {visibleSummary.keep} 条</p>
