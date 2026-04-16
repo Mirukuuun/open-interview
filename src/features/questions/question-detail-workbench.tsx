@@ -23,7 +23,7 @@ type QuestionDetailWorkbenchProps = {
 
 function renderTagList(tags: string[]) {
   if (tags.length === 0) {
-    return <span className="text-sm text-text-muted">无标签</span>;
+    return <span className="text-sm text-[color:var(--color-muted-foreground)]">无标签</span>;
   }
 
   return (
@@ -105,7 +105,7 @@ export function QuestionDetailWorkbench({
         <div className="space-y-6">
           <SurfaceCard className="space-y-4">
             <SectionHeading title="答案" />
-            <div className="rounded-xl border border-border-muted bg-surface-muted p-4 text-sm leading-7 text-text-strong whitespace-pre-wrap">
+            <div className="rounded-xl border bg-surface-muted p-4 text-sm leading-7 text-[color:var(--color-foreground)] whitespace-pre-wrap">
               {question.canonicalAnswer ?? "还没有答案。"}
             </div>
           </SurfaceCard>
@@ -116,13 +116,13 @@ export function QuestionDetailWorkbench({
               <div className="space-y-3">
                 {supplementalAnswerVariants.map((answerVariant) => (
                   <div
-                    className="rounded-xl border border-border-muted bg-surface-muted p-4"
+                    className="rounded-xl border bg-surface-muted p-4"
                     key={answerVariant.id}
                   >
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge tone="accent">{answerVariant.variantType}</Badge>
                     </div>
-                    <div className="mt-3 whitespace-pre-wrap text-sm leading-7 text-text-strong">
+                    <div className="mt-3 whitespace-pre-wrap text-sm leading-7 text-[color:var(--color-foreground)]">
                       {answerVariant.content}
                     </div>
                   </div>
@@ -136,19 +136,19 @@ export function QuestionDetailWorkbench({
               title={`相关题目（${question.relatedQuestions.length}）`}
             />
             {question.relatedQuestions.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border-strong bg-surface-muted p-4 text-sm text-text-muted">
+              <div className="rounded-xl border border-dashed bg-surface-muted p-4 text-sm text-[color:var(--color-muted-foreground)]">
                 暂无相关题目。
               </div>
             ) : (
               <div className="space-y-3">
                 {question.relatedQuestions.map((relatedQuestion) => (
                   <div
-                    className="rounded-xl border border-border-muted bg-surface-muted p-4"
+                    className="rounded-xl border bg-surface-muted p-4"
                     key={relatedQuestion.id}
                   >
                     <div className="flex flex-wrap items-center gap-2">
                       <Link
-                        className="text-sm font-semibold text-text-strong hover:text-accent"
+                        className="text-sm font-semibold text-[color:var(--color-foreground)] hover:text-[color:var(--color-brand)]"
                         href={`/questions/${relatedQuestion.id}`}
                       >
                         {relatedQuestion.questionText}
@@ -182,11 +182,11 @@ export function QuestionDetailWorkbench({
             <SectionHeading
               title="元信息"
             />
-            <div className="space-y-3 text-sm text-text-strong">
-              <div className="rounded-xl border border-border-strong bg-white px-4 py-3">
+            <div className="space-y-3 text-sm text-[color:var(--color-foreground)]">
+              <div className="rounded-xl border bg-white px-4 py-3">
                 审核状态: {question.reviewStatus}
               </div>
-              <div className="rounded-xl border border-border-strong bg-white px-4 py-3">
+              <div className="rounded-xl border bg-white px-4 py-3">
                 关联来源: {question.sources.length}
               </div>
             </div>
@@ -197,20 +197,20 @@ export function QuestionDetailWorkbench({
               title={`来源面经题（${question.linkedInterviewQuestions.length}）`}
             />
             {question.linkedInterviewQuestions.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border-strong bg-surface-muted p-4 text-sm text-text-muted">
+              <div className="rounded-xl border border-dashed bg-surface-muted p-4 text-sm text-[color:var(--color-muted-foreground)]">
                 这道题目前没有手动沉淀的面经题来源。
               </div>
             ) : (
               <div className="space-y-3">
                 {question.linkedInterviewQuestions.map((linkedQuestion) => (
                   <div
-                    className="rounded-xl border border-border-muted bg-surface-muted p-4"
+                    className="rounded-xl border bg-surface-muted p-4"
                     key={`${linkedQuestion.interviewQuestionId}-${linkedQuestion.linkType}`}
                   >
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge tone="accent">{linkedQuestion.linkType}</Badge>
                       <Link
-                        className="text-sm font-semibold text-text-strong hover:text-accent"
+                        className="text-sm font-semibold text-[color:var(--color-foreground)] hover:text-[color:var(--color-brand)]"
                         href={`/interviews/${linkedQuestion.interviewExperience.id}`}
                       >
                         {linkedQuestion.interviewExperience.company ?? "未知公司"} /{" "}
@@ -218,11 +218,11 @@ export function QuestionDetailWorkbench({
                         {linkedQuestion.interviewExperience.roundInfo ?? "未知轮次"}
                       </Link>
                     </div>
-                    <div className="mt-3 whitespace-pre-wrap text-sm leading-6 text-text-strong">
+                    <div className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[color:var(--color-foreground)]">
                       {linkedQuestion.questionText}
                     </div>
                     {linkedQuestion.sourceAnswer ? (
-                      <div className="mt-3 whitespace-pre-wrap rounded-lg border border-border-muted bg-white px-3 py-3 text-sm leading-6 text-text-strong">
+                      <div className="mt-3 whitespace-pre-wrap rounded-lg border bg-white px-3 py-3 text-sm leading-6 text-[color:var(--color-foreground)]">
                         {linkedQuestion.sourceAnswer}
                       </div>
                     ) : null}
@@ -237,27 +237,27 @@ export function QuestionDetailWorkbench({
               title={`来源（${question.sources.length}）`}
             />
             {question.sources.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border-strong bg-surface-muted p-4 text-sm text-text-muted">
+              <div className="rounded-xl border border-dashed bg-surface-muted p-4 text-sm text-[color:var(--color-muted-foreground)]">
                 这道题还没有关联来源。
               </div>
             ) : (
               <div className="space-y-3">
                 {question.sources.map((source) => (
                   <div
-                    className="rounded-xl border border-border-muted bg-surface-muted p-4"
+                    className="rounded-xl border bg-surface-muted p-4"
                     key={`${source.sourceDocumentId}-${source.title}`}
                   >
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-sm font-semibold text-text-strong">
+                      <h3 className="text-sm font-semibold text-[color:var(--color-foreground)]">
                         {source.title}
                       </h3>
                       <Badge>{source.kind}</Badge>
                     </div>
                     {source.interviewExperience ? (
-                      <p className="mt-2 text-sm text-text-muted">
+                      <p className="mt-2 text-sm text-[color:var(--color-muted-foreground)]">
                         面经:{" "}
                         <Link
-                          className="font-medium text-accent hover:underline"
+                          className="font-medium text-[color:var(--color-brand)] hover:underline"
                           href={`/interviews/${source.interviewExperience.id}`}
                         >
                           {source.interviewExperience.company ?? "未知公司"} /{" "}
@@ -267,15 +267,15 @@ export function QuestionDetailWorkbench({
                       </p>
                     ) : null}
                     {source.sourceSnippet ? (
-                      <div className="mt-3 whitespace-pre-wrap rounded-lg border border-border-muted bg-white px-3 py-3 text-sm leading-6 text-text-strong">
+                      <div className="mt-3 whitespace-pre-wrap rounded-lg border bg-white px-3 py-3 text-sm leading-6 text-[color:var(--color-foreground)]">
                         {source.sourceSnippet}
                       </div>
                     ) : null}
                     {source.sourceUrl ? (
-                      <p className="mt-3 text-sm text-text-muted">
+                      <p className="mt-3 text-sm text-[color:var(--color-muted-foreground)]">
                         来源链接:{" "}
                         <Link
-                          className="font-medium text-accent hover:underline"
+                          className="font-medium text-[color:var(--color-brand)] hover:underline"
                           href={source.sourceUrl}
                           target="_blank"
                         >

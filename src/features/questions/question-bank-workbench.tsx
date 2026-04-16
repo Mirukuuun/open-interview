@@ -37,7 +37,7 @@ function countActiveFilters(filters: ListQuestionsQuery) {
 
 function renderTagList(tags: string[]) {
   if (tags.length === 0) {
-    return <span className="text-text-muted">-</span>;
+    return <span className="text-[color:var(--color-muted-foreground)]">-</span>;
   }
 
   return (
@@ -114,7 +114,7 @@ export function QuestionBankWorkbench({
             <input name="page_size" type="hidden" value={String(filters.page_size)} />
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-text-strong" htmlFor="q">
+              <label className="text-sm font-medium text-[color:var(--color-foreground)]" htmlFor="q">
                 关键词
               </label>
               <Input
@@ -127,7 +127,7 @@ export function QuestionBankWorkbench({
 
             <div className="space-y-2">
               <label
-                className="text-sm font-medium text-text-strong"
+                className="text-sm font-medium text-[color:var(--color-foreground)]"
                 htmlFor="category"
               >
                 分类
@@ -143,7 +143,7 @@ export function QuestionBankWorkbench({
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-text-strong" htmlFor="tag">
+              <label className="text-sm font-medium text-[color:var(--color-foreground)]" htmlFor="tag">
                 标签
               </label>
               <Select defaultValue={filters.tag ?? ""} id="tag" name="tag">
@@ -158,7 +158,7 @@ export function QuestionBankWorkbench({
 
             <div className="space-y-2">
               <label
-                className="text-sm font-medium text-text-strong"
+                className="text-sm font-medium text-[color:var(--color-foreground)]"
                 htmlFor="difficulty"
               >
                 难度
@@ -178,7 +178,7 @@ export function QuestionBankWorkbench({
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-text-strong" htmlFor="sort">
+              <label className="text-sm font-medium text-[color:var(--color-foreground)]" htmlFor="sort">
                 排序
               </label>
               <Select defaultValue={filters.sort} id="sort" name="sort">
@@ -201,7 +201,7 @@ export function QuestionBankWorkbench({
             <SectionHeading
               title="题目列表"
             />
-            <p className="font-mono text-xs text-text-muted">
+            <p className="font-mono text-xs text-[color:var(--color-muted-foreground)]">
               {rangeStart}-{rangeEnd} / {result.total}
             </p>
           </div>
@@ -225,7 +225,7 @@ export function QuestionBankWorkbench({
                       "详情",
                     ].map((column) => (
                       <th
-                        className="border-b border-border-muted px-3 py-3 font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted"
+                        className="border-b px-3 py-3 font-mono text-[11px] uppercase tracking-[0.08em] text-[color:var(--color-muted-foreground)]"
                         key={column}
                         scope="col"
                       >
@@ -237,10 +237,10 @@ export function QuestionBankWorkbench({
                 <tbody>
                   {result.items.map((item) => (
                     <tr className="align-top" key={item.id}>
-                      <td className="border-b border-border-muted px-3 py-4">
+                      <td className="border-b px-3 py-4">
                         <div className="space-y-2">
                           <Link
-                            className="text-sm font-semibold text-text-strong hover:text-accent"
+                            className="text-sm font-semibold text-[color:var(--color-foreground)] hover:text-[color:var(--color-brand)]"
                             href={buildQuestionDetailHref(item.id, filters)}
                           >
                             {item.questionText}
@@ -250,25 +250,25 @@ export function QuestionBankWorkbench({
                           </div>
                         </div>
                       </td>
-                      <td className="border-b border-border-muted px-3 py-4 text-sm text-text-strong">
+                      <td className="border-b px-3 py-4 text-sm text-[color:var(--color-foreground)]">
                         {item.category ? (
                           formatCategoryLabel(item.category) ?? item.category
                         ) : (
-                          <span className="text-text-muted">-</span>
+                          <span className="text-[color:var(--color-muted-foreground)]">-</span>
                         )}
                       </td>
-                      <td className="border-b border-border-muted px-3 py-4 text-sm">
+                      <td className="border-b px-3 py-4 text-sm">
                         {renderTagList(item.tags)}
                       </td>
-                      <td className="border-b border-border-muted px-3 py-4 text-sm font-medium text-text-strong">
+                      <td className="border-b px-3 py-4 text-sm font-medium text-[color:var(--color-foreground)]">
                         {item.sourceCount}
                       </td>
-                      <td className="border-b border-border-muted px-3 py-4 text-sm text-text-muted">
+                      <td className="border-b px-3 py-4 text-sm text-[color:var(--color-muted-foreground)]">
                         {formatDateTimeLabel(item.updatedAt)}
                       </td>
-                      <td className="border-b border-border-muted px-3 py-4 text-sm">
+                      <td className="border-b px-3 py-4 text-sm">
                         <Link
-                          className="font-medium text-accent hover:underline"
+                          className="font-medium text-[color:var(--color-brand)] hover:underline"
                           href={buildQuestionDetailHref(item.id, filters)}
                         >
                           打开详情
@@ -281,8 +281,8 @@ export function QuestionBankWorkbench({
             </div>
           )}
 
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border-muted pt-4">
-            <p className="text-sm text-text-muted">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+            <p className="text-sm text-[color:var(--color-muted-foreground)]">
               进入详情页可继续查看答案、补充视角和关联来源。
             </p>
             <div className="flex flex-wrap gap-2">
