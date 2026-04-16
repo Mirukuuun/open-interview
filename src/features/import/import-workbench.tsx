@@ -130,24 +130,24 @@ export function ImportWorkbench({
         <SurfaceCard className="space-y-5 xl:flex xl:h-[var(--import-panel-height)] xl:flex-col">
           <SectionHeading title="导入方式" />
           {showOnboarding ? (
-            <div className="rounded-[28px] border border-border-strong bg-[linear-gradient(135deg,rgba(238,242,255,0.98)_0%,rgba(255,255,255,0.98)_52%,rgba(209,250,229,0.72)_100%)] px-6 py-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-text-muted">
+            <div className="rounded-[28px] border border-[color:var(--color-border)] bg-[linear-gradient(135deg,rgba(238,242,255,0.98)_0%,rgba(255,255,255,0.98)_52%,rgba(209,250,229,0.72)_100%)] px-6 py-6">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--color-muted-foreground)]">
                 首次体验
               </p>
-              <h3 className="mt-3 text-2xl font-bold tracking-[-0.05em] text-text-strong">
+              <h3 className="mt-3 text-2xl font-bold tracking-[-0.05em] text-[color:var(--color-foreground)]">
                 先把材料放进来，再把它变成可练的题库。
               </h3>
-              <p className="mt-3 max-w-3xl text-sm leading-7 text-text-muted">
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-[color:var(--color-muted-foreground)]">
                 当前还没有题库内容。先从上传、粘贴或手工录题开始，确认候选结果后再去题库、随机练习或 grounded QA 继续使用。
               </p>
-              <div className="reveal-list mt-5 grid gap-3 md:grid-cols-3">
+              <div className="mt-5 grid gap-3 md:grid-cols-3">
                 {[
                   "1. 导入文件、原文或手工问答。",
                   "2. 到审核队列确认候选并保留来源。",
                   "3. 回到题库、练习或 AI 问答继续使用。",
                 ].map((step) => (
                   <div
-                    className="rounded-[22px] border border-white/80 bg-white/86 px-4 py-4 text-sm leading-6 text-text-strong"
+                    className="rounded-[22px] border border-white/80 bg-white/86 px-4 py-4 text-sm leading-6 text-[color:var(--color-foreground)]"
                     key={step}
                   >
                     {step}
@@ -185,7 +185,7 @@ export function ImportWorkbench({
 
                 return (
                   <div
-                    className="rounded-xl border border-border-muted bg-surface-muted p-4"
+                    className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted p-4"
                     key={source.id}
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
@@ -195,24 +195,24 @@ export function ImportWorkbench({
                           <Badge tone={statusBadge.tone}>{statusBadge.label}</Badge>
                         </div>
                         <div className="space-y-1">
-                          <p className="text-sm font-semibold text-text-strong">
+                          <p className="text-sm font-semibold text-[color:var(--color-foreground)]">
                             {source.title}
                           </p>
-                          <p className="font-mono text-xs text-text-muted">
+                          <p className="font-mono text-xs text-[color:var(--color-muted-foreground)]">
                             {source.id}
                           </p>
                         </div>
                       </div>
-                      <p className="text-xs text-text-muted">
+                      <p className="text-xs text-[color:var(--color-muted-foreground)]">
                         {formatDateTimeLabel(source.createdAt)}
                       </p>
                     </div>
 
-                    <p className="mt-3 text-sm leading-6 text-text-muted">
+                    <p className="mt-3 text-sm leading-6 text-[color:var(--color-muted-foreground)]">
                       {summarizeText(source.rawText)}
                     </p>
 
-                    <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-text-muted">
+                    <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-[color:var(--color-muted-foreground)]">
                       {source.fileName ? (
                         <span className="rounded-full bg-white px-3 py-1">
                           文件: {source.fileName}

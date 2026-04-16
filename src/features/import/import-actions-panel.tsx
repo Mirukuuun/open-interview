@@ -401,8 +401,8 @@ export function ImportActionsPanel({
               className={cn(
                 "rounded-xl border px-4 py-4 text-left transition-colors",
                 isActive
-                  ? "border-accent bg-accent-soft"
-                  : "border-border-muted bg-surface-muted hover:border-border-strong hover:bg-white",
+                  ? "border-[color:var(--color-brand)] bg-[color:var(--color-brand-soft)]"
+                  : "border-[color:var(--color-border)] bg-surface-muted hover:border-[color:var(--color-border)] hover:bg-white",
               )}
               key={mode.id}
               onClick={() => {
@@ -412,7 +412,7 @@ export function ImportActionsPanel({
               type="button"
             >
               <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-semibold text-text-strong">{mode.title}</p>
+                <p className="text-sm font-semibold text-[color:var(--color-foreground)]">{mode.title}</p>
                 {isActive ? <Badge tone="accent">当前</Badge> : null}
               </div>
             </button>
@@ -429,8 +429,8 @@ export function ImportActionsPanel({
               : "border-amber-200 bg-amber-50",
           )}
         >
-          <p className="text-sm font-semibold text-text-strong">{feedback.title}</p>
-          <p className="mt-2 text-sm leading-6 text-text-muted">{feedback.body}</p>
+          <p className="text-sm font-semibold text-[color:var(--color-foreground)]">{feedback.title}</p>
+          <p className="mt-2 text-sm leading-6 text-[color:var(--color-muted-foreground)]">{feedback.body}</p>
           {feedback.actionHref && feedback.actionLabel ? (
             <div className="mt-3">
               <Button href={feedback.actionHref} variant="primary">
@@ -443,10 +443,10 @@ export function ImportActionsPanel({
 
       {activeMode === "upload" ? (
         <form className="space-y-5" onSubmit={handleUploadSubmit}>
-          <div className="rounded-2xl border border-border-muted bg-surface-muted p-5">
+          <div className="rounded-2xl border border-[color:var(--color-border)] bg-surface-muted p-5">
             <div className="flex flex-wrap items-center gap-2">
               <Badge tone="accent">上传</Badge>
-              <p className="text-sm font-semibold text-text-strong">
+              <p className="text-sm font-semibold text-[color:var(--color-foreground)]">
                 上传单个文件
               </p>
             </div>
@@ -504,7 +504,7 @@ export function ImportActionsPanel({
             <input
               accept=".txt,.md,.pdf,.docx,text/plain,text/markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
               className={cn(
-                "block w-full rounded-lg border border-border-strong bg-white px-3 py-2 text-sm text-text-strong outline-none file:mr-3 file:rounded-md file:border-0 file:bg-accent-soft file:px-3 file:py-2 file:text-sm file:font-medium file:text-accent focus:border-accent disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-text-muted",
+                "block w-full rounded-lg border border-[color:var(--color-border)] bg-white px-3 py-2 text-sm text-[color:var(--color-foreground)] outline-none file:mr-3 file:rounded-md file:border-0 file:bg-[color:var(--color-brand-soft)] file:px-3 file:py-2 file:text-sm file:font-medium file:text-[color:var(--color-brand)] focus:border-[color:var(--color-brand)] disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-[color:var(--color-muted-foreground)]",
               )}
               name="file"
               onChange={(event) =>
@@ -519,7 +519,7 @@ export function ImportActionsPanel({
           </FormField>
 
           {uploadForm.file ? (
-            <p className="text-sm text-text-muted">
+            <p className="text-sm text-[color:var(--color-muted-foreground)]">
               已选择: {uploadForm.file.name} ({Math.max(1, Math.ceil(uploadForm.file.size / 1024))} KB)
             </p>
           ) : null}

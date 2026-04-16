@@ -166,8 +166,8 @@ export function CreatableMultiSelect({
         aria-expanded={isOpen}
         aria-haspopup="dialog"
         className={cn(
-          "flex min-h-10 w-full items-center justify-between gap-3 rounded-lg border border-border-strong bg-white px-3 py-2 text-left text-sm outline-none transition-colors focus-visible:border-accent",
-          isOpen ? "border-accent" : "hover:border-border-strong",
+          "flex min-h-10 w-full items-center justify-between gap-3 rounded-lg border border-[color:var(--color-border)] bg-white px-3 py-2 text-left text-sm outline-none transition-colors focus-visible:border-[color:var(--color-brand)]",
+          isOpen ? "border-[color:var(--color-brand)]" : "hover:border-[color:var(--color-border)]",
         )}
         disabled={disabled}
         onClick={() => {
@@ -183,23 +183,23 @@ export function CreatableMultiSelect({
         <span
           className={cn(
             "truncate",
-            value.length === 0 ? "text-text-muted" : "text-text-strong",
+            value.length === 0 ? "text-[color:var(--color-muted-foreground)]" : "text-[color:var(--color-foreground)]",
           )}
         >
           {summarizeSelection()}
         </span>
-        <span className="text-xs text-text-muted">{isOpen ? "收起" : "展开"}</span>
+        <span className="text-xs text-[color:var(--color-muted-foreground)]">{isOpen ? "收起" : "展开"}</span>
       </button>
 
       <div className="flex flex-wrap gap-2">
         {value.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-border-strong px-3 py-2 text-sm text-text-muted">
+          <div className="rounded-lg border border-dashed border-[color:var(--color-border)] px-3 py-2 text-sm text-[color:var(--color-muted-foreground)]">
             {emptyText}
           </div>
         ) : (
           value.map((item) => (
             <button
-              className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent-soft px-3 py-1.5 text-sm text-accent transition-colors hover:border-accent/40"
+              className="inline-flex items-center gap-2 rounded-full border border-[color:var(--color-brand)]/20 bg-[color:var(--color-brand-soft)] px-3 py-1.5 text-sm text-[color:var(--color-brand)] transition-colors hover:border-[color:var(--color-brand)]/40"
               disabled={disabled}
               key={item}
               onClick={() => removeValue(item)}
@@ -213,8 +213,8 @@ export function CreatableMultiSelect({
       </div>
 
       {isOpen ? (
-        <div className="absolute top-full left-0 z-20 mt-2 w-full rounded-xl border border-border-strong bg-white shadow-lg">
-          <div className="border-b border-border-muted p-3">
+        <div className="absolute top-full left-0 z-20 mt-2 w-full rounded-xl border border-[color:var(--color-border)] bg-white shadow-lg">
+          <div className="border-b border-[color:var(--color-border)] p-3">
             <Input
               disabled={disabled}
               onChange={(event) => setQuery(event.target.value)}
@@ -225,7 +225,7 @@ export function CreatableMultiSelect({
 
           <div className="max-h-64 overflow-auto p-2">
             {visibleOptions.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-border-strong px-3 py-4 text-sm text-text-muted">
+              <div className="rounded-lg border border-dashed border-[color:var(--color-border)] px-3 py-4 text-sm text-[color:var(--color-muted-foreground)]">
                 没有匹配项
               </div>
             ) : (
@@ -239,8 +239,8 @@ export function CreatableMultiSelect({
                       className={cn(
                         "flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors",
                         selected
-                          ? "bg-accent-soft text-accent"
-                          : "text-text-strong hover:bg-surface-muted",
+                          ? "bg-[color:var(--color-brand-soft)] text-[color:var(--color-brand)]"
+                          : "text-[color:var(--color-foreground)] hover:bg-surface-muted",
                       )}
                       disabled={disabled}
                       key={option}
@@ -258,7 +258,7 @@ export function CreatableMultiSelect({
             )}
           </div>
 
-          <div className="border-t border-border-muted p-3">
+          <div className="border-t border-[color:var(--color-border)] p-3">
             <div className="flex flex-col gap-3 md:flex-row">
               <Input
                 disabled={disabled}
