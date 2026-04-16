@@ -81,13 +81,13 @@ function DrillQuestionState({
 }) {
   return (
     <div className="space-y-5">
-      <div className="rounded-[22px] border border-border-strong bg-[linear-gradient(180deg,rgba(244,242,249,0.94)_0%,rgba(255,255,255,0.98)_100%)] px-5 py-4">
+      <div className="rounded-[var(--radius-lg)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-5 py-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-text-muted">
+            <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[color:var(--color-muted-foreground)]">
               练习进度
             </p>
-            <p className="mt-1.5 text-xl font-semibold tracking-[-0.04em] text-text-strong">
+            <p className="mt-1.5 text-xl font-semibold tracking-[-0.04em] text-[color:var(--color-foreground)]">
               第 {drillState.currentIndex + 1} / {drillState.queue.length} 题
             </p>
           </div>
@@ -97,7 +97,7 @@ function DrillQuestionState({
         </div>
         <div className="mt-4 h-1 overflow-hidden rounded-full bg-white">
           <div
-            className="h-full rounded-full bg-accent"
+            className="h-full rounded-full bg-[color:var(--color-brand)]"
             style={{
               width: `${((drillState.currentIndex + 1) / drillState.queue.length) * 100}%`,
             }}
@@ -112,13 +112,13 @@ function DrillQuestionState({
           difficulty={currentQuestion.difficulty}
           tags={currentQuestion.tags}
         />
-        <p className="text-lg font-semibold leading-8 text-text-strong">
+        <p className="text-lg font-semibold leading-8 text-[color:var(--color-foreground)]">
           {currentQuestion.question_text}
         </p>
         {drillState.revealed ? (
           <SurfaceCard className="space-y-3" muted>
             <SectionHeading title="参考答案" />
-            <p className="whitespace-pre-wrap text-sm leading-7 text-text-strong">
+            <p className="whitespace-pre-wrap text-sm leading-7 text-[color:var(--color-foreground)]">
               {currentQuestion.canonical_answer ?? "这道题暂时还没有整理好的标准答案。"}
             </p>
           </SurfaceCard>

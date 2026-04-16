@@ -41,7 +41,7 @@ export function PracticeRadarChart({
   if (dimensions.length === 0) {
     return (
       <SurfaceCard muted>
-        <p className="text-sm text-text-muted">暂无足够维度可生成能力雷达图。</p>
+        <p className="text-sm text-[color:var(--color-muted-foreground)]">暂无足够维度可生成能力雷达图。</p>
       </SurfaceCard>
     );
   }
@@ -67,9 +67,9 @@ export function PracticeRadarChart({
   return (
     <SurfaceCard className="space-y-4">
       <div className="space-y-1" id={descriptionId}>
-        <h3 className="text-sm font-semibold text-text-strong">{title}</h3>
+        <h3 className="text-sm font-semibold text-[color:var(--color-foreground)]">{title}</h3>
         {description ? (
-          <p className="text-sm leading-6 text-text-muted">{description}</p>
+          <p className="text-sm leading-6 text-[color:var(--color-muted-foreground)]">{description}</p>
         ) : null}
       </div>
 
@@ -153,7 +153,7 @@ export function PracticeRadarChart({
             strokeDasharray={1}
             strokeDashoffset={1}
             strokeWidth="2"
-            style={{ animation: "radar-draw 900ms ease-out forwards" }}
+            style={{ strokeDashoffset: 0 }}
           />
           {dimensions.map((dimension, index) => {
             const point = polarToCartesian(
@@ -183,19 +183,19 @@ export function PracticeRadarChart({
       <div className="grid gap-2 md:grid-cols-2" id={`${descriptionId}-table`}>
         {dimensions.map((dimension) => (
           <div
-            className="rounded-[18px] border border-border-muted bg-surface-muted px-4 py-3"
+            className="rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-surface-muted)] px-4 py-3"
             key={dimension.key}
           >
             <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-semibold text-text-strong">
+              <p className="text-sm font-semibold text-[color:var(--color-foreground)]">
                 {dimension.label}
               </p>
-              <p className="text-sm font-semibold text-text-strong">
+              <p className="text-sm font-semibold text-[color:var(--color-foreground)]">
                 {dimension.score.toFixed(1)}
               </p>
             </div>
             {dimension.meta ? (
-              <p className="mt-1 text-xs leading-5 text-text-muted">
+              <p className="mt-1 text-xs leading-5 text-[color:var(--color-muted-foreground)]">
                 {dimension.meta}
               </p>
             ) : null}

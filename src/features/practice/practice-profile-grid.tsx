@@ -44,20 +44,20 @@ export function PracticeProfileGrid({
         return (
           <div
             className={cn(
-              "rounded-[20px] border bg-white/82 px-4 py-3.5 transition-colors",
+              "rounded-[var(--radius-lg)] border bg-[color:var(--color-surface)] px-4 py-3.5 transition-colors",
               isActive
-                ? "border-accent bg-accent-soft/60"
-                : "border-border-muted",
+                ? "border-[color:var(--color-brand)] bg-[color:var(--color-brand-soft)]/60"
+                : "border-[color:var(--color-border)]",
             )}
             key={dimension.key}
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-text-strong">
+                <p className="text-sm font-semibold text-[color:var(--color-foreground)]">
                   {dimension.label}
                 </p>
                 {!isCompact ? (
-                  <p className="mt-1 text-xs leading-5 text-text-muted">
+                  <p className="mt-1 text-xs leading-5 text-[color:var(--color-muted-foreground)]">
                     {formatDimensionMeta(dimension)}
                   </p>
                 ) : null}
@@ -65,23 +65,23 @@ export function PracticeProfileGrid({
               <div className="shrink-0 text-right">
                 <p
                   className={cn(
-                    "font-semibold tracking-[-0.03em] text-text-strong",
+                    "font-semibold tracking-[-0.03em] text-[color:var(--color-foreground)]",
                     isCompact ? "text-base" : "text-lg",
                   )}
                 >
                   {dimension.score.toFixed(1)}
                 </p>
                 {isActive ? (
-                  <span className="mt-1 inline-flex rounded-full bg-white px-2 py-1 text-[11px] font-medium text-accent">
+                  <span className="mt-1 inline-flex rounded-full bg-[color:var(--color-surface)] px-2 py-1 text-[11px] font-medium text-[color:var(--color-brand)]">
                     当前范围
                   </span>
                 ) : null}
               </div>
             </div>
 
-            <div className="mt-3 h-1 overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--accent-soft)_55%,white)]">
+            <div className="mt-3 h-1 overflow-hidden rounded-full bg-[color:var(--color-surface-subtle)]">
               <div
-                className="h-full rounded-full bg-accent"
+                className="h-full rounded-full bg-[color:var(--color-brand)]"
                 style={{ width: `${Math.min(100, dimension.score * 10)}%` }}
               />
             </div>
@@ -89,7 +89,7 @@ export function PracticeProfileGrid({
             {showWeakestAction ? (
               <div className="mt-3 flex items-center justify-end">
                 <Link
-                  className="text-xs font-medium text-accent transition-colors hover:text-accent-secondary"
+                  className="text-xs font-medium text-[color:var(--color-brand)] transition-colors hover:text-[color:var(--color-brand)]/80"
                   href={`/practice?dimension=${dimension.key}`}
                 >
                   先练这个

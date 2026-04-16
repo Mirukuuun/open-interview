@@ -20,6 +20,9 @@ import type {
   SubmitAssessmentSessionResponseData,
 } from "@/lib/schemas/practice";
 
+import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/workbench/page-header";
+
 import { PracticeDrillPanel } from "./practice-drill-panel";
 import { PracticeExamPanel } from "./practice-exam-panel";
 import { PracticeOverviewCard } from "./practice-overview-card";
@@ -231,6 +234,20 @@ export function PracticeWorkbenchClient({
 
   return (
     <div className="space-y-5">
+      <PageHeader
+        title="训练"
+        highlights={[
+          { label: "题池", value: `${practicePool.length}` },
+          { label: "可评分", value: `${answerReadyCount}` },
+          { label: "最近考试", value: `${recentExams.length}` },
+        ]}
+        actions={
+          <Button href="/practice/drill" size="lg" variant="primary">
+            开始训练
+          </Button>
+        }
+      />
+
       <PracticeOverviewCard
         activeDimension={activeDimension}
         answerReadyCount={answerReadyCount}
@@ -246,7 +263,7 @@ export function PracticeWorkbenchClient({
         className={
           isExamTaking
             ? "grid gap-5"
-            : "grid gap-5 xl:grid-cols-[minmax(0,1.14fr)_320px] xl:items-start"
+            : "grid gap-5 lg:grid-cols-[3fr_2fr] lg:items-start"
         }
       >
         <div id="practice-panel">

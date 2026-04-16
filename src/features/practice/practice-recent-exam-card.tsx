@@ -22,13 +22,13 @@ export function PracticeRecentExamCard({
       : Math.min(100, (totalScore / exam.max_score) * 100);
 
   return (
-    <div className="rounded-[20px] border border-border-muted bg-surface-muted px-4 py-3.5">
+    <div className="rounded-[var(--radius-lg)] border border-[color:var(--color-border)] bg-[color:var(--color-surface-muted)] px-4 py-3.5">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-base font-semibold tracking-[-0.03em] text-text-strong">
+          <p className="text-base font-semibold tracking-[-0.03em] text-[color:var(--color-foreground)]">
             {scoreText}
           </p>
-          <p className="mt-1 text-xs leading-5 text-text-muted">
+          <p className="mt-1 text-xs leading-5 text-[color:var(--color-muted-foreground)]">
             {exam.question_count} 题 · {formatDateTimeLabel(exam.completed_at)}
           </p>
         </div>
@@ -38,11 +38,11 @@ export function PracticeRecentExamCard({
       </div>
       <div className="mt-3 h-1 overflow-hidden rounded-full bg-white">
         <div
-          className="h-full rounded-full bg-accent"
+          className="h-full rounded-full bg-[color:var(--color-brand)]"
           style={{ width: `${scoreRatio}%` }}
         />
       </div>
-      <p className="mt-2 text-xs leading-5 text-text-muted">
+      <p className="mt-2 text-xs leading-5 text-[color:var(--color-muted-foreground)]">
         {exam.weak_labels.length > 0
           ? `薄弱项：${exam.weak_labels.join(" / ")}`
           : "暂无薄弱项摘要"}

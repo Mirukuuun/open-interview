@@ -110,13 +110,13 @@ function ExamTakingProgress({
   totalCount: number;
 }) {
   return (
-    <div className="rounded-[22px] border border-border-strong bg-[linear-gradient(180deg,rgba(244,242,249,0.94)_0%,rgba(255,255,255,0.98)_100%)] px-5 py-4">
+    <div className="rounded-[var(--radius-lg)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-5 py-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-text-muted">
+          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[color:var(--color-muted-foreground)]">
             模拟考试
           </p>
-          <p className="mt-1.5 text-xl font-semibold tracking-[-0.04em] text-text-strong">
+          <p className="mt-1.5 text-xl font-semibold tracking-[-0.04em] text-[color:var(--color-foreground)]">
             {answeredCount} / {totalCount} 题已作答
           </p>
         </div>
@@ -126,7 +126,7 @@ function ExamTakingProgress({
       </div>
       <div className="mt-4 h-1 overflow-hidden rounded-full bg-white">
         <div
-          className="h-full rounded-full bg-accent"
+          className="h-full rounded-full bg-[color:var(--color-brand)]"
           style={{ width: `${(answeredCount / totalCount) * 100}%` }}
         />
       </div>
@@ -137,8 +137,8 @@ function ExamTakingProgress({
 function ExamSubmittingState() {
   return (
     <SurfaceCard className="space-y-4">
-      <div className="flex items-center gap-2 text-sm font-medium text-text-strong">
-        <LoaderCircle className="h-4 w-4 animate-spin text-accent" />
+      <div className="flex items-center gap-2 text-sm font-medium text-[color:var(--color-foreground)]">
+        <LoaderCircle className="h-4 w-4 animate-spin text-[color:var(--color-brand)]" />
         正在评分并生成维度摘要
       </div>
       <div className="space-y-3">
@@ -188,7 +188,7 @@ function ExamTakingState({
                   tags={item.tags}
                 />
               </div>
-              <p className="text-base font-semibold leading-7 text-text-strong">
+              <p className="text-base font-semibold leading-7 text-[color:var(--color-foreground)]">
                 {item.question_text}
               </p>
               <Textarea
@@ -268,23 +268,23 @@ function ExamResultState({
 
   return (
     <div className="space-y-5">
-      <SurfaceCard className="space-y-4 bg-[linear-gradient(180deg,rgba(244,242,249,0.94)_0%,rgba(255,255,255,0.98)_100%)]">
+      <SurfaceCard className="space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-text-muted">
+            <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[color:var(--color-muted-foreground)]">
               考试结果
             </p>
-            <p className="mt-1.5 text-[2rem] font-semibold tracking-[-0.05em] text-text-strong">
+            <p className="mt-1.5 text-[2rem] font-semibold tracking-[-0.05em] text-[color:var(--color-foreground)]">
               {examState.totalScore === null
                 ? "评分失败"
                 : `${examState.totalScore}/${examState.maxScore}`}
             </p>
           </div>
-          <div className="rounded-[18px] border border-border-muted bg-white/82 px-4 py-3">
-            <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-text-muted">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-4 py-3">
+            <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[color:var(--color-muted-foreground)]">
               平均分
             </p>
-            <p className="mt-1.5 text-lg font-semibold tracking-[-0.03em] text-text-strong">
+            <p className="mt-1.5 text-lg font-semibold tracking-[-0.03em] text-[color:var(--color-foreground)]">
               {examState.totalScore === null
                 ? "-"
                 : `${(examState.totalScore / examState.items.length).toFixed(1)}`}
@@ -298,7 +298,7 @@ function ExamResultState({
 
       <SurfaceCard className="space-y-4">
         <SectionHeading title="整体反馈" />
-        <p className="whitespace-pre-wrap text-sm leading-7 text-text-strong">
+        <p className="whitespace-pre-wrap text-sm leading-7 text-[color:var(--color-foreground)]">
           {resultSummary.overall_feedback}
         </p>
         <div className="flex flex-wrap gap-3">
@@ -334,7 +334,7 @@ function ExamResultState({
           <SurfaceCard className="space-y-4" key={item.id}>
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="space-y-2">
-                <p className="text-sm font-semibold text-text-strong">
+                <p className="text-sm font-semibold text-[color:var(--color-foreground)]">
                   第 {item.sequence_no} 题
                 </p>
                 <PracticeQuestionMeta
@@ -347,18 +347,18 @@ function ExamResultState({
                 {item.score ?? 0}/{item.max_score}
               </Badge>
             </div>
-            <p className="text-base font-semibold leading-7 text-text-strong">
+            <p className="text-base font-semibold leading-7 text-[color:var(--color-foreground)]">
               {item.question_text}
             </p>
             <SurfaceCard className="space-y-3" muted>
               <SectionHeading title="你的回答" />
-              <p className="whitespace-pre-wrap text-sm leading-7 text-text-strong">
+              <p className="whitespace-pre-wrap text-sm leading-7 text-[color:var(--color-foreground)]">
                 {item.user_answer?.trim() || "未作答"}
               </p>
             </SurfaceCard>
             <SurfaceCard className="space-y-3" muted>
               <SectionHeading title="标准答案" />
-              <p className="whitespace-pre-wrap text-sm leading-7 text-text-strong">
+              <p className="whitespace-pre-wrap text-sm leading-7 text-[color:var(--color-foreground)]">
                 {item.canonical_answer ?? "暂无标准答案"}
               </p>
             </SurfaceCard>
@@ -366,7 +366,7 @@ function ExamResultState({
               <div className="grid gap-4 xl:grid-cols-3">
                 <SurfaceCard className="space-y-3" muted>
                   <SectionHeading title="做得好的点" />
-                  <ul className="space-y-2 text-sm leading-6 text-text-strong">
+                  <ul className="space-y-2 text-sm leading-6 text-[color:var(--color-foreground)]">
                     {item.feedback.strengths.map((strength) => (
                       <li key={strength}>{strength}</li>
                     ))}
@@ -374,7 +374,7 @@ function ExamResultState({
                 </SurfaceCard>
                 <SurfaceCard className="space-y-3" muted>
                   <SectionHeading title="缺失要点" />
-                  <ul className="space-y-2 text-sm leading-6 text-text-strong">
+                  <ul className="space-y-2 text-sm leading-6 text-[color:var(--color-foreground)]">
                     {item.feedback.missed_points.map((point) => (
                       <li key={point}>{point}</li>
                     ))}
@@ -382,7 +382,7 @@ function ExamResultState({
                 </SurfaceCard>
                 <SurfaceCard className="space-y-3" muted>
                   <SectionHeading title="下一步建议" />
-                  <p className="text-sm leading-6 text-text-strong">
+                  <p className="text-sm leading-6 text-[color:var(--color-foreground)]">
                     {item.feedback.improvement_advice}
                   </p>
                   {item.skill_scores ? (
