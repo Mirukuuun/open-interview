@@ -25,7 +25,7 @@ function renderCitations(
 ) {
   if (citations.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-border-strong bg-surface-muted px-4 py-4 text-sm text-text-muted">
+      <div className="rounded-xl border border-dashed border-[color:var(--color-border)] bg-surface-muted px-4 py-4 text-sm text-[color:var(--color-muted-foreground)]">
         No citations stored for this turn.
       </div>
     );
@@ -35,35 +35,35 @@ function renderCitations(
     <div className="space-y-3">
       {citations.map((citation) => (
         <div
-          className="rounded-xl border border-border-muted bg-surface-muted px-4 py-4"
+          className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted px-4 py-4"
           key={`${citation.owner_id}-${citation.label}`}
         >
           <div className="flex flex-wrap items-center gap-2">
             <Badge tone="accent">{citation.owner_type}</Badge>
             <Link
-              className="text-sm font-semibold text-text-strong hover:text-accent"
+              className="text-sm font-semibold text-[color:var(--color-foreground)] hover:text-[color:var(--color-brand)]"
               href={citation.href}
             >
               {citation.label}
             </Link>
           </div>
           {citation.snippet ? (
-            <div className="mt-3 whitespace-pre-wrap rounded-lg border border-border-muted bg-white px-3 py-3 text-sm leading-6 text-text-strong">
+            <div className="mt-3 whitespace-pre-wrap rounded-lg border border-[color:var(--color-border)] bg-white px-3 py-3 text-sm leading-6 text-[color:var(--color-foreground)]">
               {citation.snippet}
             </div>
           ) : null}
           {citation.source_document ? (
-            <p className="mt-3 text-sm text-text-muted">
+            <p className="mt-3 text-sm text-[color:var(--color-muted-foreground)]">
               Source:{" "}
               {citation.source_document.href ? (
                 <Link
-                  className="font-medium text-accent hover:underline"
+                  className="font-medium text-[color:var(--color-brand)] hover:underline"
                   href={citation.source_document.href}
                 >
                   {citation.source_document.title}
                 </Link>
               ) : (
-                <span className="font-medium text-text-strong">
+                <span className="font-medium text-[color:var(--color-foreground)]">
                   {citation.source_document.title}
                 </span>
               )}
@@ -83,8 +83,8 @@ function renderTrace(
   }
 
   return (
-    <details className="rounded-xl border border-border-muted bg-surface-muted px-4 py-4" open>
-      <summary className="cursor-pointer text-sm font-semibold text-text-strong">
+    <details className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted px-4 py-4" open>
+      <summary className="cursor-pointer text-sm font-semibold text-[color:var(--color-foreground)]">
         Retrieval trace • {retrievalLog.strategy} • {retrievalLog.hits.length} hits
       </summary>
       <div className="mt-4 space-y-4">
@@ -102,7 +102,7 @@ function renderTrace(
         <div className="space-y-3">
           {retrievalLog.hits.map((hit) => (
             <div
-              className="rounded-lg border border-border-muted bg-white px-3 py-3"
+              className="rounded-lg border border-[color:var(--color-border)] bg-white px-3 py-3"
               key={`${hit.owner_type}-${hit.owner_id}-${hit.chunk_id ?? "none"}`}
             >
               <div className="flex flex-wrap items-center gap-2">
@@ -110,11 +110,11 @@ function renderTrace(
                 <Badge tone={hit.reason === "fts" ? "accent" : "success"}>
                   {hit.reason}
                 </Badge>
-                <span className="font-mono text-xs text-text-muted">
+                <span className="font-mono text-xs text-[color:var(--color-muted-foreground)]">
                   score {hit.score.toFixed(1)}
                 </span>
               </div>
-              <div className="mt-2 whitespace-pre-wrap text-sm leading-6 text-text-strong">
+              <div className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[color:var(--color-foreground)]">
                 {hit.snippet}
               </div>
             </div>
@@ -173,18 +173,18 @@ export function QaSessionWorkbench({ detail }: QaSessionWorkbenchProps) {
               <div className="space-y-4">
                 {detail.turns.map((turn) => (
                   <div
-                    className="rounded-2xl border border-border-muted bg-surface-muted px-4 py-4"
+                    className="rounded-2xl border border-[color:var(--color-border)] bg-surface-muted px-4 py-4"
                     key={turn.id}
                   >
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge tone={turn.role === "assistant" ? "accent" : "neutral"}>
                         {turn.role}
                       </Badge>
-                      <span className="font-mono text-xs text-text-muted">
+                      <span className="font-mono text-xs text-[color:var(--color-muted-foreground)]">
                         {formatDateTime(turn.created_at)}
                       </span>
                     </div>
-                    <div className="mt-3 whitespace-pre-wrap text-sm leading-7 text-text-strong">
+                    <div className="mt-3 whitespace-pre-wrap text-sm leading-7 text-[color:var(--color-foreground)]">
                       {turn.content}
                     </div>
 
@@ -211,21 +211,21 @@ export function QaSessionWorkbench({ detail }: QaSessionWorkbenchProps) {
               <div className="space-y-3">
                 {latestAssistantTurn.related_questions.map((question) => (
                   <Link
-                    className="interactive-card block rounded-xl border border-border-strong bg-white px-4 py-4 focus-visible:outline-none"
+                    className="block rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-4 py-4 hover:border-[color:var(--color-brand)] transition-colors focus-visible:outline-none"
                     href={`/questions/${question.id}`}
                     key={question.id}
                   >
-                    <p className="text-sm font-semibold text-text-strong">
+                    <p className="text-sm font-semibold text-[color:var(--color-foreground)]">
                       {question.question_text}
                     </p>
-                    <p className="mt-2 text-sm text-text-muted">
+                    <p className="mt-2 text-sm text-[color:var(--color-muted-foreground)]">
                       {formatCategoryLabelOrFallback(question.category)} • {question.source_count} source(s)
                     </p>
                   </Link>
                 ))}
               </div>
             ) : (
-              <div className="rounded-xl border border-dashed border-border-strong bg-white px-4 py-4 text-sm text-text-muted">
+              <div className="rounded-xl border border-dashed border-[color:var(--color-border)] bg-white px-4 py-4 text-sm text-[color:var(--color-muted-foreground)]">
                 No related questions were stored for the latest assistant turn.
               </div>
             )}
@@ -234,23 +234,23 @@ export function QaSessionWorkbench({ detail }: QaSessionWorkbenchProps) {
           <SurfaceCard className="space-y-4">
             <SectionHeading title="Latest retrieval summary" />
             {latestAssistantTurn?.retrieval_log ? (
-              <div className="space-y-3 text-sm text-text-strong">
-                <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
+              <div className="space-y-3 text-sm text-[color:var(--color-foreground)]">
+                <div className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted px-4 py-3">
                   strategy: {latestAssistantTurn.retrieval_log.strategy}
                 </div>
-                <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
+                <div className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted px-4 py-3">
                   question_ids:{" "}
                   {latestAssistantTurn.retrieval_log.final_context.question_ids.length}
                 </div>
-                <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
+                <div className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted px-4 py-3">
                   chunk_ids: {latestAssistantTurn.retrieval_log.final_context.chunk_ids.length}
                 </div>
-                <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
+                <div className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted px-4 py-3">
                   created_at: {formatDateTime(latestAssistantTurn.retrieval_log.created_at)}
                 </div>
               </div>
             ) : (
-              <div className="rounded-xl border border-dashed border-border-strong bg-surface-muted px-4 py-4 text-sm text-text-muted">
+              <div className="rounded-xl border border-dashed border-[color:var(--color-border)] bg-surface-muted px-4 py-4 text-sm text-[color:var(--color-muted-foreground)]">
                 No retrieval trace is available yet.
               </div>
             )}

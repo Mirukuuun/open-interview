@@ -144,7 +144,7 @@ export function QaAskForm({
 
   return (
     <form className="space-y-3" onSubmit={handleSubmit}>
-      <div className="rounded-[28px] border border-border-strong bg-surface-muted p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+      <div className="rounded-[28px] border border-[color:var(--color-border)] bg-surface-muted p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
         <Textarea
           className="min-h-[110px] resize-none border-0 bg-transparent px-2 py-2 text-[15px] leading-7 shadow-none focus:border-0 focus-visible:ring-0"
           disabled={isSubmitting}
@@ -160,8 +160,8 @@ export function QaAskForm({
           value={query}
         />
 
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-border-muted px-2 pt-3">
-          <p className="text-xs font-medium text-text-strong">
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-[color:var(--color-border)] px-2 pt-3">
+          <p className="text-xs font-medium text-[color:var(--color-foreground)]">
             {isSubmitting ? "AI 正在整理回答…" : "Enter 发送，Shift + Enter 换行"}
           </p>
 
@@ -194,7 +194,7 @@ export function QaAskForm({
         <div className="flex flex-wrap gap-2">
           {promptSuggestions.map((suggestion) => (
             <button
-              className="interactive-card rounded-full border border-border-muted bg-white px-3 py-2 text-sm text-text-strong focus-visible:outline-none"
+              className="rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-3 py-2 text-sm text-[color:var(--color-foreground)] hover:border-[color:var(--color-brand)] transition-colors focus-visible:outline-none"
               key={suggestion}
               onClick={() => applyPromptSuggestion(suggestion)}
               type="button"
@@ -206,9 +206,9 @@ export function QaAskForm({
       ) : null}
 
       {isSubmitting ? (
-        <div className="rounded-[24px] border border-border-strong bg-white px-4 py-4">
-          <div className="flex items-center gap-2 text-sm font-medium text-text-strong">
-            <LoaderCircle className="h-4 w-4 animate-spin text-accent" />
+        <div className="rounded-[24px] border border-[color:var(--color-border)] bg-white px-4 py-4">
+          <div className="flex items-center gap-2 text-sm font-medium text-[color:var(--color-foreground)]">
+            <LoaderCircle className="h-4 w-4 animate-spin text-[color:var(--color-brand)]" />
             正在整理 grounded answer
           </div>
           <div className="mt-4 space-y-3">
@@ -225,14 +225,14 @@ export function QaAskForm({
         </div>
       ) : null}
 
-      <details className="rounded-2xl border border-border-muted bg-white px-4 py-3">
-        <summary className="rounded-lg text-xs font-semibold tracking-[0.14em] text-text-muted uppercase focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2">
+      <details className="rounded-2xl border border-[color:var(--color-border)] bg-white px-4 py-3">
+        <summary className="rounded-lg text-xs font-semibold tracking-[0.14em] text-[color:var(--color-muted-foreground)] uppercase focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-brand)] focus-visible:ring-offset-2">
           检索选项
         </summary>
 
         <div className="mt-3 grid gap-3 md:grid-cols-2">
           <label className="block space-y-2">
-            <span className="text-sm font-medium text-text-strong">检索策略</span>
+            <span className="text-sm font-medium text-[color:var(--color-foreground)]">检索策略</span>
             <Select
               disabled={isSubmitting}
               onChange={(event) => setStrategy(event.target.value as "fts" | "hybrid")}
@@ -244,7 +244,7 @@ export function QaAskForm({
           </label>
 
           <label className="block space-y-2">
-            <span className="text-sm font-medium text-text-strong">召回数量</span>
+            <span className="text-sm font-medium text-[color:var(--color-foreground)]">召回数量</span>
             <Select
               disabled={isSubmitting}
               onChange={(event) => setTopK(event.target.value)}

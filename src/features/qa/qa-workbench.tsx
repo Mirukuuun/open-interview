@@ -54,7 +54,6 @@ export function QaWorkbench({
             </Button>
           </>
         }
-        eyebrow="Grounded QA"
         highlights={[
           {
             label: "可用题目",
@@ -102,29 +101,29 @@ export function QaWorkbench({
                 title="完成第一轮对话"
               />
             ) : (
-              <div className="reveal-list space-y-3">
+              <div className="space-y-3">
                 {recentSessions.map((session) => (
                   <Link
-                    className="interactive-card block rounded-[24px] border border-border-strong bg-white px-4 py-4 focus-visible:outline-none"
+                    className="block rounded-[24px] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-4 py-4 hover:border-[color:var(--color-brand)] transition-colors focus-visible:outline-none"
                     href={`/qa/${session.id}`}
                     key={session.id}
                   >
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-semibold text-text-strong">
+                      <p className="text-sm font-semibold text-[color:var(--color-foreground)]">
                         {session.title ?? "未命名会话"}
                       </p>
                       <Badge>{session.status}</Badge>
                     </div>
                     {session.latestUserQuery ? (
-                      <p className="mt-2 text-sm leading-6 text-text-muted">
+                      <p className="mt-2 text-sm leading-6 text-[color:var(--color-muted-foreground)]">
                         {session.latestUserQuery}
                       </p>
                     ) : (
-                      <p className="mt-2 text-sm leading-6 text-text-muted">
+                      <p className="mt-2 text-sm leading-6 text-[color:var(--color-muted-foreground)]">
                         会话已创建，但还没有轮次。
                       </p>
                     )}
-                    <p className="mt-3 text-xs text-text-muted">
+                    <p className="mt-3 text-xs text-[color:var(--color-muted-foreground)]">
                       {session.turnCount} 轮 • 更新于 {formatDateTime(session.updatedAt)}
                     </p>
                   </Link>

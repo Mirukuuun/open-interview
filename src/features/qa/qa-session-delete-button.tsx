@@ -95,7 +95,7 @@ export function QaSessionDeleteButton({
     <button
       aria-label={`删除会话 ${title?.trim() || sessionId}`}
       className={cn(
-        "inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent text-sm text-text-muted transition-colors hover:border-border-muted hover:bg-surface-muted hover:text-text-strong disabled:cursor-not-allowed disabled:opacity-50",
+        "inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent text-sm text-[color:var(--color-muted-foreground)] transition-colors hover:border-[color:var(--color-border)] hover:bg-[color:var(--color-surface-muted)] hover:text-[color:var(--color-foreground)] disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}
       disabled={isDeleting}
