@@ -3,7 +3,7 @@
 - doc_type: roadmap
 - status: proposed
 - complexity: L2
-- updated_at: 2026-04-15
+- updated_at: 2026-04-16
 - workstream: `001-webui-refactor`
 - git_branch: `feature/001-webui-refactor`
 - design_source: [`design.md`](./design.md)
@@ -28,10 +28,10 @@
 
 **Phase 2 完成判定：**
 
-- [ ] 7 个 feature 页面（practice / qa / questions / review / interviews / import / resume）所有动作、数据展示、路由跳转与重构前对等
-- [ ] 页面间节奏可感知不同（至少 practice / qa / questions 三类有差异化布局）
-- [ ] 统一遵循"一个语境一个 Primary"与"Header 紧凑 Body 平衡"
-- [ ] 所有按钮 / input / badge 使用新组件，无 inline 样式 hack
+- [ ] 7 个 feature 页面（practice / qa / questions / review / interviews / import / resume）所有动作、数据展示、路由跳转与重构前对等 <!-- 源码层 PASS（每页 task 动作/路由对等自测清单），浏览器视觉 diff 属用户手动项，见 m2-feature-pages/report.md §2 #1 待用户手动验收 -->
+- [ ] 页面间节奏可感知不同（至少 practice / qa / questions 三类有差异化布局） <!-- 源码层六类节奏差异化已落点（practice 三段 / qa 对话分栏 / questions 列表浏览 / review 同 P3 / interviews 主从分栏 / import 表单引导 / resume 渐进展开），浏览器观感属用户手动项，见 m2-feature-pages/report.md §1.3 待用户手动验收 -->
+- [x] 统一遵循"一个语境一个 Primary"与"Header 紧凑 Body 平衡" <!-- 每页 design note §3 "按钮摆放" 显式列出单一 Primary 规则；Header 紧凑密度来自 M1 PageHeader，M2 全页消费，见 m2-feature-pages/report.md §2 #3 -->
+- [x] 所有按钮 / input / badge 使用新组件，无 inline 样式 hack <!-- src/features/** 全局 grep CLEAN（interactive-card / reveal-list / radar-draw / 旧 token 类名 × 5 / bg-accent / text-accent / eyebrow= 全 0 hits）+ 7 份 tests/<page>-page.test.tsx 断言，见 m2-feature-pages/report.md §2 #4 / #5 -->
 
 **整体收口：**
 
@@ -67,7 +67,7 @@
 | 里程碑 | slug | 主题 | 目录 | 前置依赖 | 状态 | 估算 |
 |---|---|---|---|---|---|---|
 | M1 | `m1-infra` | 全站 design tokens + 原子组件重写 + Shell 层重构 + 深色模式支持 | [`m1-infra/`](./m1-infra/) | — | `- [x]` 已完成 | 4–5 天 |
-| M2 | `m2-feature-pages` | 7 个 feature 页面按优先级逐页重构（practice → qa → questions → review → interviews → import → resume） | [`m2-feature-pages/`](./m2-feature-pages/) | M1 完成并合并 | `- [ ]` 未开始 | 7–14 天（单页 1–2 天 × 7） |
+| M2 | `m2-feature-pages` | 7 个 feature 页面按优先级逐页重构（practice → qa → questions → review → interviews → import → resume） | [`m2-feature-pages/`](./m2-feature-pages/) | M1 完成并合并 | `- [x]` 已完成 | 7–14 天（单页 1–2 天 × 7） |
 
 ### Phase 依赖图
 
@@ -167,7 +167,7 @@
 
 ## 5. M2 · `m2-feature-pages` · 7 个 feature 页面逐页重构
 
-- [ ] **状态**：未开始
+- [x] **状态**：已完成
 - **目录**：`docs/001-webui-refactor/m2-feature-pages/`
 - **估算**：7–14 天（每页 1–2 天 × 7 页，独立 PR）
 - **前置依赖**：M1 (`m1-infra`) 完成并合并到本 feature 分支
