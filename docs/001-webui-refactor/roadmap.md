@@ -1,7 +1,7 @@
 # Open Interview Web UI 重构 · MVP 实施路线图
 
 - doc_type: roadmap
-- status: proposed
+- status: closed
 - complexity: L2
 - updated_at: 2026-04-16
 - workstream: `001-webui-refactor`
@@ -35,9 +35,9 @@
 
 **整体收口：**
 
-- [ ] `AGENTS.md` 中 UI 相关描述保持一致或被 PR 同步更新
-- [ ] `docs/reference/ui-flows.md` 若含 UI 描述同步更新
-- [ ] 新 tokens / 组件规范在 `AGENTS.md` 或新 `docs/reference/design-system.md` 有入口索引
+- [x] `AGENTS.md` 中 UI 相关描述保持一致或被 PR 同步更新 <!-- m2-feature-pages/report.md §5.4 Step 1：AGENTS.md 无页面级 UI 描述，M2 仅动 src/features/<page>/* 不触达 directory 级结构，无需更新 -->
+- [x] `docs/reference/ui-flows.md` 若含 UI 描述同步更新 <!-- m2-feature-pages/report.md §5.4 Step 2：ui-flows.md 为路由/API/状态契约文档，M2 未改这些；其 ASCII 布局骨架与 M2 实现一致，无需更新 -->
+- [x] 新 tokens / 组件规范在 `AGENTS.md` 或新 `docs/reference/design-system.md` 有入口索引 <!-- m2-feature-pages/report.md §5.4 Step 3：AGENTS.md:63 链接 docs/reference/design-system.md 作为 canonical UI 规范依然有效，M1 产出的 tokens/组件/按钮/深色/反模式对 M2 全适用 -->
 
 ---
 
@@ -256,3 +256,4 @@
 ---
 
 <!-- handoff: H1 · status: complete · timestamp: 2026-04-15 12:19 -->
+<!-- closure: 001-webui-refactor · status: complete · closed_by: SubAgent(closing-phase mode=feature) · timestamp: 2026-04-16 -->
