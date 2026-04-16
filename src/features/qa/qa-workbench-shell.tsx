@@ -7,6 +7,7 @@ import type {
 import { SafeMarkdown } from "@/components/content/safe-markdown";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/workbench/page-header";
 import { formatDateTimeLabel } from "@/lib/date-time";
 import { formatCategoryLabelOrFallback } from "@/lib/taxonomy-display";
 import { cn } from "@/lib/utils";
@@ -264,7 +265,6 @@ export function QaWorkbenchShell({
   activeSession,
 }: QaWorkbenchShellProps) {
   const turns = activeSession?.turns ?? [];
-  const latestAssistantTurn = [...turns].reverse().find((turn) => turn.role === "assistant");
   const promptSuggestions = [
     "请你做个自我介绍",
     "Redis 分布式锁这题应该怎么回答比较完整？",
@@ -273,143 +273,95 @@ export function QaWorkbenchShell({
   ];
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
-      <aside className="space-y-4 xl:sticky xl:top-6 xl:self-start">
-        <div className="overflow-hidden rounded-[30px] border border-[color:var(--color-border)] bg-[linear-gradient(180deg,rgba(219,234,254,0.55)_0%,rgba(255,255,255,1)_60%)] shadow-sm">
-          <div className="border-b border-[color:var(--color-border)] px-5 py-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge tone="accent">QA</Badge>
-              <span className="font-mono text-xs text-[color:var(--color-muted-foreground)]">/qa</span>
-            </div>
-          </div>
+    <div className="flex flex-col">
+      <PageHeader
+        title="AI 问答"
+        actions={
+          <Button href="/qa" variant="primary" size="lg">
+            新建会话
+          </Button>
+        }
+      />
 
-          <div className="space-y-4 px-5 py-5">
-            <div className="space-y-2">
-              <h1 className="text-2xl font-semibold tracking-[-0.04em] text-[color:var(--color-foreground)]">
-                AI 问答
-              </h1>
-              <p className="text-sm leading-6 text-[color:var(--color-muted-foreground)]">
-                chat-first grounded QA。
-              </p>
-            </div>
-
-            <Button
-              className="h-10 w-full justify-center"
-              href="/qa"
-              variant={activeSession ? "secondary" : "primary"}
-            >
-              新建会话
-            </Button>
-          </div>
-        </div>
-
-        <div className="rounded-[30px] border border-[color:var(--color-border)] bg-white p-3 shadow-sm">
-          <div className="flex items-center justify-between px-2 pb-3 pt-2">
+      <div className="mt-4 flex min-h-[78vh] overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)]">
+        {/* Sidebar: session list — hidden below md */}
+        <aside className="hidden w-60 flex-none flex-col border-r border-[color:var(--color-border)] md:flex">
+          <div className="flex items-center justify-between px-4 py-3">
             <p className="text-sm font-semibold text-[color:var(--color-foreground)]">会话列表</p>
             <Badge>{recentSessions.length}</Badge>
           </div>
 
-          {recentSessions.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-[color:var(--color-border)] bg-surface-muted px-4 py-5 text-sm leading-6 text-[color:var(--color-muted-foreground)]">
-              还没有会话。直接在右侧输入你的第一条问题即可。
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {recentSessions.map((session) => {
-                const active = activeSession?.aiSession.id === session.id;
+          <div className="flex-1 overflow-y-auto px-3 pb-3">
+            {recentSessions.length === 0 ? (
+              <div className="rounded-[var(--radius-md)] border border-dashed border-[color:var(--color-border)] bg-[color:var(--color-surface-muted)] px-4 py-5 text-sm leading-6 text-[color:var(--color-muted-foreground)]">
+                还没有会话。直接在右侧输入你的第一条问题即可。
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {recentSessions.map((session) => {
+                  const active = activeSession?.aiSession.id === session.id;
 
-                return (
-                  <div
-                    className={cn(
-                      "rounded-2xl border px-3 py-3 transition-colors",
-                      active
-                        ? "border-[color:var(--color-brand)] bg-[color:var(--color-brand-soft)]"
-                        : "border-[color:var(--color-border)] bg-[color:var(--color-surface)] hover:border-[color:var(--color-brand)] hover:bg-[color:var(--color-brand-soft)]",
-                    )}
-                    key={session.id}
-                  >
-                    <div className="flex items-start gap-2">
-                      <Link
-                        className="min-w-0 flex-1 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-brand)] focus-visible:ring-offset-2"
-                        href={`/qa/${session.id}`}
-                      >
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="text-sm font-semibold text-[color:var(--color-foreground)]">
-                            {session.title ?? "未命名会话"}
+                  return (
+                    <div
+                      className={cn(
+                        "rounded-[var(--radius-md)] border px-3 py-3 transition-colors",
+                        active
+                          ? "border-[color:var(--color-brand)] bg-[color:var(--color-brand-soft)]"
+                          : "border-[color:var(--color-border)] bg-[color:var(--color-surface)] hover:border-[color:var(--color-brand)] hover:bg-[color:var(--color-brand-soft)]",
+                      )}
+                      key={session.id}
+                    >
+                      <div className="flex items-start gap-2">
+                        <Link
+                          className="min-w-0 flex-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-brand)] focus-visible:ring-offset-2"
+                          href={`/qa/${session.id}`}
+                        >
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-sm font-semibold text-[color:var(--color-foreground)]">
+                              {session.title ?? "未命名会话"}
+                            </p>
+                            {active ? <Badge tone="accent">当前</Badge> : null}
+                          </div>
+                          <p className="mt-2 text-sm leading-6 text-[color:var(--color-muted-foreground)]">
+                            {session.latestUserQuery ?? "会话已创建，等待第一条问题。"}
                           </p>
-                          {active ? <Badge tone="accent">当前</Badge> : null}
-                        </div>
-                        <p className="mt-2 text-sm leading-6 text-[color:var(--color-muted-foreground)]">
-                          {session.latestUserQuery ?? "会话已创建，等待第一条问题。"}
-                        </p>
-                        <p className="mt-3 text-xs text-[color:var(--color-muted-foreground)]">
-                          {session.turnCount} 轮 · {formatDateTimeLabel(session.updatedAt)}
-                        </p>
-                      </Link>
+                          <p className="mt-3 text-xs text-[color:var(--color-muted-foreground)]">
+                            {session.turnCount} 轮 · {formatDateTimeLabel(session.updatedAt)}
+                          </p>
+                        </Link>
 
-                      <QaSessionDeleteButton
-                        active={active}
-                        sessionId={session.id}
-                        title={session.title}
-                      />
+                        <QaSessionDeleteButton
+                          active={active}
+                          sessionId={session.id}
+                          title={session.title}
+                        />
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </aside>
-
-      <section className="flex min-h-[78vh] flex-col overflow-hidden rounded-[32px] border border-[color:var(--color-border)] bg-white shadow-sm">
-        <div className="border-b border-[color:var(--color-border)] bg-[linear-gradient(180deg,rgba(247,249,251,0.9)_0%,rgba(255,255,255,1)_100%)] px-5 py-5 sm:px-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="space-y-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge tone="accent">Chat</Badge>
-                {latestAssistantTurn?.answer_mode ? (
-                  <Badge tone={toneForAnswerMode(latestAssistantTurn.answer_mode)}>
-                    {labelForAnswerMode(latestAssistantTurn.answer_mode)}
-                  </Badge>
-                ) : null}
+                  );
+                })}
               </div>
-
-              <div>
-                <h2 className="text-2xl font-semibold tracking-[-0.04em] text-[color:var(--color-foreground)]">
-                  {activeSession?.aiSession.title ?? "开始一轮新的对话"}
-                </h2>
-              </div>
-            </div>
-
-            {activeSession ? (
-              <div className="rounded-2xl border border-[color:var(--color-border)] bg-white px-4 py-3 text-sm text-[color:var(--color-muted-foreground)]">
-                <span className="font-medium text-[color:var(--color-foreground)]">
-                  {turns.length}
-                </span>
-                {" "}
-                轮对话 · 最近更新 {formatDateTimeLabel(activeSession.aiSession.updated_at)}
-              </div>
-            ) : null}
+            )}
           </div>
-        </div>
+        </aside>
 
-        <div className="flex-1 overflow-hidden">
-          <div className="h-full overflow-y-auto bg-[color:var(--color-surface)] px-4 py-5 sm:px-6 sm:py-6">
+        {/* Main: chat area */}
+        <main className="flex flex-1 min-w-0 flex-col">
+          <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-6 sm:py-6">
             {turns.length === 0 ? (
               <div className="mx-auto flex h-full max-w-3xl flex-col justify-center">
-                <div className="rounded-[32px] border border-[color:var(--color-border)] bg-white/90 px-6 py-8 shadow-sm backdrop-blur">
+                <div className="rounded-[var(--radius-lg)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-6 py-8">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge tone="accent">对话模式</Badge>
                     <Badge>引用按需展开</Badge>
                   </div>
-                  <h3 className="mt-4 text-3xl font-semibold tracking-[-0.05em] text-[color:var(--color-foreground)]">
+                  <h3 className="mt-4 text-base font-semibold text-[color:var(--color-foreground)]">
                     问一个问题，直接开始。
                   </h3>
 
                   <div className="mt-6 grid gap-3 md:grid-cols-2">
                     {promptSuggestions.map((suggestion) => (
                       <div
-                        className="rounded-2xl border border-[color:var(--color-border)] bg-surface-muted px-4 py-4 text-sm leading-6 text-[color:var(--color-foreground)]"
+                        className="rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-surface-muted)] px-4 py-4 text-sm leading-6 text-[color:var(--color-foreground)]"
                         key={suggestion}
                       >
                         {suggestion}
@@ -423,17 +375,17 @@ export function QaWorkbenchShell({
                 {turns.map((turn) => (
                   <article
                     className={cn(
-                      "flex",
-                      turn.role === "user" ? "justify-end" : "justify-start",
+                      "flex max-w-[88%]",
+                      turn.role === "user" ? "self-end" : "self-start",
                     )}
                     key={turn.id}
                   >
                     <div
                       className={cn(
-                        "max-w-[88%] rounded-[28px] px-4 py-4 shadow-sm sm:px-5",
+                        "rounded-[var(--radius-lg)] px-4 py-4 sm:px-5",
                         turn.role === "user"
                           ? "bg-[color:var(--color-brand)] text-white"
-                          : "border border-[color:var(--color-border)] bg-surface-muted text-[color:var(--color-foreground)]",
+                          : "border border-[color:var(--color-border)] bg-[color:var(--color-surface-muted)] text-[color:var(--color-foreground)]",
                       )}
                     >
                       <div className="flex flex-wrap items-center gap-2">
@@ -480,17 +432,17 @@ export function QaWorkbenchShell({
               </div>
             )}
           </div>
-        </div>
 
-        <div className="border-t border-[color:var(--color-border)] bg-white/95 px-4 py-4 backdrop-blur sm:px-6">
-          <QaAskForm
-            hasTurns={turns.length > 0}
-            initialQuery={activeSession ? "" : initialQuery}
-            promptSuggestions={turns.length === 0 ? promptSuggestions : []}
-            sessionId={activeSession?.aiSession.id}
-          />
-        </div>
-      </section>
+          <div className="sticky bottom-0 border-t border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-4 py-4 sm:px-6">
+            <QaAskForm
+              hasTurns={turns.length > 0}
+              initialQuery={activeSession ? "" : initialQuery}
+              promptSuggestions={turns.length === 0 ? promptSuggestions : []}
+              sessionId={activeSession?.aiSession.id}
+            />
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
