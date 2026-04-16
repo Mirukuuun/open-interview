@@ -20,7 +20,7 @@ type InterviewDetailWorkbenchProps = {
 
 function renderTagList(tags: string[]) {
   if (tags.length === 0) {
-    return <span className="text-sm text-text-muted">无标签</span>;
+    return <span className="text-sm text-[color:var(--color-muted-foreground)]">无标签</span>;
   }
 
   return (
@@ -82,7 +82,7 @@ export function InterviewDetailWorkbench({
             <SectionHeading
               title="面经摘要"
             />
-            <div className="rounded-xl border border-border-muted bg-surface-muted p-4 text-sm leading-7 text-text-strong whitespace-pre-wrap">
+            <div className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted p-4 text-sm leading-7 text-[color:var(--color-foreground)] whitespace-pre-wrap">
               {interview.summary ?? "还没有面经摘要。"}
             </div>
           </SurfaceCard>
@@ -92,7 +92,7 @@ export function InterviewDetailWorkbench({
               title={`关联题目（${interview.questions.length}）`}
             />
             {interview.questions.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border-strong bg-surface-muted p-4 text-sm text-text-muted">
+              <div className="rounded-xl border border-dashed border-[color:var(--color-border)] bg-surface-muted p-4 text-sm text-[color:var(--color-muted-foreground)]">
                 这条面经还没有关联题目。
               </div>
             ) : (
@@ -108,7 +108,7 @@ export function InterviewDetailWorkbench({
             <SectionHeading
               title="来源原文"
             />
-            <div className="max-h-[560px] overflow-auto rounded-xl border border-border-muted bg-surface-muted p-4 font-mono text-sm leading-6 text-text-strong whitespace-pre-wrap">
+            <div className="max-h-[560px] overflow-auto rounded-xl border border-[color:var(--color-border)] bg-surface-muted p-4 font-mono text-sm leading-6 text-[color:var(--color-foreground)] whitespace-pre-wrap">
               {interview.sourceDocument.rawText}
             </div>
           </SurfaceCard>
@@ -118,10 +118,10 @@ export function InterviewDetailWorkbench({
           <SurfaceCard className="space-y-4">
             <SectionHeading title="沉淀概览" />
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-4 text-sm text-text-strong">
+              <div className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted px-4 py-4 text-sm text-[color:var(--color-foreground)]">
                 已沉淀 {promotedQuestionCount} / {interview.questions.length}
               </div>
-              <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-4 text-sm text-text-strong">
+              <div className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted px-4 py-4 text-sm text-[color:var(--color-foreground)]">
                 待处理 {pendingQuestionCount} 道
               </div>
             </div>
@@ -137,14 +137,14 @@ export function InterviewDetailWorkbench({
             <SectionHeading
               title="元信息"
             />
-            <div className="space-y-3 text-sm text-text-strong">
-              <div className="rounded-xl border border-border-strong bg-white px-4 py-3">
+            <div className="space-y-3 text-sm text-[color:var(--color-foreground)]">
+              <div className="rounded-xl border border-[color:var(--color-border)] bg-white px-4 py-3">
                 公司: {interview.company ?? "未知"}
               </div>
-              <div className="rounded-xl border border-border-strong bg-white px-4 py-3">
+              <div className="rounded-xl border border-[color:var(--color-border)] bg-white px-4 py-3">
                 岗位: {interview.role ?? "未知"}
               </div>
-              <div className="rounded-xl border border-border-strong bg-white px-4 py-3">
+              <div className="rounded-xl border border-[color:var(--color-border)] bg-white px-4 py-3">
                 轮次: {interview.roundInfo ?? "未知"}
               </div>
             </div>
@@ -154,28 +154,28 @@ export function InterviewDetailWorkbench({
             <SectionHeading
               title="来源文档"
             />
-            <div className="space-y-3 text-sm text-text-strong">
-              <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
+            <div className="space-y-3 text-sm text-[color:var(--color-foreground)]">
+              <div className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted px-4 py-3">
                 <span className="font-medium">标题:</span> {interview.sourceDocument.title}
               </div>
-              <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
+              <div className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted px-4 py-3">
                 <span className="font-medium">类型:</span> {interview.sourceDocument.kind}
               </div>
-              <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
+              <div className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted px-4 py-3">
                 <span className="font-medium">更新时间:</span>{" "}
                 {formatDateTimeLabel(interview.sourceDocument.updatedAt)}
               </div>
               {interview.sourceDocument.fileName ? (
-                <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
+                <div className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted px-4 py-3">
                   <span className="font-medium">文件:</span>{" "}
                   {interview.sourceDocument.fileName}
                 </div>
               ) : null}
               {interview.sourceDocument.sourceUrl ? (
-                <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-3">
+                <div className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted px-4 py-3">
                   <span className="font-medium">来源链接:</span>{" "}
                   <Link
-                    className="text-accent hover:underline"
+                    className="text-[color:var(--color-brand)] hover:underline"
                     href={interview.sourceDocument.sourceUrl}
                     target="_blank"
                   >

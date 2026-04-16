@@ -157,7 +157,7 @@ export function InterviewQuestionCard({ question }: InterviewQuestionCardProps) 
   }
 
   return (
-    <div className="rounded-xl border border-border-muted bg-surface-muted p-4">
+    <div className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted p-4">
       <div className="flex flex-wrap items-center gap-2">
         <Badge tone="accent">
           {question.sourceKind === "interview_question" ? "面经原题" : "历史题库关联"}
@@ -170,7 +170,7 @@ export function InterviewQuestionCard({ question }: InterviewQuestionCardProps) 
         ) : null}
       </div>
 
-      <div className="mt-3 text-sm font-semibold text-text-strong">
+      <div className="mt-3 text-sm font-semibold text-[color:var(--color-foreground)]">
         {question.questionText}
       </div>
 
@@ -181,17 +181,17 @@ export function InterviewQuestionCard({ question }: InterviewQuestionCardProps) 
       </div>
 
       {question.sourceAnswer ? (
-        <div className="mt-3 whitespace-pre-wrap rounded-lg border border-border-muted bg-white px-3 py-3 text-sm leading-6 text-text-strong">
+        <div className="mt-3 whitespace-pre-wrap rounded-lg border border-[color:var(--color-border)] bg-white px-3 py-3 text-sm leading-6 text-[color:var(--color-foreground)]">
           {question.sourceAnswer}
         </div>
       ) : null}
 
       {question.sourceSnippet ? (
-        <details className="mt-3 rounded-lg border border-border-muted bg-white px-3 py-3">
-          <summary className="cursor-pointer text-sm font-semibold text-text-strong">
+        <details className="mt-3 rounded-lg border border-[color:var(--color-border)] bg-white px-3 py-3">
+          <summary className="cursor-pointer text-sm font-semibold text-[color:var(--color-foreground)]">
             查看原文 QA
           </summary>
-          <div className="mt-3 whitespace-pre-wrap border-t border-border-muted pt-3 text-sm leading-6 text-text-muted">
+          <div className="mt-3 whitespace-pre-wrap border-t border-[color:var(--color-border)] pt-3 text-sm leading-6 text-[color:var(--color-muted-foreground)]">
             {question.sourceSnippet}
           </div>
         </details>
@@ -201,8 +201,8 @@ export function InterviewQuestionCard({ question }: InterviewQuestionCardProps) 
         <div
           className={`mt-3 rounded-lg border px-3 py-3 text-sm ${
             feedback.tone === "success"
-              ? "border-emerald-200 bg-emerald-50 text-text-strong"
-              : "border-amber-200 bg-amber-50 text-text-strong"
+              ? "border-emerald-200 bg-emerald-50 text-[color:var(--color-foreground)]"
+              : "border-amber-200 bg-amber-50 text-[color:var(--color-foreground)]"
           }`}
         >
           {feedback.message}
@@ -211,17 +211,17 @@ export function InterviewQuestionCard({ question }: InterviewQuestionCardProps) 
 
       {question.promotedQuestions.length > 0 ? (
         <div className="mt-4 space-y-3">
-          <p className="text-sm font-semibold text-text-strong">已沉淀到题库</p>
+          <p className="text-sm font-semibold text-[color:var(--color-foreground)]">已沉淀到题库</p>
           <div className="space-y-2">
             {question.promotedQuestions.map((promotedQuestion) => (
               <div
-                className="rounded-lg border border-border-muted bg-white px-3 py-3"
+                className="rounded-lg border border-[color:var(--color-border)] bg-white px-3 py-3"
                 key={`${promotedQuestion.questionItemId}-${promotedQuestion.linkType}`}
               >
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge tone="success">{promotedQuestion.linkType}</Badge>
                   <Link
-                    className="text-sm font-semibold text-text-strong hover:text-accent"
+                    className="text-sm font-semibold text-[color:var(--color-foreground)] hover:text-[color:var(--color-brand)]"
                     href={`/questions/${promotedQuestion.questionItemId}`}
                   >
                     {promotedQuestion.questionText}
@@ -234,14 +234,14 @@ export function InterviewQuestionCard({ question }: InterviewQuestionCardProps) 
       ) : null}
 
       {question.sourceKind === "legacy_question_link" ? (
-        <div className="mt-4 rounded-lg border border-border-muted bg-white px-3 py-3 text-sm leading-6 text-text-muted">
+        <div className="mt-4 rounded-lg border border-[color:var(--color-border)] bg-white px-3 py-3 text-sm leading-6 text-[color:var(--color-muted-foreground)]">
           这是一条历史面经数据，题目曾直接写入题库；当前不支持继续在此卡片上执行新的沉淀动作。
         </div>
       ) : (
         <>
           {question.recommendedQuestions.length > 0 ? (
             <div className="mt-4 space-y-3">
-              <p className="text-sm font-semibold text-text-strong">相关题库题</p>
+              <p className="text-sm font-semibold text-[color:var(--color-foreground)]">相关题库题</p>
               <div className="space-y-2">
                 {question.recommendedQuestions.map((recommendedQuestion) => {
                   const alreadyPromoted = question.promotedQuestions.some(
@@ -251,12 +251,12 @@ export function InterviewQuestionCard({ question }: InterviewQuestionCardProps) 
 
                   return (
                     <div
-                      className="rounded-lg border border-border-muted bg-white px-3 py-3"
+                      className="rounded-lg border border-[color:var(--color-border)] bg-white px-3 py-3"
                       key={recommendedQuestion.id}
                     >
                       <div className="flex flex-wrap items-center gap-2">
                         <Link
-                          className="text-sm font-semibold text-text-strong hover:text-accent"
+                          className="text-sm font-semibold text-[color:var(--color-foreground)] hover:text-[color:var(--color-brand)]"
                           href={`/questions/${recommendedQuestion.id}`}
                         >
                           {recommendedQuestion.questionText}
@@ -300,7 +300,7 @@ export function InterviewQuestionCard({ question }: InterviewQuestionCardProps) 
               </div>
             </div>
           ) : (
-            <div className="mt-4 rounded-lg border border-dashed border-border-strong bg-white px-3 py-3 text-sm text-text-muted">
+            <div className="mt-4 rounded-lg border border-dashed border-[color:var(--color-border)] bg-white px-3 py-3 text-sm text-[color:var(--color-muted-foreground)]">
               当前没有检索到明显相关的题库题。
             </div>
           )}

@@ -104,7 +104,7 @@ function getPromotionStatusMeta(
 
 function renderTagList(tags: string[]) {
   if (tags.length === 0) {
-    return <span className="text-text-muted">-</span>;
+    return <span className="text-[color:var(--color-muted-foreground)]">-</span>;
   }
 
   return (
@@ -182,7 +182,7 @@ export function InterviewListWorkbench({
             <input name="page_size" type="hidden" value={String(filters.page_size)} />
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-text-strong" htmlFor="q">
+              <label className="text-sm font-medium text-[color:var(--color-foreground)]" htmlFor="q">
                 关键词
               </label>
               <Input
@@ -195,7 +195,7 @@ export function InterviewListWorkbench({
 
             <div className="space-y-2">
               <label
-                className="text-sm font-medium text-text-strong"
+                className="text-sm font-medium text-[color:var(--color-foreground)]"
                 htmlFor="company"
               >
                 公司
@@ -211,7 +211,7 @@ export function InterviewListWorkbench({
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-text-strong" htmlFor="tag">
+              <label className="text-sm font-medium text-[color:var(--color-foreground)]" htmlFor="tag">
                 标签
               </label>
               <Select defaultValue={filters.tag ?? ""} id="tag" name="tag">
@@ -238,7 +238,7 @@ export function InterviewListWorkbench({
             <SectionHeading
               title="面经列表"
             />
-            <p className="font-mono text-xs text-text-muted">
+            <p className="font-mono text-xs text-[color:var(--color-muted-foreground)]">
               {rangeStart}-{rangeEnd} / {result.total}
             </p>
           </div>
@@ -249,12 +249,12 @@ export function InterviewListWorkbench({
             <div className="space-y-6">
               {groupedInterviews.map((group) => (
                 <div className="space-y-3" key={group.company}>
-                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border-muted bg-surface-muted px-4 py-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[color:var(--color-border)] bg-surface-muted px-4 py-4">
                     <div>
-                      <p className="text-lg font-semibold tracking-[-0.03em] text-text-strong">
+                      <p className="text-lg font-semibold tracking-[-0.03em] text-[color:var(--color-foreground)]">
                         {group.company}
                       </p>
-                      <p className="mt-1 text-sm text-text-muted">
+                      <p className="mt-1 text-sm text-[color:var(--color-muted-foreground)]">
                         {group.items.length} 条面经
                       </p>
                     </div>
@@ -267,14 +267,14 @@ export function InterviewListWorkbench({
 
                       return (
                         <div
-                          className="rounded-2xl border border-border-muted bg-white px-4 py-4"
+                          className="rounded-2xl border border-[color:var(--color-border)] bg-white px-4 py-4"
                           key={item.id}
                         >
                           <div className="flex flex-wrap items-start justify-between gap-3">
                             <div className="space-y-2">
                               <div className="flex flex-wrap items-center gap-2">
                                 <Link
-                                  className="text-sm font-semibold text-text-strong hover:text-accent"
+                                  className="text-sm font-semibold text-[color:var(--color-foreground)] hover:text-[color:var(--color-brand)]"
                                   href={`/interviews/${item.id}`}
                                 >
                                   {item.role ?? "未知岗位"} / {item.roundInfo ?? "轮次未标注"}
@@ -283,7 +283,7 @@ export function InterviewListWorkbench({
                                   {promotionStatus.label}
                                 </Badge>
                               </div>
-                              <p className="text-sm text-text-muted">{item.sourceTitle}</p>
+                              <p className="text-sm text-[color:var(--color-muted-foreground)]">{item.sourceTitle}</p>
                             </div>
                             <div className="flex flex-wrap items-center gap-2">
                               <Badge>
@@ -295,11 +295,11 @@ export function InterviewListWorkbench({
                             </div>
                           </div>
 
-                          <p className="mt-3 text-sm leading-6 text-text-strong">
+                          <p className="mt-3 text-sm leading-6 text-[color:var(--color-foreground)]">
                             {item.summary ?? "还没有面经摘要。"}
                           </p>
 
-                          <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-text-muted">
+                          <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-[color:var(--color-muted-foreground)]">
                             <span>更新于 {formatDateTimeLabel(item.updatedAt)}</span>
                             <span>待处理 {Math.max(0, item.questionCount - item.promotedQuestionCount)} 道</span>
                           </div>
@@ -323,8 +323,8 @@ export function InterviewListWorkbench({
             </div>
           )}
 
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border-muted pt-4">
-            <p className="text-sm text-text-muted">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[color:var(--color-border)] pt-4">
+            <p className="text-sm text-[color:var(--color-muted-foreground)]">
               进入详情页可查看原始上下文并跳转到关联题目。
             </p>
             <div className="flex flex-wrap gap-2">
