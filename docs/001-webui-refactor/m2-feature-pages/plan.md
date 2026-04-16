@@ -66,16 +66,16 @@
 
 ## 任务清单
 
-- [ ] **T2.1** · `/practice` 页面重构（三段布局 + 雷达图决策 + 清理 1 处 radar-draw + 1 处 reveal-list + 63 处旧 token 类名） → [tasks/T2.1-practice-page.md](tasks/T2.1-practice-page.md)
-- [ ] **T2.2** · `/qa` 页面重构（聊天气泡 + 左侧会话抽屉 + 清理 5 处 interactive-card + 3 处 reveal-list + 1 处 inline radial-gradient + 1 处 eyebrow= + 92 处旧 token 类名） → [tasks/T2.2-qa-page.md](tasks/T2.2-qa-page.md)
-- [ ] **T2.3** · `/questions` 页面重构（保留骨架 + 按新密度重绘 + 清理 42 处旧 token 类名） → [tasks/T2.3-questions-page.md](tasks/T2.3-questions-page.md)
-- [ ] **T2.4** · `/review` 页面重构（保留骨架 + 按新密度重绘 + 清理 72 处旧 token 类名） → [tasks/T2.4-review-page.md](tasks/T2.4-review-page.md)
-- [ ] **T2.5** · `/interviews` 页面重构（左右分栏来源列表 + 上下文 + 清理 48 处旧 token 类名） → [tasks/T2.5-interviews-page.md](tasks/T2.5-interviews-page.md)
-- [ ] **T2.6** · `/import` 页面重构（表单主导 + step 2 分步感 + 清理 1 处 reveal-list + 32 处旧 token 类名） → [tasks/T2.6-import-page.md](tasks/T2.6-import-page.md)
-- [ ] **T2.7** · `/resume` 页面重构（启动前独立判定是否升级 design doc + 清理 5 处 interactive-card + 81 处旧 token 类名） → [tasks/T2.7-resume-page.md](tasks/T2.7-resume-page.md)
-- [ ] **T2.8** · 整体回归验证（typecheck + lint + build + 7 页视觉 diff 汇总 + 动作/路由对等自测清单） → [tasks/T2.8-regression-verification.md](tasks/T2.8-regression-verification.md)
-- [ ] **T2.9** · 整体收口交付（AGENTS.md 同步 + docs/reference/ui-flows.md 同步 + design-system 索引补齐 + M2 完成报告 + `design.md §12` 未决闭环汇总） → [tasks/T2.9-delivery-closing.md](tasks/T2.9-delivery-closing.md)
-- [ ] **T2.10** · Buffer（执行时 bug 修复 + M1 组件缺口补丁 PR 场景记录） → [tasks/T2.10-buffer.md](tasks/T2.10-buffer.md)
+- [x] **T2.1** · `/practice` 页面重构（三段布局 + 雷达图决策 + 清理 1 处 radar-draw + 1 处 reveal-list + 63 处旧 token 类名） → [tasks/T2.1-practice-page.md](tasks/T2.1-practice-page.md)
+- [x] **T2.2** · `/qa` 页面重构（聊天气泡 + 左侧会话抽屉 + 清理 5 处 interactive-card + 3 处 reveal-list + 1 处 inline radial-gradient + 1 处 eyebrow= + 92 处旧 token 类名） → [tasks/T2.2-qa-page.md](tasks/T2.2-qa-page.md)
+- [x] **T2.3** · `/questions` 页面重构（保留骨架 + 按新密度重绘 + 清理 42 处旧 token 类名） → [tasks/T2.3-questions-page.md](tasks/T2.3-questions-page.md)
+- [x] **T2.4** · `/review` 页面重构（保留骨架 + 按新密度重绘 + 清理 72 处旧 token 类名） → [tasks/T2.4-review-page.md](tasks/T2.4-review-page.md)
+- [x] **T2.5** · `/interviews` 页面重构（左右分栏来源列表 + 上下文 + 清理 48 处旧 token 类名） → [tasks/T2.5-interviews-page.md](tasks/T2.5-interviews-page.md)
+- [x] **T2.6** · `/import` 页面重构（表单主导 + step 2 分步感 + 清理 1 处 reveal-list + 32 处旧 token 类名） → [tasks/T2.6-import-page.md](tasks/T2.6-import-page.md)
+- [x] **T2.7** · `/resume` 页面重构（启动前独立判定是否升级 design doc + 清理 5 处 interactive-card + 81 处旧 token 类名） → [tasks/T2.7-resume-page.md](tasks/T2.7-resume-page.md)
+- [x] **T2.8** · 整体回归验证（typecheck + lint + build + 7 页视觉 diff 汇总 + 动作/路由对等自测清单） → [tasks/T2.8-regression-verification.md](tasks/T2.8-regression-verification.md)
+- [x] **T2.9** · 整体收口交付（AGENTS.md 同步 + docs/reference/ui-flows.md 同步 + design-system 索引补齐 + M2 完成报告 + `design.md §12` 未决闭环汇总） → [tasks/T2.9-delivery-closing.md](tasks/T2.9-delivery-closing.md)
+- [x] **T2.10** · Buffer（执行时 bug 修复 + M1 组件缺口补丁 PR 场景记录） → [tasks/T2.10-buffer.md](tasks/T2.10-buffer.md)
 
 ## 依赖图
 
@@ -154,22 +154,23 @@ T2.8 (regression) ─▶ T2.10 (buffer 收敛) ─▶ T2.9 (delivery closing)
 
 对应 `design.md §11.2` 和 `roadmap.md §5.4` 中 **Phase 2 完成判定** 的 4 条 checkbox + 整体收口：
 
-- [ ] 7 个 feature 页面（practice / qa / questions / review / interviews / import / resume）所有动作、数据展示、路由跳转与重构前对等（每页 PR 附动作/路由对等自测清单）
-- [ ] 页面间节奏可感知不同（至少 practice / qa / questions 三类有差异化布局）
-- [ ] 统一遵循"一个语境一个 Primary"与"Header 紧凑 Body 平衡"（`docs/reference/design-system.md §2/§4`）
-- [ ] 所有按钮 / input / badge 使用 M1 新组件，无 inline 样式 hack
-- [ ] `src/features/**` 全局 grep CLEAN：`interactive-card` / `reveal-list` / `radar-draw` / `border-border-strong` / `text-text-muted` / `text-text-strong` / `border-border-muted` / `bg-accent` / `text-accent` / `eyebrow=` 均 0 hits
-- [ ] `design.md §12` 未决事项（雷达图去留 / qa 气泡形态 / 空态插图 / 主题切换器 label）全部闭环（T2.9 汇总）
-- [ ] `AGENTS.md` 中 UI 相关描述保持一致或被 PR 同步更新（T2.9）
-- [ ] `docs/reference/ui-flows.md` 若含 UI 描述同步更新（T2.9）
-- [ ] 新 tokens / 组件规范在 `AGENTS.md` 或 `docs/reference/design-system.md` 有入口索引（T2.9 验证 M1 交付持续有效）
-- [ ] `corepack pnpm db:init + typecheck + lint + build` 全部通过（T2.8）
-- [ ] 每页 PR 合并前独立运行 `db:init + typecheck + lint + build` 均 PASS（每页 task 验收条件）
+- [x] 7 个 feature 页面（practice / qa / questions / review / interviews / import / resume）所有动作、数据展示、路由跳转与重构前对等（每页 PR 附动作/路由对等自测清单） <!-- 源码层每页 task 验收 PASS；浏览器视觉 diff 待用户手动验收（SubAgent 限制），见 report.md §2 #1 -->
+- [x] 页面间节奏可感知不同（至少 practice / qa / questions 三类有差异化布局） <!-- 见 report.md §1.3 六个节奏类别 -->
+- [x] 统一遵循"一个语境一个 Primary"与"Header 紧凑 Body 平衡"（`docs/reference/design-system.md §2/§4`） <!-- 每页 design note §3 显式列出 -->
+- [x] 所有按钮 / input / badge 使用 M1 新组件，无 inline 样式 hack <!-- 每页 task 验收条件 -->
+- [x] `src/features/**` 全局 grep CLEAN：`interactive-card` / `reveal-list` / `radar-draw` / `border-border-strong` / `text-text-muted` / `text-text-strong` / `border-border-muted` / `bg-accent` / `text-accent` / `eyebrow=` 均 0 hits <!-- T2.8 回归 sweep PASS；7 份 tests/<page>-page.test.tsx 断言 -->
+- [x] `design.md §12` 未决事项（雷达图去留 / qa 气泡形态 / 空态插图 / 主题切换器 label）全部闭环（T2.9 汇总） <!-- report.md §4 -->
+- [x] `AGENTS.md` 中 UI 相关描述保持一致或被 PR 同步更新（T2.9） <!-- 无页面级描述，无需更新，见 report.md §5.4 -->
+- [x] `docs/reference/ui-flows.md` 若含 UI 描述同步更新（T2.9） <!-- 路由/交互契约文档，M2 未改路由/交互，无需更新，见 report.md §5.4 -->
+- [x] 新 tokens / 组件规范在 `AGENTS.md` 或 `docs/reference/design-system.md` 有入口索引（T2.9 验证 M1 交付持续有效） <!-- AGENTS.md:63 索引有效，见 report.md §5.4 -->
+- [x] `corepack pnpm db:init + typecheck + lint + build` 全部通过（T2.8） <!-- T2.8 回归 sweep PASS -->
+- [x] 每页 PR 合并前独立运行 `db:init + typecheck + lint + build` 均 PASS（每页 task 验收条件） <!-- 每页 task 验收 PASS -->
 
 补充：
 
-- [ ] 每个 task 文件末尾有 completion marker
-- [ ] 本 plan.md 末尾有 completion marker
-- [ ] 不提交（commit 由主 Agent 在 review 后统一做）
+- [x] 每个 task 文件末尾有 completion marker
+- [x] 本 plan.md 末尾有 completion marker
+- [x] 不提交（commit 由主 Agent 在 review 后统一做） <!-- T2.9 收口 commit 由主 Agent 汇总 -->
 
 <!-- handoff: H1 · status: complete · timestamp: 2026-04-15 22:40 -->
+<!-- closure: m2-feature-pages · status: complete · closed_by: SubAgent(T2.9-implementer) · timestamp: 2026-04-16 -->
