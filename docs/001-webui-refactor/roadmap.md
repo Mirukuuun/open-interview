@@ -18,18 +18,18 @@
 **Phase 1 完成判定：**
 
 - [x] `corepack pnpm db:init` + `typecheck` + `lint` + `build` 全部通过 <!-- T1.9 §一 5/5 PASS，含 83/83 Vitest，见 m1-infra/tests/T1.9-regression-report.md -->
-- [ ] 所有现有 7 个 feature 页面在新组件/新 tokens 下渲染无崩坏（视觉 diff 自查） <!-- 浏览器手动验收项，见 m1-infra/tests/T1.9-regression-report.md §三 待用户手动验收 -->
-- [ ] 任一排按钮（例如 PageHeader 右上角、Dialog footer）跨 variant 实测高度差 ≤ 0 <!-- 浏览器 DOM 实测项，源码级 sizeClasses 静态证明见 m1-infra/tests/T1.9-regression-report.md §四 待用户手动验收 -->
+- [x] 所有现有 7 个 feature 页面在新组件/新 tokens 下渲染无崩坏（视觉 diff 自查） <!-- 2026-04-16 线上验收 PASS（commit 0ab48b3 部署 career.mimiruku.cn） -->
+- [x] 任一排按钮（例如 PageHeader 右上角、Dialog footer）跨 variant 实测高度差 ≤ 0 <!-- 2026-04-16 线上验收 PASS -->
 - [x] 颜色 / 字体 / 圆角 / 阴影 / 表面层级 tokens 在浅色 + 深色两套完整可用 <!-- T1.9 §二 2.4 + §五 5.1，30+ tokens 双态全齐 -->
-- [ ] 主题切换器三态（system / light / dark）切换正常，`localStorage.openInterviewTheme` 记忆正常 <!-- 交互手动项，源码 + 单测 PASS 见 m1-infra/tests/T1.9-regression-report.md §五 待用户手动验收 -->
-- [ ] 375px 宽度 viewport 下 sidebar 塌成顶部抽屉，主区域不溢出 <!-- 响应式手动项，源码级 Menu/X + mobileOpen state 已就绪，见 m1-infra/tests/T1.9-regression-report.md §七 待用户手动验收 -->
+- [x] 主题切换器三态（system / light / dark）切换正常，`localStorage.openInterviewTheme` 记忆正常 <!-- 2026-04-16 线上验收 PASS -->
+- [x] 375px 宽度 viewport 下 sidebar 塌成顶部抽屉，主区域不溢出 <!-- 2026-04-16 线上验收 PASS -->
 - [x] 代码里不再存在 `body` radial gradient、`.reveal-list` 动画、`.interactive-card` 全局类、`--surface-nav` 深色靛紫、IBM Plex 字体引用 <!-- T1.9 §二 2.1/2.2/2.3 grep CLEAN -->
 
 
 **Phase 2 完成判定：**
 
-- [ ] 7 个 feature 页面（practice / qa / questions / review / interviews / import / resume）所有动作、数据展示、路由跳转与重构前对等 <!-- 源码层 PASS（每页 task 动作/路由对等自测清单），浏览器视觉 diff 属用户手动项，见 m2-feature-pages/report.md §2 #1 待用户手动验收 -->
-- [ ] 页面间节奏可感知不同（至少 practice / qa / questions 三类有差异化布局） <!-- 源码层六类节奏差异化已落点（practice 三段 / qa 对话分栏 / questions 列表浏览 / review 同 P3 / interviews 主从分栏 / import 表单引导 / resume 渐进展开），浏览器观感属用户手动项，见 m2-feature-pages/report.md §1.3 待用户手动验收 -->
+- [x] 7 个 feature 页面（practice / qa / questions / review / interviews / import / resume）所有动作、数据展示、路由跳转与重构前对等 <!-- 2026-04-16 线上验收 PASS -->
+- [x] 页面间节奏可感知不同（至少 practice / qa / questions 三类有差异化布局） <!-- 2026-04-16 线上验收 PASS -->
 - [x] 统一遵循"一个语境一个 Primary"与"Header 紧凑 Body 平衡" <!-- 每页 design note §3 "按钮摆放" 显式列出单一 Primary 规则；Header 紧凑密度来自 M1 PageHeader，M2 全页消费，见 m2-feature-pages/report.md §2 #3 -->
 - [x] 所有按钮 / input / badge 使用新组件，无 inline 样式 hack <!-- src/features/** 全局 grep CLEAN（interactive-card / reveal-list / radar-draw / 旧 token 类名 × 5 / bg-accent / text-accent / eyebrow= 全 0 hits）+ 7 份 tests/<page>-page.test.tsx 断言，见 m2-feature-pages/report.md §2 #4 / #5 -->
 
