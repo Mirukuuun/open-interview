@@ -237,14 +237,14 @@ export function ResumeSourcePanel({
               : "border-amber-200 bg-amber-50",
           )}
         >
-          <p className="text-sm font-semibold text-text-strong">{feedback.title}</p>
-          <p className="mt-2 text-sm leading-6 text-text-muted">{feedback.body}</p>
+          <p className="text-sm font-semibold text-[color:var(--color-foreground)]">{feedback.title}</p>
+          <p className="mt-2 text-sm leading-6 text-[color:var(--color-muted-foreground)]">{feedback.body}</p>
         </div>
       ) : null}
 
       <form className="space-y-4" onSubmit={handleSave}>
         <label className="block space-y-2">
-          <span className="text-sm font-medium text-text-strong">简历标题</span>
+          <span className="text-sm font-medium text-[color:var(--color-foreground)]">简历标题</span>
           <Input
             onChange={(event) =>
               setForm((current) => ({
@@ -259,7 +259,7 @@ export function ResumeSourcePanel({
         </label>
 
         <label className="block space-y-2">
-          <span className="text-sm font-medium text-text-strong">来源链接</span>
+          <span className="text-sm font-medium text-[color:var(--color-foreground)]">来源链接</span>
           <Input
             onChange={(event) =>
               setForm((current) => ({
@@ -273,7 +273,7 @@ export function ResumeSourcePanel({
         </label>
 
         <label className="block space-y-2">
-          <span className="text-sm font-medium text-text-strong">简历原文</span>
+          <span className="text-sm font-medium text-[color:var(--color-foreground)]">简历原文</span>
           <Textarea
             className="min-h-[220px]"
             onChange={(event) =>
@@ -296,7 +296,7 @@ export function ResumeSourcePanel({
         </div>
       </form>
 
-      <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-4">
+      <div className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted px-4 py-4">
         <div className="flex flex-wrap items-center gap-2">
           <Badge tone="accent">当前来源</Badge>
           {latestSource ? <Badge>{latestSource.parseStatus}</Badge> : null}
@@ -304,8 +304,8 @@ export function ResumeSourcePanel({
         </div>
 
         {latestSource ? (
-          <div className="mt-4 space-y-2 text-sm text-text-muted">
-            <p className="font-semibold text-text-strong">{latestSource.title}</p>
+          <div className="mt-4 space-y-2 text-sm text-[color:var(--color-muted-foreground)]">
+            <p className="font-semibold text-[color:var(--color-foreground)]">{latestSource.title}</p>
             <p className="font-mono text-xs">{latestSource.id}</p>
             <p>更新于 {formatDateTimeLabel(latestSource.updatedAt)}</p>
             {latestParseJob?.error_message ? (
@@ -313,7 +313,7 @@ export function ResumeSourcePanel({
             ) : null}
           </div>
         ) : (
-          <p className="mt-4 text-sm leading-6 text-text-muted">
+          <p className="mt-4 text-sm leading-6 text-[color:var(--color-muted-foreground)]">
             还没有简历来源。先在上方保存，再执行解析和写入。
           </p>
         )}
@@ -341,22 +341,22 @@ export function ResumeSourcePanel({
           <Badge>{`${parsedProjectPreview.length} 个项目`}</Badge>
         </div>
         {parsedProjectPreview.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border-strong bg-white px-4 py-4 text-sm leading-6 text-text-muted">
+          <div className="rounded-xl border border-dashed border-[color:var(--color-border)] bg-white px-4 py-4 text-sm leading-6 text-[color:var(--color-muted-foreground)]">
             还没有项目预览。解析器更适合有清晰项目区块的简历。
           </div>
         ) : (
           <div className="space-y-3">
             {parsedProjectPreview.map((project) => (
               <div
-                className="rounded-xl border border-border-muted bg-white px-4 py-4"
+                className="rounded-xl border border-[color:var(--color-border)] bg-white px-4 py-4"
                 key={project.name}
               >
-                <p className="text-sm font-semibold text-text-strong">{project.name}</p>
-                <p className="mt-2 text-sm leading-6 text-text-muted">
+                <p className="text-sm font-semibold text-[color:var(--color-foreground)]">{project.name}</p>
+                <p className="mt-2 text-sm leading-6 text-[color:var(--color-muted-foreground)]">
                   {project.summary ?? "还没有项目摘要。"}
                 </p>
                 {project.techStack.length > 0 ? (
-                  <p className="mt-3 text-xs text-text-muted">
+                  <p className="mt-3 text-xs text-[color:var(--color-muted-foreground)]">
                     技术栈: {project.techStack.join(", ")}
                   </p>
                 ) : null}

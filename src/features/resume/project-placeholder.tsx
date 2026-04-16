@@ -44,7 +44,7 @@ export function ProjectPlaceholder({ projectId }: ProjectPlaceholderProps) {
               "Suggested deep-dive questions placeholder",
             ].map((item) => (
               <div
-                className="rounded-xl border border-dashed border-border-strong bg-surface-muted p-4 text-sm text-text-muted"
+                className="rounded-xl border border-dashed border-[color:var(--color-border)] bg-surface-muted p-4 text-sm text-[color:var(--color-muted-foreground)]"
                 key={item}
               >
                 {item}
@@ -55,7 +55,7 @@ export function ProjectPlaceholder({ projectId }: ProjectPlaceholderProps) {
 
         <SurfaceCard className="space-y-5" muted>
           <SectionHeading title="Session history" />
-          <div className="rounded-xl border border-border-strong bg-white p-4 text-sm leading-6 text-text-muted">
+          <div className="rounded-xl border border-[color:var(--color-border)] bg-white p-4 text-sm leading-6 text-[color:var(--color-muted-foreground)]">
             Existing deep-dive and mock interview sessions will render here when
             Slice 6 wires project records.
           </div>

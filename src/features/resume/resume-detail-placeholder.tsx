@@ -35,7 +35,7 @@ export function ResumeDetailPlaceholder({
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.8fr)]">
         <SurfaceCard className="space-y-5">
           <SectionHeading title="Resume summary" />
-          <div className="rounded-xl border border-dashed border-border-strong bg-surface-muted p-5 text-sm leading-6 text-text-muted">
+          <div className="rounded-xl border border-dashed border-[color:var(--color-border)] bg-surface-muted p-5 text-sm leading-6 text-[color:var(--color-muted-foreground)]">
             Resume metadata, parse status, and extracted projects are intentionally
             deferred to Slice 6.
           </div>
@@ -43,11 +43,11 @@ export function ResumeDetailPlaceholder({
 
         <SurfaceCard className="space-y-5" muted>
           <SectionHeading title="Resume metadata" />
-          <div className="space-y-3 text-sm text-text-muted">
-            <div className="rounded-xl border border-border-strong bg-white px-4 py-3">
+          <div className="space-y-3 text-sm text-[color:var(--color-muted-foreground)]">
+            <div className="rounded-xl border border-[color:var(--color-border)] bg-white px-4 py-3">
               Candidate name placeholder
             </div>
-            <div className="rounded-xl border border-border-strong bg-white px-4 py-3">
+            <div className="rounded-xl border border-[color:var(--color-border)] bg-white px-4 py-3">
               Parse status placeholder
             </div>
           </div>

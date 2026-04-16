@@ -60,7 +60,7 @@ export function ResumePlaceholder() {
               ],
             ]}
           />
-          <p className="text-sm leading-6 text-text-muted">
+          <p className="text-sm leading-6 text-[color:var(--color-muted-foreground)]">
             Project rows are static for bootstrap only. Slice 6 will connect them
             to parsed resume data and session history.
           </p>

@@ -22,8 +22,8 @@ function renderTrace(
   }
 
   return (
-    <details className="rounded-xl border border-border-muted bg-surface-muted px-4 py-4" open>
-      <summary className="cursor-pointer text-sm font-semibold text-text-strong">
+    <details className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted px-4 py-4" open>
+      <summary className="cursor-pointer text-sm font-semibold text-[color:var(--color-foreground)]">
         Retrieval trace • {retrievalLog.strategy} • {retrievalLog.hits.length} hits
       </summary>
       <div className="mt-4 space-y-4">
@@ -40,7 +40,7 @@ function renderTrace(
         <div className="space-y-3">
           {retrievalLog.hits.map((hit) => (
             <div
-              className="rounded-lg border border-border-muted bg-white px-3 py-3"
+              className="rounded-lg border border-[color:var(--color-border)] bg-white px-3 py-3"
               key={`${hit.owner_type}-${hit.owner_id}-${hit.chunk_id ?? "none"}`}
             >
               <div className="flex flex-wrap items-center gap-2">
@@ -48,11 +48,11 @@ function renderTrace(
                 <Badge tone={hit.reason === "fts" ? "accent" : "success"}>
                   {hit.reason}
                 </Badge>
-                <span className="font-mono text-xs text-text-muted">
+                <span className="font-mono text-xs text-[color:var(--color-muted-foreground)]">
                   score {hit.score.toFixed(1)}
                 </span>
               </div>
-              <div className="mt-2 whitespace-pre-wrap text-sm leading-6 text-text-strong">
+              <div className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[color:var(--color-foreground)]">
                 {hit.snippet}
               </div>
             </div>
@@ -118,18 +118,18 @@ export function ProjectSessionWorkbench({
               <div className="space-y-4">
                 {detail.turns.map((turn) => (
                   <div
-                    className="rounded-2xl border border-border-muted bg-surface-muted px-4 py-4"
+                    className="rounded-2xl border border-[color:var(--color-border)] bg-surface-muted px-4 py-4"
                     key={turn.id}
                   >
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge tone={turn.role === "assistant" ? "accent" : "neutral"}>
                         {turn.role === "assistant" ? "interviewer" : turn.role}
                       </Badge>
-                      <span className="font-mono text-xs text-text-muted">
+                      <span className="font-mono text-xs text-[color:var(--color-muted-foreground)]">
                         {formatDateTimeLabel(turn.created_at)}
                       </span>
                     </div>
-                    <div className="mt-3 whitespace-pre-wrap text-sm leading-7 text-text-strong">
+                    <div className="mt-3 whitespace-pre-wrap text-sm leading-7 text-[color:var(--color-foreground)]">
                       {turn.content}
                     </div>
 
@@ -138,7 +138,7 @@ export function ProjectSessionWorkbench({
                         <SectionHeading title={`Coach hints (${turn.coach_hints.length})`} />
                         {turn.coach_hints.map((hint) => (
                           <div
-                            className="rounded-xl border border-border-muted bg-white px-4 py-4 text-sm leading-6 text-text-strong"
+                            className="rounded-xl border border-[color:var(--color-border)] bg-white px-4 py-4 text-sm leading-6 text-[color:var(--color-foreground)]"
                             key={hint}
                           >
                             {hint}
@@ -155,14 +155,14 @@ export function ProjectSessionWorkbench({
                         <div className="space-y-3">
                           {turn.related_questions.map((question) => (
                             <Link
-                              className="interactive-card block rounded-xl border border-border-muted bg-white px-4 py-4 focus-visible:outline-none"
+                              className="block rounded-xl border border-[color:var(--color-border)] bg-white px-4 py-4 hover:border-[color:var(--color-brand)] transition-colors focus-visible:outline-none"
                               href={`/questions/${question.id}`}
                               key={question.id}
                             >
-                              <p className="text-sm font-semibold text-text-strong">
+                              <p className="text-sm font-semibold text-[color:var(--color-foreground)]">
                                 {question.question_text}
                               </p>
-                              <p className="mt-2 text-sm text-text-muted">
+                              <p className="mt-2 text-sm text-[color:var(--color-muted-foreground)]">
                                 {formatCategoryLabelOrFallback(question.category)} • {question.source_count} source(s)
                               </p>
                             </Link>
@@ -186,7 +186,7 @@ export function ProjectSessionWorkbench({
               <div className="space-y-3">
                 {latestCoachHints.map((hint) => (
                   <div
-                    className="rounded-xl border border-border-muted bg-surface-muted px-4 py-4 text-sm leading-6 text-text-strong"
+                    className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted px-4 py-4 text-sm leading-6 text-[color:var(--color-foreground)]"
                     key={hint}
                   >
                     {hint}
@@ -194,7 +194,7 @@ export function ProjectSessionWorkbench({
                 ))}
               </div>
             ) : (
-              <div className="rounded-xl border border-dashed border-border-strong bg-surface-muted px-4 py-4 text-sm text-text-muted">
+              <div className="rounded-xl border border-dashed border-[color:var(--color-border)] bg-surface-muted px-4 py-4 text-sm text-[color:var(--color-muted-foreground)]">
                 当前还没有 coach hints。先完成一轮回答，系统会给出表达和补充建议。
               </div>
             )}
@@ -202,7 +202,7 @@ export function ProjectSessionWorkbench({
 
           <SurfaceCard className="space-y-4" muted>
             <SectionHeading title="Project context" />
-            <div className="rounded-xl border border-border-strong bg-white px-4 py-4 text-sm leading-6 text-text-muted">
+            <div className="rounded-xl border border-[color:var(--color-border)] bg-white px-4 py-4 text-sm leading-6 text-[color:var(--color-muted-foreground)]">
               {detail.resumeProject.summary ?? "No summary extracted."}
             </div>
             {detail.resumeProject.tech_stack.length > 0 ? (
@@ -216,7 +216,7 @@ export function ProjectSessionWorkbench({
               <div className="space-y-2">
                 {detail.resumeProject.highlights.map((highlight) => (
                   <div
-                    className="rounded-xl border border-border-strong bg-white px-4 py-3 text-sm text-text-strong"
+                    className="rounded-xl border border-[color:var(--color-border)] bg-white px-4 py-3 text-sm text-[color:var(--color-foreground)]"
                     key={highlight}
                   >
                     {highlight}
@@ -232,7 +232,7 @@ export function ProjectSessionWorkbench({
               <div className="space-y-3">
                 {detail.resumeProject.deep_dive_questions.map((question) => (
                   <div
-                    className="rounded-xl border border-border-muted bg-surface-muted px-4 py-4 text-sm leading-6 text-text-strong"
+                    className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted px-4 py-4 text-sm leading-6 text-[color:var(--color-foreground)]"
                     key={question}
                   >
                     {question}
@@ -240,7 +240,7 @@ export function ProjectSessionWorkbench({
                 ))}
               </div>
             ) : (
-              <div className="rounded-xl border border-dashed border-border-strong bg-surface-muted px-4 py-4 text-sm text-text-muted">
+              <div className="rounded-xl border border-dashed border-[color:var(--color-border)] bg-surface-muted px-4 py-4 text-sm text-[color:var(--color-muted-foreground)]">
                 这条项目暂时没有预置追问，先从左侧会话继续深挖。
               </div>
             )}
@@ -249,11 +249,11 @@ export function ProjectSessionWorkbench({
           <SurfaceCard className="space-y-4">
             <SectionHeading title="Latest prompt" />
             {latestAssistantTurn ? (
-              <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-4 text-sm leading-6 text-text-strong">
+              <div className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted px-4 py-4 text-sm leading-6 text-[color:var(--color-foreground)]">
                 {latestAssistantTurn.content}
               </div>
             ) : (
-              <div className="rounded-xl border border-dashed border-border-strong bg-surface-muted px-4 py-4 text-sm text-text-muted">
+              <div className="rounded-xl border border-dashed border-[color:var(--color-border)] bg-surface-muted px-4 py-4 text-sm text-[color:var(--color-muted-foreground)]">
                 No assistant prompt is available yet.
               </div>
             )}

@@ -110,7 +110,7 @@ export function DeepDiveAnswerForm({
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
       <label className="block space-y-2">
-        <span className="text-sm font-medium text-text-strong">你的回答</span>
+        <span className="text-sm font-medium text-[color:var(--color-foreground)]">你的回答</span>
         <Textarea
           className="min-h-[140px]"
           onChange={(event) => setAnswer(event.target.value)}
@@ -129,8 +129,8 @@ export function DeepDiveAnswerForm({
               : "border-amber-200 bg-amber-50",
           )}
         >
-          <p className="text-sm font-semibold text-text-strong">{feedback.title}</p>
-          <p className="mt-2 text-sm leading-6 text-text-muted">{feedback.body}</p>
+          <p className="text-sm font-semibold text-[color:var(--color-foreground)]">{feedback.title}</p>
+          <p className="mt-2 text-sm leading-6 text-[color:var(--color-muted-foreground)]">{feedback.body}</p>
         </div>
       ) : null}
 

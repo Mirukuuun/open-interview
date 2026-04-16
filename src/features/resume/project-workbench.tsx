@@ -45,7 +45,7 @@ export function ProjectWorkbench({ project }: { project: ResumeProjectDetail }) 
         <div className="space-y-6">
           <SurfaceCard className="space-y-5">
             <SectionHeading title="项目上下文" />
-            <div className="rounded-xl border border-border-muted bg-surface-muted px-4 py-4 text-sm leading-6 text-text-muted">
+            <div className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted px-4 py-4 text-sm leading-6 text-[color:var(--color-muted-foreground)]">
               {project.summary ?? "还没有项目摘要。"}
             </div>
 
@@ -54,13 +54,13 @@ export function ProjectWorkbench({ project }: { project: ResumeProjectDetail }) 
                 title="项目亮点"
               />
               {project.highlights.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-border-strong bg-white px-4 py-4 text-sm text-text-muted">
+                <div className="rounded-xl border border-dashed border-[color:var(--color-border)] bg-white px-4 py-4 text-sm text-[color:var(--color-muted-foreground)]">
                   还没有提取到亮点。
                 </div>
               ) : (
                 project.highlights.map((highlight) => (
                   <div
-                    className="rounded-xl border border-border-muted bg-white px-4 py-4 text-sm leading-6 text-text-strong"
+                    className="rounded-xl border border-[color:var(--color-border)] bg-white px-4 py-4 text-sm leading-6 text-[color:var(--color-foreground)]"
                     key={highlight}
                   >
                     {highlight}
@@ -74,13 +74,13 @@ export function ProjectWorkbench({ project }: { project: ResumeProjectDetail }) 
                 title="建议追问"
               />
               {project.deep_dive_questions.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-border-strong bg-white px-4 py-4 text-sm text-text-muted">
+                <div className="rounded-xl border border-dashed border-[color:var(--color-border)] bg-white px-4 py-4 text-sm text-[color:var(--color-muted-foreground)]">
                   还没有建议追问。
                 </div>
               ) : (
                 project.deep_dive_questions.map((question) => (
                   <div
-                    className="rounded-xl border border-border-muted bg-white px-4 py-4 text-sm leading-6 text-text-strong"
+                    className="rounded-xl border border-[color:var(--color-border)] bg-white px-4 py-4 text-sm leading-6 text-[color:var(--color-foreground)]"
                     key={question}
                   >
                     {question}
@@ -95,7 +95,7 @@ export function ProjectWorkbench({ project }: { project: ResumeProjectDetail }) 
           <SurfaceCard className="space-y-4" muted>
             <SectionHeading title="技术栈" />
             {project.tech_stack.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border-strong bg-white px-4 py-4 text-sm text-text-muted">
+              <div className="rounded-xl border border-dashed border-[color:var(--color-border)] bg-white px-4 py-4 text-sm text-[color:var(--color-muted-foreground)]">
                 还没有提取到技术栈。
               </div>
             ) : (
@@ -115,17 +115,17 @@ export function ProjectWorkbench({ project }: { project: ResumeProjectDetail }) 
               <div className="space-y-3">
                 {project.sessions.map((session) => (
                   <Link
-                    className="interactive-card block rounded-xl border border-border-strong bg-white px-4 py-4 focus-visible:outline-none"
+                    className="block rounded-xl border border-[color:var(--color-border)] bg-white px-4 py-4 hover:border-[color:var(--color-brand)] transition-colors focus-visible:outline-none"
                     href={`/resume/projects/${project.id}/session/${session.id}`}
                     key={session.id}
                   >
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-semibold text-text-strong">
+                      <p className="text-sm font-semibold text-[color:var(--color-foreground)]">
                         {session.title ?? "未命名深挖"}
                       </p>
                       <Badge>{session.status}</Badge>
                     </div>
-                    <p className="mt-3 text-xs text-text-muted">
+                    <p className="mt-3 text-xs text-[color:var(--color-muted-foreground)]">
                       更新于 {formatDateTimeLabel(session.updated_at)}
                     </p>
                   </Link>

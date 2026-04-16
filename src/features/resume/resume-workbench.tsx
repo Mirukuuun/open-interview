@@ -60,21 +60,21 @@ export function ResumeWorkbench({ workspace }: { workspace: ResumeWorkspace }) {
       <SurfaceCard className="space-y-4">
         <SectionHeading title="项目表达训练入口" />
         {spotlightProjects.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border-strong bg-surface-muted px-4 py-4 text-sm leading-6 text-text-muted">
+          <div className="rounded-xl border border-dashed border-[color:var(--color-border)] bg-surface-muted px-4 py-4 text-sm leading-6 text-[color:var(--color-muted-foreground)]">
             还没有可继续深挖的项目。先保存并解析简历，写入结构化项目后，这里会展示可继续训练的重点项目。
           </div>
         ) : (
           <div className="grid gap-3 lg:grid-cols-3">
             {spotlightProjects.map((project) => (
               <div
-                className="rounded-xl border border-border-muted bg-surface-muted px-4 py-4"
+                className="rounded-xl border border-[color:var(--color-border)] bg-surface-muted px-4 py-4"
                 key={project.id}
               >
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-sm font-semibold text-text-strong">{project.name}</p>
+                  <p className="text-sm font-semibold text-[color:var(--color-foreground)]">{project.name}</p>
                   <Badge>{`${project.session_count} 个会话`}</Badge>
                 </div>
-                <p className="mt-2 text-sm leading-6 text-text-muted">
+                <p className="mt-2 text-sm leading-6 text-[color:var(--color-muted-foreground)]">
                   {project.summary ?? "还没有项目摘要。"}
                 </p>
                 {project.highlights.length > 0 ? (
@@ -122,24 +122,24 @@ export function ResumeWorkbench({ workspace }: { workspace: ResumeWorkspace }) {
               <div className="space-y-3">
                 {newestResume.projects.map((project) => (
                   <Link
-                    className="interactive-card block rounded-xl border border-border-strong bg-white px-4 py-4 focus-visible:outline-none"
+                    className="block rounded-xl border border-[color:var(--color-border)] bg-white px-4 py-4 hover:border-[color:var(--color-brand)] transition-colors focus-visible:outline-none"
                     href={`/resume/projects/${project.id}`}
                     key={project.id}
                   >
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-semibold text-text-strong">{project.name}</p>
+                      <p className="text-sm font-semibold text-[color:var(--color-foreground)]">{project.name}</p>
                       <Badge>{`${project.session_count} 个会话`}</Badge>
                     </div>
-                    <p className="mt-2 text-sm leading-6 text-text-muted">
+                    <p className="mt-2 text-sm leading-6 text-[color:var(--color-muted-foreground)]">
                       {project.summary ?? "还没有项目摘要。"}
                     </p>
                     {project.tech_stack.length > 0 ? (
-                      <p className="mt-3 text-xs text-text-muted">
+                      <p className="mt-3 text-xs text-[color:var(--color-muted-foreground)]">
                         技术栈: {project.tech_stack.join(", ")}
                       </p>
                     ) : null}
                     {project.latest_session_updated_at ? (
-                      <p className="mt-3 text-xs text-text-muted">
+                      <p className="mt-3 text-xs text-[color:var(--color-muted-foreground)]">
                         最近会话: {formatDateTimeLabel(project.latest_session_updated_at)}
                       </p>
                     ) : null}
@@ -152,21 +152,21 @@ export function ResumeWorkbench({ workspace }: { workspace: ResumeWorkspace }) {
           <SurfaceCard className="space-y-4" muted>
             <SectionHeading title="最近结构化简历" />
             {workspace.recentResumes.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border-strong bg-white px-4 py-4 text-sm text-text-muted">
+              <div className="rounded-xl border border-dashed border-[color:var(--color-border)] bg-white px-4 py-4 text-sm text-[color:var(--color-muted-foreground)]">
                 还没有持久化的结构化简历。
               </div>
             ) : (
               <div className="space-y-3">
                 {workspace.recentResumes.map((resume) => (
                   <Link
-                    className="interactive-card block rounded-xl border border-border-strong bg-white px-4 py-4 focus-visible:outline-none"
+                    className="block rounded-xl border border-[color:var(--color-border)] bg-white px-4 py-4 hover:border-[color:var(--color-brand)] transition-colors focus-visible:outline-none"
                     href={`/resume/${resume.id}`}
                     key={resume.id}
                   >
-                    <p className="text-sm font-semibold text-text-strong">
+                    <p className="text-sm font-semibold text-[color:var(--color-foreground)]">
                       {resume.candidate_name ?? resume.id}
                     </p>
-                    <p className="mt-2 text-sm text-text-muted">
+                    <p className="mt-2 text-sm text-[color:var(--color-muted-foreground)]">
                       {resume.project_count} 个项目 • 更新于{" "}
                       {formatDateTimeLabel(resume.updated_at)}
                     </p>
